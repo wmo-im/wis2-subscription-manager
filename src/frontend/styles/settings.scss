@@ -1,0 +1,81 @@
+/**
+ * src/styles/settings.scss
+ *
+ * Configures SASS variables and Vuetify overwrites
+ */
+
+// https://vuetifyjs.com/features/sass-variables/`
+// @use 'vuetify/settings' with (
+//   $color-pack: false
+// );
+.max-form-width {
+    max-width: 1200px;
+}
+
+.max-dashboard-width {
+    max-width: 1400px;
+}
+
+.big-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.hint-text {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    padding-left: 1rem;
+}
+
+.hint-valid {
+    color: green;
+}
+
+.hint-invalid {
+    color: red;
+}
+
+.hint-default {
+    color: #888;
+}
+
+.warning-color {
+    color: #FD9235
+}
+
+.warning-item {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+    background-color: #FEC89A
+}
+
+.error-color {
+    color: #EA4848
+}
+
+.error-item {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+    background-color: #F08080
+}
+
+.secondary {
+    color: #767B91;
+}
+
+.file-actions {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    padding: 4px;
+}
+
+.divider-spacing {
+    margin-top: 10px;
+}

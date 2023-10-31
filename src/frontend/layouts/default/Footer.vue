@@ -1,5 +1,5 @@
 <template>
-    <img src="@/assets/foot.png"/>
+    <img src="/assets/foot.png"/>
     <v-footer class="footer-text">
         <div>
             {{ new Date().getFullYear() }} — <strong>World Meteorological Organization</strong>

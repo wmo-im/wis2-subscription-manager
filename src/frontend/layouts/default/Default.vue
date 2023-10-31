@@ -1,8 +1,6 @@
 <template>
   <v-app>
     <default-bar />
-    <!-- Add space after AppBar -->
-    <div style="margin-top: 30px;"/>
     <default-view />
     <default-footer />
   </v-app>
