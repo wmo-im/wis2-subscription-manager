@@ -1,24 +1,18 @@
 <template>
-  <v-app>
-    <v-app-bar image="/assets/banner.png">
-      <img src="/assets/logo-large.png" alt="Logo" class="wmo-logo" />
-  
-      <template v-slot:image>
-        <!-- Gradient from white to transparent, ensuring at all sizes the blue logo
-        will be on a solid background as required by the WMO -->
-        <v-img gradient="to left, transparent, #FFFFFF"></v-img>
-      </template>
-  
-      <v-app-bar-title class="wis2-title"> WIS2 Downloader
-      </v-app-bar-title>
-  
-    </v-app-bar>
-  </v-app>
+  <v-app-bar image="/assets/banner.png">
+    <img src="/assets/logo-large.png" alt="Logo" class="wmo-logo" />
+
+    <template v-slot:append>
+      <v-btn color="white" append-icon="mdi-account">Log In</v-btn>
+      <v-btn color="white" append-icon="mdi-cloud-search">Explore</v-btn>
+    </template>
+
+  </v-app-bar>
 </template>
 
 <script setup>
 
-import { VApp, VAppBar, VImg } from 'vuetify/lib/components/index.mjs';
+import { VAppBar, VBtn } from 'vuetify/lib/components/index.mjs';
 
 </script>
 
@@ -32,11 +26,6 @@ import { VApp, VAppBar, VImg } from 'vuetify/lib/components/index.mjs';
   margin-left: 10px;
 }
 
-.wis2-title {
-  color: #003DA5;
-  font-size: 2rem;
-  font-weight: 300;
-}
 
 .left-chevron {
   justify-content: center;

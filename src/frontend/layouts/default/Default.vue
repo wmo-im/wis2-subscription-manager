@@ -2,12 +2,11 @@
   <v-app>
     <default-bar />
     <default-view />
-    <default-footer />
   </v-app>
 </template>
 
 <script setup>
-  import DefaultBar from './AppBar.vue'
-  import DefaultView from './View.vue'
-  import DefaultFooter from './Footer.vue'
+  import { VApp } from 'vuetify/lib/components/index.mjs';
+  import DefaultBar from '@/layouts/default/AppBar.vue'
+  import DefaultView from '@/layouts/default/View.vue'
 </script>

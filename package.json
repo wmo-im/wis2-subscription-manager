@@ -27,6 +27,7 @@
     "@electron-forge/plugin-vite": "^6.4.2",
     "@vitejs/plugin-vue": "^4.4.0",
     "electron": "27.0.2",
+    "sass": "^1.69.5",
     "vite-plugin-vuetify": "^1.0.2",
     "vuetify": "^3.3.23"
   },
