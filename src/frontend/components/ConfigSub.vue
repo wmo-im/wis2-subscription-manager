@@ -1,47 +1,82 @@
 <template>
-    <v-row>
-        <v-col cols=12>
+    <v-row class="justify-center">
+        <v-col cols=12 class="max-form-width">
             <v-card>
                 <v-card-title class="big-title">WIS2 Subscription Configuration</v-card-title>
 
                 <v-form>
-                    <v-card-item>
+                    <v-card-item class="py-0">
                         <v-card-title>Global broker</v-card-title>
-                        <v-select label="Please choose a broker" :items="brokerList"
-                            variant="solo-filled" v-model="selectedBroker"></v-select>
+                        <v-select label="Please choose a broker" :items="brokerList" variant="solo-filled"
+                            v-model="selectedBroker"></v-select>
                     </v-card-item>
 
-                    <v-card-item>
+                    <v-card-item class="py-0">
                         <v-card-title>Topics</v-card-title>
+                        <v-row>
+                            <v-col cols="10">
+                                <v-text-field label="Please enter one or more topics" variant="solo-filled"
+                                    v-model="topicEntry" @keyup.enter="addTopic">
+                                </v-text-field>
+                            </v-col>
+                            <v-col cols="2">
+                                <v-btn color="#003DA5" variant="flat" icon="mdi-plus" size="large"
+                                    @click="addTopic"></v-btn>
+                            </v-col>
+                        </v-row>
 
+                        <v-chip-group>
+                            <v-chip v-for="(topic, index) in topicsList" closable :key="index"
+                                @click:close="removeTopic(index)">
+                                {{ topic }}
+                            </v-chip>
+                        </v-chip-group>
                     </v-card-item>
+
+                    <v-card-item class="py-4">
+                        <v-row align="center" class="ma-1">
+                            <v-card-title>Download data</v-card-title>
+                            <v-checkbox-btn color="#003DA5" v-model="downloadBoolean"></v-checkbox-btn>
+                        </v-row>
+                        <v-row v-if="downloadBoolean === true" align="center">
+                            <v-col cols="auto">
+                                <v-btn prepend-icon="mdi-folder-download"
+                                color="#003DA5" variant="flat" @click="selectDirectory">Select a
+                                    folder</v-btn>
+                            </v-col>
+                            <v-col cols="auto">
+                                <v-chip label v-if="selectedDirectory">{{ truncatedDirectory }}</v-chip>
+                            </v-col>
+                        </v-row>
+                    </v-card-item>
+
 
                     <v-card-item>
-                        <v-card-title>Download location</v-card-title>
+                        <div class="d-flex justify-center">
+                            <v-btn color="#003DA5" variant="flat" class="ma-1" block>Subscribe</v-btn>
+                        </div>
                     </v-card-item>
-
-                    <v-row justify="end">
-                        <v-btn>Subscribe</v-btn>
-                    </v-row>
 
                 </v-form>
             </v-card>
         </v-col>
     </v-row>
 
-    <v-row>
-        <v-col cols="12">
+    <v-row class="justify-center">
+        <v-col cols="12" class="max-form-width">
             <v-card>
                 <v-card-title class="big-title">
                     Notifications
                 </v-card-title>
-                <v-container>
+                <v-card-item>
                     <v-card variant="tonal">
-                        <p>Example console text</p>
-                        <p>Example console text</p>
-                        <p>Example console text</p>
+                        <v-container>
+                            <p>Example notification</p>
+                            <p>Example notification</p>
+                            <p>Example notification</p>
+                        </v-container>
                     </v-card>
-                </v-container>
+                </v-card-item>
             </v-card>
         </v-col>
     </v-row>
@@ -49,7 +84,7 @@
 
 <script>
 import { defineComponent, ref, computed } from 'vue';
-import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect } from 'vuetify/lib/components/index.mjs';
+import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VChipGroup, VChip, VCheckboxBtn } from 'vuetify/lib/components/index.mjs';
 
 export default defineComponent({
     name: 'ConfigSub',
@@ -61,27 +96,77 @@ export default defineComponent({
         VForm,
         VBtn,
         VListGroup,
-        VSelect
+        VSelect,
+        VTextField,
+        VChipGroup,
+        VChip,
+        VCheckboxBtn
     },
     setup() {
-        
+
         // Reactive variables
         const brokerList = ref(['France Global Broker', 'China Global Broker']);
         const selectedBroker = ref("");
-        const chosenTopics = ref([]);
-        const downloadLocation = ref("");
+        const topicEntry = ref("")
+        const topicsList = ref([]);
+        const selectedDirectory = ref("");
+        const downloadBoolean = ref(false);
+
+        // Computed
+
+        // Truncates the selected folder directory if it is too long
+        const truncatedDirectory = computed(() => {
+            const maxPathLength = 30;
+            if (selectedDirectory.value.length > maxPathLength) {
+                return '...' + selectedDirectory.value.slice(-maxPathLength);
+            }
+            // If the selected directory is less than 30 characters, leave as is
+            return selectedDirectory.value;
+        });
 
         // Methods
-        const logInputs = () => {
-            console.log("Selected broker", selectedBroker.value)
-        };
+
+        // If the user types a topic and presses +, it will add it to the
+        // topic list and reset the text field
+        const addTopic = () => {
+            if (topicEntry.value.trim() !== '') {
+                topicsList.value.push(topicEntry.value);
+                topicEntry.value = '';
+            }
+        }
+
+        // If the user clicks the 'close' button on a pre-entered topic,
+        // the topic will be removed from the list
+        const removeTopic = (index) => {
+            topicsList.value.splice(index, 1);
+        }
+
+        // Communicates with the electron API to use the
+        // openDialog method, allowing the user to pick a folder
+        const selectDirectory = async () => {
+            try {
+                // Use the method exposed in preload.js
+                const path = await window.electronAPI.openDialog();
+                if (path) {
+                    selectedDirectory.value = path;
+                }
+            }
+            catch (error) {
+                console.error('Error selecting directory:', error);
+            }
+        }
 
         return {
             brokerList,
             selectedBroker,
-            chosenTopics,
-            downloadLocation,
-            logInputs
+            topicEntry,
+            topicsList,
+            selectedDirectory,
+            truncatedDirectory,
+            downloadBoolean,
+            addTopic,
+            removeTopic,
+            selectDirectory
         }
 
     }
