@@ -16,12 +16,12 @@
                         <v-row>
                             <v-col cols="10">
                                 <v-text-field label="Please enter one or more topics" variant="solo-filled"
-                                    v-model="topicEntry" @keyup.enter="addTopic">
+                                    v-model="topicEntry" @keyup.enter="addTopic" :disabled="!isBrokerSelected">
                                 </v-text-field>
                             </v-col>
                             <v-col cols="2">
                                 <v-btn color="#003DA5" variant="flat" icon="mdi-plus" size="large"
-                                    @click="addTopic"></v-btn>
+                                    @click="addTopic" :disabled="!isBrokerSelected"></v-btn>
                             </v-col>
                         </v-row>
 
@@ -36,7 +36,7 @@
                     <v-card-item class="py-4">
                         <v-row align="center" class="ma-1">
                             <v-card-title>Download data</v-card-title>
-                            <v-checkbox-btn color="#003DA5" v-model="downloadBoolean"></v-checkbox-btn>
+                            <v-checkbox-btn color="#003DA5" v-model="downloadBoolean" :disabled="!isBrokerSelected"></v-checkbox-btn>
                         </v-row>
                         <v-row v-if="downloadBoolean === true" align="center">
                             <v-col cols="auto">
@@ -53,7 +53,7 @@
 
                     <v-card-item>
                         <div class="d-flex justify-center">
-                            <v-btn color="#003DA5" variant="flat" class="ma-1" block>Subscribe</v-btn>
+                            <v-btn color="#003DA5" variant="flat" class="ma-1" block :disabled="!canSubscribe">Subscribe</v-btn>
                         </div>
                     </v-card-item>
 
@@ -114,6 +114,17 @@ export default defineComponent({
 
         // Computed
 
+        // Checks if the global broker has been selected
+        const isBrokerSelected = computed(() => {
+            return selectedBroker.value !== ""
+        });
+
+        // Checks if the global broker has been selected and at
+        // least one topic has been added
+        const canSubscribe = computed(() => {
+            return isBrokerSelected.value && topicsList.value.length > 0
+        });
+
         // Truncates the selected folder directory if it is too long
         const truncatedDirectory = computed(() => {
             const maxPathLength = 30;
@@ -133,13 +144,13 @@ export default defineComponent({
                 topicsList.value.push(topicEntry.value);
                 topicEntry.value = '';
             }
-        }
+        };
 
         // If the user clicks the 'close' button on a pre-entered topic,
         // the topic will be removed from the list
         const removeTopic = (index) => {
             topicsList.value.splice(index, 1);
-        }
+        };
 
         // Communicates with the electron API to use the
         // openDialog method, allowing the user to pick a folder
@@ -154,7 +165,7 @@ export default defineComponent({
             catch (error) {
                 console.error('Error selecting directory:', error);
             }
-        }
+        };
 
         return {
             brokerList,
@@ -162,6 +173,8 @@ export default defineComponent({
             topicEntry,
             topicsList,
             selectedDirectory,
+            isBrokerSelected,
+            canSubscribe,
             truncatedDirectory,
             downloadBoolean,
             addTopic,
