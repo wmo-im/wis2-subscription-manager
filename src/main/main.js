@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+const { PythonShell } = require('python-shell');
 const path = require("path");
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -6,11 +7,26 @@ if (require("electron-squirrel-startup")) {
   app.quit();
 }
 
+// Start the backend Flask app
+// let flaskProcess = null;
+
+// const startFlaskApp = () => {
+//   const options = {
+     
+//   }
+// }
+
 const createWindow = () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 800,
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+      color: '#14418F',
+      symbolColor: '#FFFFFF',
+      height: 60
+    },
     webPreferences: {
       nodeIntegration: false, // Best practice for security reasons
       contextIsolation: true, // Isolates renderer process context from preload script
@@ -28,7 +44,7 @@ const createWindow = () => {
   }
 
   // Hide scroll bar
-  mainWindow.webContents.insertCSS("::-webkit-scrollbar { display: none; }");
+  mainWindow.webContents.insertCSS("body::-webkit-scrollbar { display: none !important; }");
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools();

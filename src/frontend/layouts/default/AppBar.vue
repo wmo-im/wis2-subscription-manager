@@ -1,10 +1,11 @@
 <template>
-  <v-app-bar image="/assets/banner.png">
-    <img src="/assets/logo-large.png" alt="Logo" class="wmo-logo" />
+  <v-app-bar class="draggable" color="#14418F">
+    
 
-    <template v-slot:append>
-      <v-btn color="white" append-icon="mdi-account">Log In</v-btn>
-      <v-btn color="white" append-icon="mdi-cloud-search">Explore</v-btn>
+    <template v-slot:prepend>
+      <img src="/assets/logo-white.png" alt="Logo" class="wmo-logo" />
+      <v-btn class="login-button" color="white" prepend-icon="mdi-account">Log In</v-btn>
+      <v-btn class="explore-button" color="white" prepend-icon="mdi-cloud-search">Explore</v-btn>
     </template>
 
   </v-app-bar>
@@ -17,22 +18,20 @@ import { VAppBar, VBtn } from 'vuetify/lib/components/index.mjs';
 </script>
 
 <style scoped>
-.bar-sizing {
-  padding: 5px;
+.wmo-logo {
+  height: 50px;
 }
 
-.wmo-logo {
-  height: 60px;
+.login-button {
+  -webkit-app-region: no-drag;
   margin-left: 10px;
 }
 
-
-.left-chevron {
-  justify-content: center;
+.explore-button {
+  -webkit-app-region: no-drag;
 }
 
-.right-chevron {
-  justify-content: flex-end;
-  padding-right: 5px;
+.draggable {
+  -webkit-app-region: drag;
 }
 </style>
