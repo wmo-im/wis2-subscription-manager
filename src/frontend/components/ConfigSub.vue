@@ -20,8 +20,8 @@
                                 </v-text-field>
                             </v-col>
                             <v-col cols="2">
-                                <v-btn color="#003DA5" variant="flat" icon="mdi-plus" size="large"
-                                    @click="addTopic" :disabled="!isBrokerSelected"></v-btn>
+                                <v-btn color="#003DA5" variant="flat" icon="mdi-plus" size="large" @click="addTopic"
+                                    :disabled="!isBrokerSelected"></v-btn>
                             </v-col>
                         </v-row>
 
@@ -36,12 +36,13 @@
                     <v-card-item class="py-4">
                         <v-row align="center" class="ma-1">
                             <v-card-title>Download data</v-card-title>
-                            <v-checkbox-btn color="#003DA5" v-model="downloadBoolean" :disabled="!isBrokerSelected"></v-checkbox-btn>
+                            <v-checkbox-btn color="#003DA5" v-model="downloadBoolean"
+                                :disabled="!isBrokerSelected"></v-checkbox-btn>
                         </v-row>
                         <v-row v-if="downloadBoolean === true" align="center">
                             <v-col cols="auto">
-                                <v-btn prepend-icon="mdi-folder-download"
-                                color="#003DA5" variant="flat" @click="selectDirectory">Select a
+                                <v-btn prepend-icon="mdi-folder-download" color="#003DA5" variant="flat"
+                                    @click="selectDirectory">Select a
                                     folder</v-btn>
                             </v-col>
                             <v-col cols="auto">
@@ -53,13 +54,10 @@
 
                     <v-card-item>
                         <div class="d-flex justify-center">
-                            <v-btn v-if="!susbcribePressed" 
-                            :disabled="!canSubscribe"
-                            @click="toggleSubscription"
-                            color="#003DA5" variant="flat" class="ma-1" block>Subscribe</v-btn>
-                            <v-btn v-if="susbcribePressed"
-                            @click="toggleSubscription"
-                            color="#E09D00" variant="flat" class="ma-1" block>Cancel Subscription</v-btn>
+                            <v-btn v-if="!susbcribePressed" :disabled="!canSubscribe" @click="handleSubscription"
+                                color="#003DA5" variant="flat" class="ma-1" block>Subscribe</v-btn>
+                            <v-btn v-if="susbcribePressed" @click="handleSubscription" color="#E09D00" variant="flat"
+                                class="ma-1" block>Cancel Subscription</v-btn>
                         </div>
                     </v-card-item>
 
@@ -174,10 +172,43 @@ export default defineComponent({
             }
         };
 
-        // Toggles the state of the subscription: subscribing or unsubscribing
-        const toggleSubscription = () => {
+        // Handles the subscription process depending on whether the user
+        // intends to start a subscription or cancel a subscription
+        const handleSubscription = async () => {
+            // When subscribe/cancel button pressed, change boolean state
             susbcribePressed.value = !susbcribePressed.value;
-        }
+
+            // If the 'Subscribe' button was pressed, then send data to backend
+            if (susbcribePressed.value === true) {
+                try {
+                    // Construct data to be sent
+                    const data = {
+                        broker: selectedBroker.value,
+                        topics: topicsList.value,
+                        downloadDirectory: selectedDirectory.value
+                    };
+
+                    // Send to backend
+                    await window.electronAPI.sendDataToBackend(data);
+                    // HANDLE RESPONSE FROM BACKEND
+                }
+                catch (error) {
+                    console.error('Error subscribing: ', error);
+                }
+            }
+
+            // If the 'Cancel Subscription' button was pressed, kill the
+            // backend process to stop subscriptions and downloads
+            if (susbcribePressed.value === false) {
+                try {
+                    window.electronAPI.sendCancelSubscription();
+                }
+                catch (error) {
+                    console.error('Error cancelling subscription: ', error);
+                }
+            }
+        };
+
 
         return {
             brokerList,
@@ -193,7 +224,7 @@ export default defineComponent({
             removeTopic,
             selectDirectory,
             susbcribePressed,
-            toggleSubscription
+            handleSubscription
         }
     }
 })
