@@ -53,7 +53,13 @@
 
                     <v-card-item>
                         <div class="d-flex justify-center">
-                            <v-btn color="#003DA5" variant="flat" class="ma-1" block :disabled="!canSubscribe">Subscribe</v-btn>
+                            <v-btn v-if="!susbcribePressed" 
+                            :disabled="!canSubscribe"
+                            @click="toggleSubscription"
+                            color="#003DA5" variant="flat" class="ma-1" block>Subscribe</v-btn>
+                            <v-btn v-if="susbcribePressed"
+                            @click="toggleSubscription"
+                            color="#E09D00" variant="flat" class="ma-1" block>Cancel Subscription</v-btn>
                         </div>
                     </v-card-item>
 
@@ -111,6 +117,7 @@ export default defineComponent({
         const topicsList = ref([]);
         const selectedDirectory = ref("");
         const downloadBoolean = ref(false);
+        const susbcribePressed = ref(false);
 
         // Computed
 
@@ -167,6 +174,11 @@ export default defineComponent({
             }
         };
 
+        // Toggles the state of the subscription: subscribing or unsubscribing
+        const toggleSubscription = () => {
+            susbcribePressed.value = !susbcribePressed.value;
+        }
+
         return {
             brokerList,
             selectedBroker,
@@ -179,9 +191,10 @@ export default defineComponent({
             downloadBoolean,
             addTopic,
             removeTopic,
-            selectDirectory
+            selectDirectory,
+            susbcribePressed,
+            toggleSubscription
         }
-
     }
 })
 
