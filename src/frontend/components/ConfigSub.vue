@@ -54,9 +54,9 @@
 
                     <v-card-item>
                         <div class="d-flex justify-center">
-                            <v-btn v-if="!susbcribePressed" :disabled="!canSubscribe" @click="toggleSubscription"
+                            <v-btn v-if="!subscribePressed" :disabled="!canSubscribe" @click="toggleSubscription"
                                 color="#003DA5" variant="flat" class="ma-1" block>Subscribe</v-btn>
-                            <v-btn v-if="susbcribePressed" @click="toggleSubscription" color="#E09D00" variant="flat"
+                            <v-btn v-if="subscribePressed" @click="toggleSubscription" color="#E09D00" variant="flat"
                                 class="ma-1" block>Cancel Subscription</v-btn>
                         </div>
                     </v-card-item>
@@ -113,7 +113,7 @@ export default defineComponent({
         const topicsList = ref([]);
         const selectedDirectory = ref('');
         const downloadBoolean = ref(false);
-        const susbcribePressed = ref(false);
+        const subscribePressed = ref(false);
         const backendStatus = ref('');
 
         // Static variables
@@ -186,20 +186,27 @@ export default defineComponent({
         // intends to start a subscription or cancel a subscription
         const toggleSubscription = async () => {
             // When subscribe/cancel button pressed, change boolean state
-            susbcribePressed.value = !susbcribePressed.value;
+            subscribePressed.value = !subscribePressed.value;
 
             try {
                 // Construct data to be sent
                 const data = {
                     broker: brokerURL.value,
-                    topics: topicsList.value,
+                    topics: Array.from(topicsList.value), // Convert Proxy to regular array
                     downloadDirectory: selectedDirectory.value,
                     shouldSubscribe: subscribePressed.value
                 };
 
+                console.log('Data sent to backend: ', data)
+
                 // Start or kill backend process
-                const backendResponse = await window.electronAPI.handleSubscription(data);
-                backendStatus.value = backendResponse.status;
+                window.electronAPI.handleSubscription(data);
+                
+                // Listen to response from backend
+                window.electronAPI.onSubscriptionResponse((event, response) => {
+                    console.log('Backend response:', response);
+                    backendStatus.value = response.status
+                });
             }
             catch (error) {
                 console.error('Error subscribing: ', error);
@@ -222,7 +229,8 @@ export default defineComponent({
             addTopic,
             removeTopic,
             selectDirectory,
-            susbcribePressed,
+            subscribePressed,
+            backendStatus,
             toggleSubscription
         }
     }
