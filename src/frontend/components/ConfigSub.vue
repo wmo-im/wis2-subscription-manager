@@ -54,9 +54,9 @@
 
                     <v-card-item>
                         <div class="d-flex justify-center">
-                            <v-btn v-if="!susbcribePressed" :disabled="!canSubscribe" @click="handleSubscription"
+                            <v-btn v-if="!susbcribePressed" :disabled="!canSubscribe" @click="toggleSubscription"
                                 color="#003DA5" variant="flat" class="ma-1" block>Subscribe</v-btn>
-                            <v-btn v-if="susbcribePressed" @click="handleSubscription" color="#E09D00" variant="flat"
+                            <v-btn v-if="susbcribePressed" @click="toggleSubscription" color="#E09D00" variant="flat"
                                 class="ma-1" block>Cancel Subscription</v-btn>
                         </div>
                     </v-card-item>
@@ -75,9 +75,7 @@
                 <v-card-item>
                     <v-card variant="tonal">
                         <v-container>
-                            <p>Example notification</p>
-                            <p>Example notification</p>
-                            <p>Example notification</p>
+                            {{ backendStatus }}
                         </v-container>
                     </v-card>
                 </v-card-item>
@@ -110,12 +108,13 @@ export default defineComponent({
 
         // Reactive variables
         const brokerList = ref(['France Global Broker', 'China Global Broker']);
-        const selectedBroker = ref("");
-        const topicEntry = ref("")
+        const selectedBroker = ref('');
+        const topicEntry = ref('')
         const topicsList = ref([]);
-        const selectedDirectory = ref("");
+        const selectedDirectory = ref('');
         const downloadBoolean = ref(false);
         const susbcribePressed = ref(false);
+        const backendStatus = ref('');
 
         // Static variables
         const brokerURLMapping = {
@@ -183,40 +182,28 @@ export default defineComponent({
             }
         };
 
-        // Handles the subscription process depending on whether the user
+        // Toggles the subscription process depending on whether the user
         // intends to start a subscription or cancel a subscription
-        const handleSubscription = async () => {
+        const toggleSubscription = async () => {
             // When subscribe/cancel button pressed, change boolean state
             susbcribePressed.value = !susbcribePressed.value;
 
-            // If the 'Subscribe' button was pressed, then send data to backend
-            if (susbcribePressed.value === true) {
-                try {
-                    // Construct data to be sent
-                    const data = {
-                        broker: brokerURL.value,
-                        topics: topicsList.value,
-                        downloadDirectory: selectedDirectory.value
-                    };
+            try {
+                // Construct data to be sent
+                const data = {
+                    broker: brokerURL.value,
+                    topics: topicsList.value,
+                    downloadDirectory: selectedDirectory.value,
+                    shouldSubscribe: subscribePressed.value
+                };
 
-                    // Send to backend
-                    await window.electronAPI.sendDataToBackend(data);
-                    // HANDLE RESPONSE FROM BACKEND
-                }
-                catch (error) {
-                    console.error('Error subscribing: ', error);
-                }
+                // Start or kill backend process
+                const backendResponse = await window.electronAPI.handleSubscription(data);
+                backendStatus.value = backendResponse.status;
             }
-
-            // If the 'Cancel Subscription' button was pressed, kill the
-            // backend process to stop subscriptions and downloads
-            if (susbcribePressed.value === false) {
-                try {
-                    window.electronAPI.sendCancelSubscription();
-                }
-                catch (error) {
-                    console.error('Error cancelling subscription: ', error);
-                }
+            catch (error) {
+                console.error('Error subscribing: ', error);
+                backendStatus.value = 'Error occurred with backend subscriber';
             }
         };
 
@@ -236,7 +223,7 @@ export default defineComponent({
             removeTopic,
             selectDirectory,
             susbcribePressed,
-            handleSubscription
+            toggleSubscription
         }
     }
 })

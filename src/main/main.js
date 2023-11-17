@@ -1,20 +1,11 @@
 const { app, BrowserWindow, Menu, Tray, ipcMain, dialog } = require("electron");
-const { PythonShell } = require('python-shell');
 const path = require("path");
+const fs = require('fs')
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
   app.quit();
 }
-
-// Start the backend Flask app
-// let flaskProcess = null;
-
-// const startFlaskApp = () => {
-//   const options = {
-     
-//   }
-// }
 
 const createWindow = () => {
   // Create the browser window.
@@ -26,7 +17,7 @@ const createWindow = () => {
     titleBarOverlay: {
       color: '#14418F',
       symbolColor: '#FFFFFF',
-      height: 60
+      height: 64
     },
     webPreferences: {
       nodeIntegration: false, // Best practice for security reasons
@@ -105,7 +96,10 @@ app.on("activate", () => {
   }
 });
 
-// IPC listener
+// Inter-process communication setup (IPC)
+
+// Handler for the choose directory pop up
+// We name this 'open-directory-dialog' to be referenced elsewhere
 ipcMain.handle("open-directory-dialog", async (event) => {
   // Opens the dialog to select a directory
   const result = await dialog.showOpenDialog({ properties: ['openDirectory']});
@@ -118,4 +112,53 @@ ipcMain.handle("open-directory-dialog", async (event) => {
     return result.filePaths[0];
   }
 
+});
+
+// Handler for the subscription process
+
+let backendProcess = null;
+
+// We name this 'handle-subscription' to be referenced elsewhere
+ipcMain.handle("handle-subscription", async (event, data) => {
+  const backendPath = path.join(__dirname, '../../backend/app.exe');
+  const subscriptionsPath = path.join(__dirname, '../../backend/subscriptions.json');
+
+  if (data.shouldSubscribe) {
+    // Write topics to subscriptions.json before starting backend
+    fs.writeFileSync(subscriptionsPath, JSON.stringify({ topics: data.topics }), 'utf8');
+
+    // Start backend executable with arguments
+    if (data.downloadDirectory === "") {
+        // If no download directory given, do not pass as argument
+        // backendProcess = spawn(backendPath, ['--broker', data.broker], 
+        // { windowsHide: true });
+        backendProcess = spawn(backendPath, ['--broker', data.broker])
+    }
+    else {
+        // If download directory given, pass as argument
+        backendProcess = spawn(backendPath, ['--broker', data.broker, '--download-dir', data.downloadDirectory],
+        { windowsHide: true });
+    }
+    
+
+    backendProcess.stdout.on('data', (data) => {
+      // Send stdout data to frontend (do later)
+    });
+
+    backendProcess.stderr.on('data', (data) => {
+      // Send stderr data to frontend (do later)
+    });
+
+    backendProcess.on('close', (code) => {
+      // Handle process exit
+    });
+
+    return { status: 'Subscription Started' };
+  } else {
+    if (backendProcess) {
+      backendProcess.kill(); // Terminate the backend process
+      backendProcess = null;
+      return { status: 'Subscription Cancelled' };
+    }
+  }
 });

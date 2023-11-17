@@ -11,8 +11,11 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 });
 
+// Setup context bridge for secure and isolated IPC communication
 const { contextBridge, ipcRenderer } = require('electron');
 
+// Expose to renderer the open-directory-dialog and handle-subscription methods
 contextBridge.exposeInMainWorld('electronAPI', {
   openDialog: () => ipcRenderer.invoke('open-directory-dialog'),
+  handleSubscription: (data) => ipcRenderer.invoke('handle-subscription', data)
 });
