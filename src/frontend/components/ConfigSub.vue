@@ -117,7 +117,18 @@ export default defineComponent({
         const downloadBoolean = ref(false);
         const susbcribePressed = ref(false);
 
+        // Static variables
+        const brokerURLMapping = {
+            'France Global Broker': 'globalbroker.meteo.fr',
+            'China Global Broker': 'gb.wis.cma.cn'
+        };
+
         // Computed
+
+        // Maps selected broker from the drop down to the actual URL
+        const brokerURL = computed(() => {
+            return brokerURLMapping[selectedBroker.value] || ""
+        })
 
         // Checks if the global broker has been selected
         const isBrokerSelected = computed(() => {
@@ -183,7 +194,7 @@ export default defineComponent({
                 try {
                     // Construct data to be sent
                     const data = {
-                        broker: selectedBroker.value,
+                        broker: brokerURL.value,
                         topics: topicsList.value,
                         downloadDirectory: selectedDirectory.value
                     };
@@ -213,6 +224,7 @@ export default defineComponent({
         return {
             brokerList,
             selectedBroker,
+            brokerURL,
             topicEntry,
             topicsList,
             selectedDirectory,
