@@ -15,10 +15,13 @@ window.addEventListener("DOMContentLoaded", () => {
 const { contextBridge, ipcRenderer } = require('electron');
 
 // Expose to renderer the open-directory-dialog and handle-subscription 
-// methods, as well as a response method for sending subscription messages 
-// back up to the Vue frontend
+// methods, as well as response methods for sending subscription 
+// messages back up to the Vue frontend
 contextBridge.exposeInMainWorld('electronAPI', {
   openDialog: () => ipcRenderer.invoke('open-directory-dialog'),
   handleSubscription: (data) => ipcRenderer.send('handle-subscription', data),
-  onSubscriptionResponse: (callback) => ipcRenderer.on('subscription-response', callback)
+  onSubscriptionResponse: (callback) => ipcRenderer.on('subscription-response', callback),
+  onBackendStdout: (callback) => ipcRenderer.on('backend-stdout', callback),
+  onBackendStderr: (callback) => ipcRenderer.on('backend-stderr', callback),
+  removeListener: (channel, callback) => ipcRenderer.removeListener(channel, callback)
 });

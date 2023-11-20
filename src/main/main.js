@@ -1,9 +1,8 @@
 const { app, BrowserWindow, Menu, Tray, ipcMain, dialog } = require("electron");
 const path = require("path");
 const fs = require('fs');
-const spawn = require('child_process');
 
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
+// Handle creating/removing shortcuts on Winrsdows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
   app.quit();
 }
@@ -117,12 +116,21 @@ ipcMain.handle("open-directory-dialog", async (event) => {
 
 // Handler for the subscription process
 
+const spawn = require('child_process').spawn;
 let backendProcess = null;
 
 // We name this 'handle-subscription' to be referenced elsewhere
 ipcMain.on("handle-subscription", (event, data) => {
   const backendPath = path.join(__dirname, '../../backend/app.exe');
   const subscriptionsPath = path.join(__dirname, '../../backend/subscriptions.json');
+
+  // Make sure the backend process is not already running
+  // so there are duplicate processes
+  if (backendProcess) {
+    backendProcess.removeAllListeners();
+    backendProcess.kill();
+    backendProcess = null;
+  }
 
   if (data.shouldSubscribe) {
     try {
@@ -136,30 +144,35 @@ ipcMain.on("handle-subscription", (event, data) => {
 
       // Write topics to subscriptions.json before starting backend
       fs.writeFileSync(subscriptionsPath, JSON.stringify(subscriptions), 'utf8');
-  
+
       // Start backend executable with arguments
       if (data.downloadDirectory === "") {
-          // If no download directory given, do not pass as argument
-          backendProcess = spawn(backendPath, ['--broker', data.broker]);
+        // If no download directory given, do not pass as argument
+        backendProcess = spawn(backendPath, ['--broker', data.broker],
+        { windowsHide: true });
       }
       else {
-          // If download directory given, pass as argument
-          backendProcess = spawn(backendPath, ['--broker', data.broker, '--download-dir', data.downloadDirectory],
-          { windowsHide: true });
+        // If download directory given, pass as argument
+        backendProcess = spawn(backendPath, ['--broker', data.broker, '--download_dir', data.downloadDirectory],
+        { windowsHide: true });
       }
       
+      // Send stdout and stderr data to frontend
+      backendProcess.stdout.on('data', (data) => {
+        event.sender.send('backend-stdout', data.toString());
+      });
   
-      // backendProcess.stdout.on('data', (data) => {
-      //   // Send stdout data to frontend (do later)
-      // });
+      backendProcess.stderr.on('data', (data) => {
+        event.sender.send('backend-stderr', data.toString());
+      });
   
-      // backendProcess.stderr.on('data', (data) => {
-      //   // Send stderr data to frontend (do later)
-      // });
-  
-      // backendProcess.on('close', (code) => {
-      //   // Handle process exit
-      // });
+      // Handle process exit
+      backendProcess.on('close', (code) => {
+        console.log(`Backend process exited with code ${code}`);
+        event.sender.send('subscription-response', { status: `Subscription process ended with code ${code}` });
+        backendProcess.removeAllListeners();
+        backendProcess = null;
+      });
   
       // Send a message to the frontend
       event.sender.send('subscription-response', { status: 'Subscription started' });
@@ -171,12 +184,7 @@ ipcMain.on("handle-subscription", (event, data) => {
     }
   }
   else {
-    if (backendProcess) {
-      // Terminate the backend process when the user presses 'Cancel'
-      backendProcess.kill();
-      backendProcess = null;
-      // Send a message to the frontend
-      event.sender.send('subscription-response', { status: 'Subscription cancelled' });
-    }
+    // Send a message to the frontend
+    event.sender.send('subscription-response', { status: 'Subscription cancelled' });
   }
 });

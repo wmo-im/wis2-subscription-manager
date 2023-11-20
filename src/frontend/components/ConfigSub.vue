@@ -74,8 +74,8 @@
                 </v-card-title>
                 <v-card-item>
                     <v-card variant="tonal">
-                        <v-container>
-                            {{ backendStatus }}
+                        <v-container class="backend-output">
+                            {{ backendOutput }}
                         </v-container>
                     </v-card>
                 </v-card-item>
@@ -85,7 +85,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed } from 'vue';
+import { defineComponent, ref, computed, onMounted, onUnmounted } from 'vue';
 import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VChipGroup, VChip, VCheckboxBtn } from 'vuetify/lib/components/index.mjs';
 
 export default defineComponent({
@@ -114,7 +114,7 @@ export default defineComponent({
         const selectedDirectory = ref('');
         const downloadBoolean = ref(false);
         const subscribePressed = ref(false);
-        const backendStatus = ref('');
+        const backendOutput = ref('');
 
         // Static variables
         const brokerURLMapping = {
@@ -201,19 +201,44 @@ export default defineComponent({
 
                 // Start or kill backend process
                 window.electronAPI.handleSubscription(data);
-                
-                // Listen to response from backend
-                window.electronAPI.onSubscriptionResponse((event, response) => {
-                    console.log('Backend response:', response);
-                    backendStatus.value = response.status
-                });
             }
             catch (error) {
                 console.error('Error subscribing: ', error);
-                backendStatus.value = 'Error occurred with backend subscriber';
+                backendOutput.value = 'Error occurred with backend subscriber';
             }
         };
 
+        // Start listeners of standard out and error from the 
+        // backend process
+
+        const handleBackendStatus = (event, response) => {
+            console.log('Backend response:', response);
+            backendOutput.value += response.status + "\n";
+        };
+
+        const handleStdout = (event, message) => {
+            backendOutput.value += message + "\n";
+        };
+
+        const handleStderr = (event, message) => {
+            backendOutput.value += "Error: " + message + "\n";
+        };
+
+        onMounted(() => {
+            window.electronAPI.onSubscriptionResponse(handleBackendStatus);
+            window.electronAPI.onBackendStdout(handleStdout);
+            window.electronAPI.onBackendStderr(handleStderr);
+        })
+
+        // Clean up listeners
+        onUnmounted(() => {
+            window.electronAPI.removeListener('subscription-response',
+                handleBackendStatus);
+            window.electronAPI.removeListener('backend-stdout',
+                handleStdout);
+            window.electronAPI.removeListener('backend-stderr',
+                handleStderr);
+        });
 
         return {
             brokerList,
@@ -230,7 +255,7 @@ export default defineComponent({
             removeTopic,
             selectDirectory,
             subscribePressed,
-            backendStatus,
+            backendOutput,
             toggleSubscription
         }
     }
@@ -238,4 +263,10 @@ export default defineComponent({
 
 </script>
 
-<style scoped></style>
+<style scoped>
+.backend-output {
+  max-height: 200px; /* Adjust as needed */
+  overflow-y: auto;
+  white-space: pre-wrap; /* To respect line breaks and spaces */
+}
+</style>
