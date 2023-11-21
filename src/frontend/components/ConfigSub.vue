@@ -76,6 +76,8 @@
                     <v-card variant="tonal">
                         <v-container class="backend-output">
                             {{ backendOutput }}
+                            <!-- Empty div to scroll to the bottom -->
+                            <div ref="latestResponse"></div>
                         </v-container>
                     </v-card>
                 </v-card-item>
@@ -85,7 +87,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, onMounted, onUnmounted } from 'vue';
+import { defineComponent, ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VChipGroup, VChip, VCheckboxBtn } from 'vuetify/lib/components/index.mjs';
 
 export default defineComponent({
@@ -115,6 +117,7 @@ export default defineComponent({
         const downloadBoolean = ref(false);
         const subscribePressed = ref(false);
         const backendOutput = ref('');
+        const latestResponse = ref(null);
 
         // Static variables
         const brokerURLMapping = {
@@ -213,22 +216,34 @@ export default defineComponent({
 
         const handleBackendStatus = (event, response) => {
             console.log('Backend response:', response);
-            backendOutput.value += response.status + "\n";
+            backendOutput.value += "\n" + response.status + "\n";
         };
 
         const handleStdout = (event, message) => {
-            backendOutput.value += message + "\n";
+            backendOutput.value += "\n" + message + "\n";
         };
 
         const handleStderr = (event, message) => {
-            backendOutput.value += message + "\n";
+            backendOutput.value += "\n" + message + "\n";
         };
 
         onMounted(() => {
+            // Get responses from backend to be displayed in frontend
             window.electronAPI.onSubscriptionResponse(handleBackendStatus);
             window.electronAPI.onBackendStdout(handleStdout);
             window.electronAPI.onBackendStderr(handleStderr);
-        })
+        });
+
+        // Watch for changes in backendOutput and scroll to bottom
+        watch(backendOutput, () => {
+            nextTick(() => {
+                if (latestResponse.value) {
+                    latestResponse.value.scrollIntoView();
+                }
+                // Trim excess newline from backendOutput
+                backendOutput.value = backendOutput.value.trim();
+            });
+        });
 
         // Clean up listeners
         onUnmounted(() => {
@@ -256,6 +271,7 @@ export default defineComponent({
             selectDirectory,
             subscribePressed,
             backendOutput,
+            latestResponse,
             toggleSubscription
         }
     }
