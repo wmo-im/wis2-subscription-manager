@@ -184,7 +184,7 @@ export default defineComponent({
 
         // Toggles the subscription process depending on whether the user
         // intends to start a subscription or cancel a subscription
-        const toggleSubscription = async () => {
+        const toggleSubscription = () => {
             // When subscribe/cancel button pressed, change boolean state
             subscribePressed.value = !subscribePressed.value;
 
@@ -221,7 +221,7 @@ export default defineComponent({
         };
 
         const handleStderr = (event, message) => {
-            backendOutput.value += "Error: " + message + "\n";
+            backendOutput.value += message + "\n";
         };
 
         onMounted(() => {

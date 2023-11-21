@@ -1,6 +1,9 @@
 const { app, BrowserWindow, Menu, Tray, ipcMain, dialog } = require("electron");
 const path = require("path");
 const fs = require('fs');
+const spawn = require('child_process').spawn;
+var kill  = require('tree-kill');
+let backendProcess = null;
 
 // Handle creating/removing shortcuts on Winrsdows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
@@ -67,6 +70,11 @@ const createWindow = () => {
     } },
     { label: 'Quit', click:  function(){
         app.isQuiting = true;
+        // Kill the backend process if it's already running
+        if (backendProcess) {
+          kill(backendProcess.pid);
+        }
+        // Now quit the app
         app.quit();
     } }
   ]);
@@ -116,19 +124,15 @@ ipcMain.handle("open-directory-dialog", async (event) => {
 
 // Handler for the subscription process
 
-const spawn = require('child_process').spawn;
-let backendProcess = null;
-
 // We name this 'handle-subscription' to be referenced elsewhere
 ipcMain.on("handle-subscription", (event, data) => {
-  const backendPath = path.join(__dirname, '../../backend/app.exe');
-  const subscriptionsPath = path.join(__dirname, '../../backend/subscriptions.json');
+  const backendPath = 'backend/app.exe';
+  const subscriptionsPath = 'backend/subscriptions.json';
 
-  // Make sure the backend process is not already running
-  // so there are duplicate processes
+  // Remove listeners and kill the backend process if it's already running
   if (backendProcess) {
     backendProcess.removeAllListeners();
-    backendProcess.kill();
+    kill(backendProcess.pid);
     backendProcess = null;
   }
 
@@ -137,9 +141,9 @@ ipcMain.on("handle-subscription", (event, data) => {
       let subscriptions = {};
 
       // Structure the subscription JSON file with format
-      // "topic1": "download/directory"
+      // "topic1": "download/directory" (in Linux format)
       data.topics.forEach(topic => {
-        subscriptions[topic] = data.downloadDirectory;
+        subscriptions[topic] = data.downloadDirectory.replaceAll('\\', '/');
       });
 
       // Write topics to subscriptions.json before starting backend

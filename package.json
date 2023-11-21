@@ -36,6 +36,7 @@
     "electron-squirrel-startup": "^1.0.0",
     "pyinstaller": "^0.0.1",
     "python-shell": "^5.0.0",
+    "tree-kill": "^1.2.2",
     "vue": "^3.3.7",
     "vue-router": "^4.2.5",
     "webfontloader": "^1.6.28"
