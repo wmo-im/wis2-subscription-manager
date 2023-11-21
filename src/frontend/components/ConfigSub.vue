@@ -191,6 +191,11 @@ export default defineComponent({
             // When subscribe/cancel button pressed, change boolean state
             subscribePressed.value = !subscribePressed.value;
 
+            // Make sure the data is not downloaded if the user unticks the box
+            if (downloadBoolean.value === false) {
+                selectedDirectory.value = '';
+            }
+
             try {
                 // Construct data to be sent
                 const data = {
