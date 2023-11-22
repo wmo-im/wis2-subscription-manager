@@ -2,7 +2,17 @@
     <v-row class="justify-center">
         <v-col cols=12 class="max-form-width">
             <v-card>
-                <v-card-title class="big-title">WIS2 Subscription Configuration</v-card-title>
+                <v-row>
+                    <v-col cols="7">
+                        <v-card-title class="big-title">WIS2 Subscription Configuration</v-card-title>
+                    </v-col>
+                    <v-spacer/>
+                    <v-col cols="3">
+                        <v-select label="Configurations" density="comfortable" variant="solo-filled"
+                        :items="configList" v-model="selectedConfig"></v-select>
+                    </v-col>
+                </v-row>
+                
 
                 <v-form>
                     <v-card-item class="py-0">
@@ -54,14 +64,37 @@
 
                     <v-card-item>
                         <div class="d-flex justify-center">
+                            <!-- Save configuration button -->
+                            <v-btn @click="showSaveDialog = true" :disabled="!canSubscribe"
+                                    color="#64BF40" variant="flat" class="ma-1" block>
+                                Save Configuration</v-btn>
+                        </div>
+                        <div class="d-flex justify-center">
+                            
+                            <!-- Subscribe/Unsubscribe buttons -->
                             <v-btn v-if="!subscribePressed" :disabled="!canSubscribe" @click="toggleSubscription"
                                 color="#003DA5" variant="flat" class="ma-1" block>Subscribe</v-btn>
                             <v-btn v-if="subscribePressed" @click="toggleSubscription" color="#E09D00" variant="flat"
                                 class="ma-1" block>Cancel Subscription</v-btn>
                         </div>
                     </v-card-item>
-
                 </v-form>
+
+                <!-- Dialog for saving configuration, appears when 'Save Configuration' clicked -->
+                <v-dialog v-model="showSaveDialog">
+                    <v-card>
+                        <v-card-title>
+                        Save Configuration
+                            <v-btn icon @click="showSaveDialog = false">
+                                <v-icon>mdi-close</v-icon>
+                            </v-btn>
+                        </v-card-title>
+                        <v-text-field v-model="configName" label="Configuration Name"></v-text-field>
+                        <v-card-actions>
+                        <v-btn block @click="saveConfiguration">Save As Preset</v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
             </v-card>
         </v-col>
     </v-row>
@@ -118,6 +151,10 @@ export default defineComponent({
         const subscribePressed = ref(false);
         const backendOutput = ref('');
         const latestResponse = ref(null);
+        const selectedConfig = ref(null);
+        const configList = ref([]);
+        const showSaveDialog = ref(false);
+        const configName = ref('');
 
         // Static variables
         const brokerURLMapping = {
@@ -185,6 +222,32 @@ export default defineComponent({
             }
         };
 
+        // Saves the configuration settings to a local JSON file
+        const saveConfiguration = () => {
+            try {
+                let name = configName.value;
+
+                const data = {
+                    brokerURL: brokerURL.value,
+                    topicsList: topicsList.value,
+                    selectedDirectory: selectDirectory.value
+                };
+    
+                // Write to file named by user
+                window.electronAPI.saveConfig(name, data);
+    
+                // Update the list of configs
+                configList.push(name);
+
+                // Close the dialog
+                showSaveDialog.value = false;
+            }
+
+            catch (error) {
+                console.error('Error saving config: ', error);
+            }
+        }
+
         // Toggles the subscription process depending on whether the user
         // intends to start a subscription or cancel a subscription
         const toggleSubscription = () => {
@@ -239,6 +302,19 @@ export default defineComponent({
             window.electronAPI.onBackendStderr(handleStderr);
         });
 
+        // Watch for changes in selectedConfig and update the UI
+        watch(selectedConfig, () => {
+            if (selectedConfig.value) {
+                // Get the config data from the file
+                const configData = window.electronAPI.loadConfig(selectedConfig.value);
+
+                // Update the UI
+                selectedBroker.value = configData.brokerURL;
+                topicsList.value = configData.topicsList;
+                selectedDirectory.value = configData.selectedDirectory;
+            }
+        });
+
         // Watch for changes in backendOutput and scroll to bottom
         watch(backendOutput, () => {
             nextTick(() => {
@@ -277,7 +353,12 @@ export default defineComponent({
             subscribePressed,
             backendOutput,
             latestResponse,
-            toggleSubscription
+            toggleSubscription,
+            selectedConfig,
+            configList,
+            showSaveDialog,
+            saveConfiguration,
+            configName
         }
     }
 })

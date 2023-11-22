@@ -14,11 +14,13 @@ window.addEventListener("DOMContentLoaded", () => {
 // Setup context bridge for secure and isolated IPC communication
 const { contextBridge, ipcRenderer } = require('electron');
 
-// Expose to renderer the open-directory-dialog and handle-subscription 
-// methods, as well as response methods for sending subscription 
-// messages back up to the Vue frontend
+// Expose to renderer the open-directory-dialog,.load-config, save-config,
+// and handle-subscription methods, 
+// as well as response methods for sending messages back up to the Vue frontend
 contextBridge.exposeInMainWorld('electronAPI', {
+  loadConfig: (config) => ipcRenderer.invoke('load-config', config),
   openDialog: () => ipcRenderer.invoke('open-directory-dialog'),
+  saveConfig: (name, data) => ipcRenderer.send('save-config', name, data),
   handleSubscription: (data) => ipcRenderer.send('handle-subscription', data),
   onSubscriptionResponse: (callback) => ipcRenderer.on('subscription-response', callback),
   onBackendStdout: (callback) => ipcRenderer.on('backend-stdout', callback),

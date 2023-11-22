@@ -106,6 +106,24 @@ app.on("activate", () => {
 
 // Inter-process communication setup (IPC)
 
+// Handler for loading the configuration data
+// We name this 'load-config' to be referenced elsewhere
+ipcMain.handle("load-config", async (event, config) => {
+  try {
+    // Read the configuration file
+    const configJSON = fs.readFileSync(`backend/config/${config}.json`, 'utf8');
+    // Parse the configuration file
+    const configData = JSON.parse(configJSON);
+    // Return the configuration file
+    return configData;
+  }
+  catch (error) {
+    console.error("Error in load-config:", error);
+    // Return an error message
+    return { errorMessage: error.message };
+  }
+});
+
 // Handler for the choose directory pop up
 // We name this 'open-directory-dialog' to be referenced elsewhere
 ipcMain.handle("open-directory-dialog", async (event) => {
@@ -122,8 +140,23 @@ ipcMain.handle("open-directory-dialog", async (event) => {
 
 });
 
-// Handler for the subscription process
+// Handler for the saving the configuration
+// We name this 'save-config' to be referenced elsewhere
+ipcMain.on("save-config", (event, name, data) => {
+  try {
+    // Write the configuration file
+    fs.writeFileSync(`backend/config/${name}.json`, JSON.stringify(data), 'utf8');
+    // Send a message to the frontend
+    event.sender.send('config-response', { status: 'Configuration saved' });
+  }
+  catch (error) {
+    console.error("Error in save-config:", error);
+    // Send a message to the frontend
+    event.sender.send('config-response', { status: 'Error saving configuration', errorMessage: error.message });
+  }
+});
 
+// Handler for the subscription process
 // We name this 'handle-subscription' to be referenced elsewhere
 ipcMain.on("handle-subscription", (event, data) => {
   const backendPath = 'backend/app.exe';
