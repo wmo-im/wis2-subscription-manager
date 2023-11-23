@@ -106,21 +106,38 @@ app.on("activate", () => {
 
 // Inter-process communication setup (IPC)
 
-// Handler for loading the configuration data
+// Handler for loading the configuration names
+// We name this 'load-config-names' to be referenced elsewhere
+ipcMain.handle("load-config-names", async (event) => {
+  try {
+    // Read the configuration directory
+    const files = fs.readdirSync('backend/configs');
+    // Create an array of the file basename excluding the .json extension
+    const configNames = files.map(file => path.basename(file, '.json'));
+    // Return the configuration names
+    return configNames;
+  }
+  catch (error) {
+    console.error("Error in load-config-names:", error.message);
+    // Return an error message
+    return [];
+  }
+});
+
+// Handler for loading the selected configuration data
 // We name this 'load-config' to be referenced elsewhere
 ipcMain.handle("load-config", async (event, config) => {
   try {
+    const filePath = `backend/configs/${config}.json`;
     // Read the configuration file
-    const configJSON = fs.readFileSync(`backend/config/${config}.json`, 'utf8');
+    const configJSON = fs.readFileSync(filePath, 'utf8');
     // Parse the configuration file
     const configData = JSON.parse(configJSON);
     // Return the configuration file
     return configData;
   }
   catch (error) {
-    console.error("Error in load-config:", error);
-    // Return an error message
-    return { errorMessage: error.message };
+    console.error("Error in load-config:", error.message);
   }
 });
 
@@ -144,15 +161,16 @@ ipcMain.handle("open-directory-dialog", async (event) => {
 // We name this 'save-config' to be referenced elsewhere
 ipcMain.on("save-config", (event, name, data) => {
   try {
+    const filePath = `backend/configs/${name}.json`;
     // Write the configuration file
-    fs.writeFileSync(`backend/config/${name}.json`, JSON.stringify(data), 'utf8');
+    fs.writeFileSync(filePath, JSON.stringify(data), 'utf8');
     // Send a message to the frontend
-    event.sender.send('config-response', { status: 'Configuration saved' });
+    // event.sender.send('config-response', { status: 'Configuration saved' });
   }
   catch (error) {
-    console.error("Error in save-config:", error);
+    console.error("Error in save-config:", error.message);
     // Send a message to the frontend
-    event.sender.send('config-response', { status: 'Error saving configuration', errorMessage: error.message });
+    // event.sender.send('config-response', { status: 'Error saving configuration', errorMessage: error.message });
   }
 });
 

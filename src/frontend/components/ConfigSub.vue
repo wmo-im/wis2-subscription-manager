@@ -6,13 +6,13 @@
                     <v-col cols="7">
                         <v-card-title class="big-title">WIS2 Subscription Configuration</v-card-title>
                     </v-col>
-                    <v-spacer/>
+                    <v-spacer />
                     <v-col cols="3">
-                        <v-select label="Configurations" density="comfortable" variant="solo-filled"
-                        :items="configList" v-model="selectedConfig"></v-select>
+                        <v-select label="Configurations" density="comfortable" variant="solo-filled" :items="configList"
+                            v-model="selectedConfig"></v-select>
                     </v-col>
                 </v-row>
-                
+
 
                 <v-form>
                     <v-card-item class="py-0">
@@ -65,12 +65,12 @@
                     <v-card-item>
                         <div class="d-flex justify-center">
                             <!-- Save configuration button -->
-                            <v-btn @click="showSaveDialog = true" :disabled="!canSubscribe"
-                                    color="#64BF40" variant="flat" class="ma-1" block>
+                            <v-btn @click="showSaveDialog = true" :disabled="!canSubscribe" color="#64BF40" variant="flat"
+                                class="ma-1" block>
                                 Save Configuration</v-btn>
                         </div>
                         <div class="d-flex justify-center">
-                            
+
                             <!-- Subscribe/Unsubscribe buttons -->
                             <v-btn v-if="!subscribePressed" :disabled="!canSubscribe" @click="toggleSubscription"
                                 color="#003DA5" variant="flat" class="ma-1" block>Subscribe</v-btn>
@@ -84,14 +84,14 @@
                 <v-dialog v-model="showSaveDialog">
                     <v-card>
                         <v-card-title>
-                        Save Configuration
-                            <v-btn icon @click="showSaveDialog = false">
+                            Save Configuration
+                            <v-btn icon variant="text" class="close-button" @click="showSaveDialog = false">
                                 <v-icon>mdi-close</v-icon>
                             </v-btn>
                         </v-card-title>
                         <v-text-field v-model="configName" label="Configuration Name"></v-text-field>
                         <v-card-actions>
-                        <v-btn block @click="saveConfiguration">Save As Preset</v-btn>
+                            <v-btn @click="saveConfiguration" color="#64BF40" variant="flat" block>Save As Preset</v-btn>
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
@@ -142,7 +142,7 @@ export default defineComponent({
     setup() {
 
         // Reactive variables
-        const brokerList = ref(['France Global Broker', 'China Global Broker']);
+        const brokerList = ref(['France (globalbroker.meteo.fr)', 'China (gb.wis.cma.cn)']);
         const selectedBroker = ref('');
         const topicEntry = ref('')
         const topicsList = ref([]);
@@ -158,20 +158,20 @@ export default defineComponent({
 
         // Static variables
         const brokerURLMapping = {
-            'France Global Broker': 'globalbroker.meteo.fr',
-            'China Global Broker': 'gb.wis.cma.cn'
+            'France (globalbroker.meteo.fr)': 'globalbroker.meteo.fr',
+            'China (gb.wis.cma.cn)': 'gb.wis.cma.cn'
         };
 
         // Computed
 
         // Maps selected broker from the drop down to the actual URL
         const brokerURL = computed(() => {
-            return brokerURLMapping[selectedBroker.value] || ""
+            return brokerURLMapping[selectedBroker.value] || ''
         })
 
         // Checks if the global broker has been selected
         const isBrokerSelected = computed(() => {
-            return selectedBroker.value !== ""
+            return selectedBroker.value !== ''
         });
 
         // Checks if the global broker has been selected and at
@@ -191,6 +191,17 @@ export default defineComponent({
         });
 
         // Methods
+
+        // Load the list of saved configurations
+        const loadConfigNames = async () => {
+            try {
+                const configs = await window.electronAPI.loadConfigNames();
+                configList.value = configs;
+            }
+            catch (error) {
+                console.error('Error loading config list: ', error);
+            }
+        };
 
         // If the user types a topic and presses +, it will add it to the
         // topic list and reset the text field
@@ -225,19 +236,22 @@ export default defineComponent({
         // Saves the configuration settings to a local JSON file
         const saveConfiguration = () => {
             try {
-                let name = configName.value;
+                const name = configName.value;
 
                 const data = {
                     brokerURL: brokerURL.value,
-                    topicsList: topicsList.value,
-                    selectedDirectory: selectDirectory.value
+                    topicsList: Array.from(topicsList.value), // Convert Proxy to regular array
+                    selectedDirectory: selectedDirectory.value
                 };
-    
+
                 // Write to file named by user
                 window.electronAPI.saveConfig(name, data);
-    
-                // Update the list of configs
-                configList.push(name);
+
+                // Check if the config name already exists in the list,
+                // if not, add it
+                if (!configList.value.includes(name)) {
+                    configList.value.push(name);
+                };
 
                 // Close the dialog
                 showSaveDialog.value = false;
@@ -296,6 +310,8 @@ export default defineComponent({
         };
 
         onMounted(() => {
+            // Get config list
+            loadConfigNames();
             // Get responses from backend to be displayed in frontend
             window.electronAPI.onSubscriptionResponse(handleBackendStatus);
             window.electronAPI.onBackendStdout(handleStdout);
@@ -303,15 +319,32 @@ export default defineComponent({
         });
 
         // Watch for changes in selectedConfig and update the UI
-        watch(selectedConfig, () => {
+        watch(selectedConfig, async () => {
             if (selectedConfig.value) {
                 // Get the config data from the file
-                const configData = window.electronAPI.loadConfig(selectedConfig.value);
+                const configData = await window.electronAPI.loadConfig(selectedConfig.value);
+
+                // Log the config data obtained
+                console.log('Config data obtained: ', configData);
 
                 // Update the UI
-                selectedBroker.value = configData.brokerURL;
+
+                // Map the broker URL to the dropdown option
+                const brokerDropdownMapping = {
+                    'globalbroker.meteo.fr': 'France (globalbroker.meteo.fr)',
+                    'gb.wis.cma.cn': 'China (gb.wis.cma.cn)'
+                };
+                selectedBroker.value = brokerDropdownMapping[configData.brokerURL] || '';
+
+                // Update the topics list
                 topicsList.value = configData.topicsList;
-                selectedDirectory.value = configData.selectedDirectory;
+
+                // If the user had selected to download data, enable the
+                // checkbox and update the directory
+                if (configData.selectedDirectory) {
+                    downloadBoolean.value = true;
+                    selectedDirectory.value = configData.selectedDirectory;
+                }
             }
         });
 
@@ -367,8 +400,10 @@ export default defineComponent({
 
 <style scoped>
 .backend-output {
-  max-height: 200px; /* Adjust as needed */
-  overflow-y: auto;
-  white-space: pre-wrap; /* To respect line breaks and spaces */
+    max-height: 200px;
+    /* Adjust as needed */
+    overflow-y: auto;
+    white-space: pre-wrap;
+    /* To respect line breaks and spaces */
 }
 </style>
