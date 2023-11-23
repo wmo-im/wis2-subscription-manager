@@ -90,3 +90,6 @@ typings/
 
 # Electron-Forge
 out/
+
+# Conifg files
+backend/configs/*.json
