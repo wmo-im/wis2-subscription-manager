@@ -81,7 +81,7 @@
                 </v-form>
 
                 <!-- Dialog for saving configuration, appears when 'Save Configuration' clicked -->
-                <v-dialog v-model="showSaveDialog">
+                <v-dialog v-model="showSaveDialog" max-width="750px">
                     <v-card>
                         <v-card-title>
                             Save Configuration
