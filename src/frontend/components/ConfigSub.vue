@@ -17,19 +17,27 @@
                 <v-form>
                     <v-card-item class="py-0">
                         <v-card-title>Global broker</v-card-title>
-                        <v-select label="Please choose a broker" :items="brokerList" variant="solo-filled"
-                            v-model="selectedBroker"></v-select>
+                        <v-row>
+                            <v-col cols="11">
+                                <v-select label="Please choose a broker" :items="brokerList" variant="solo-filled"
+                                    v-model="selectedBroker"></v-select>
+                            </v-col>
+                            <v-col cols="1">
+                                <v-btn color="#003DA5" variant="flat" icon="mdi-sync" size="large"
+                                    @click="syncBrokers"></v-btn>
+                            </v-col>
+                        </v-row>
                     </v-card-item>
 
                     <v-card-item class="py-0">
                         <v-card-title>Topics</v-card-title>
                         <v-row>
-                            <v-col cols="10">
+                            <v-col cols="11">
                                 <v-text-field label="Please enter one or more topics" variant="solo-filled"
                                     v-model="topicEntry" @keyup.enter="addTopic" :disabled="!isBrokerSelected">
                                 </v-text-field>
                             </v-col>
-                            <v-col cols="2">
+                            <v-col cols="1">
                                 <v-btn color="#003DA5" variant="flat" icon="mdi-plus" size="large" @click="addTopic"
                                     :disabled="!isBrokerSelected"></v-btn>
                             </v-col>
@@ -142,7 +150,8 @@ export default defineComponent({
     setup() {
 
         // Reactive variables
-        const brokerList = ref(['France (globalbroker.meteo.fr)', 'China (gb.wis.cma.cn)']);
+        const brokerList = ref([]);
+        const syncTime = ref('');
         const selectedBroker = ref('');
         const topicEntry = ref('')
         const topicsList = ref([]);
@@ -156,18 +165,7 @@ export default defineComponent({
         const showSaveDialog = ref(false);
         const configName = ref('');
 
-        // Static variables
-        const brokerURLMapping = {
-            'France (globalbroker.meteo.fr)': 'globalbroker.meteo.fr',
-            'China (gb.wis.cma.cn)': 'gb.wis.cma.cn'
-        };
-
         // Computed
-
-        // Maps selected broker from the drop down to the actual URL
-        const brokerURL = computed(() => {
-            return brokerURLMapping[selectedBroker.value] || ''
-        })
 
         // Checks if the global broker has been selected
         const isBrokerSelected = computed(() => {
@@ -200,6 +198,35 @@ export default defineComponent({
             }
             catch (error) {
                 console.error('Error loading config list: ', error);
+            }
+        };
+
+        // Load the list of brokers from the JSON file when application is started
+        const loadBrokers = async () => {
+            try {
+                const data = await window.electronAPI.loadBrokers();
+                brokerList.value = data.brokers;
+                syncTime.value = data.sync_time;
+            }
+            catch (error) {
+                console.error('Error loading brokers: ', error);
+            }
+        };
+
+        // Get the latest brokers when the synchronisation button is pressed
+        const syncBrokers = async () => {
+            try {
+                // Wait for the backend to get the latest brokers from the 
+                // GDC and write them to the JSON file brokers.json
+                window.electronAPI.syncBrokers();
+                // Delay
+                setTimeout(() => {
+                    // Load the brokers from the JSON file
+                    loadBrokers();
+                }, 1000);
+            }
+            catch (error) {
+                console.error('Error syncing brokers: ', error);
             }
         };
 
@@ -239,7 +266,7 @@ export default defineComponent({
                 const name = configName.value;
 
                 const data = {
-                    brokerURL: brokerURL.value,
+                    brokerURL: selectedBroker.value,
                     topicsList: Array.from(topicsList.value), // Convert Proxy to regular array
                     selectedDirectory: selectedDirectory.value
                 };
@@ -276,7 +303,7 @@ export default defineComponent({
             try {
                 // Construct data to be sent
                 const data = {
-                    broker: brokerURL.value,
+                    broker: selectedBroker.value,
                     topics: Array.from(topicsList.value), // Convert Proxy to regular array
                     downloadDirectory: selectedDirectory.value,
                     shouldSubscribe: subscribePressed.value
@@ -312,6 +339,8 @@ export default defineComponent({
         onMounted(() => {
             // Get config list
             loadConfigNames();
+            // Get broker list
+            loadBrokers();
             // Get responses from backend to be displayed in frontend
             window.electronAPI.onSubscriptionResponse(handleBackendStatus);
             window.electronAPI.onBackendStdout(handleStdout);
@@ -329,14 +358,7 @@ export default defineComponent({
 
                 // Update the UI
 
-                // Map the broker URL to the dropdown option
-                const brokerDropdownMapping = {
-                    'globalbroker.meteo.fr': 'France (globalbroker.meteo.fr)',
-                    'gb.wis.cma.cn': 'China (gb.wis.cma.cn)'
-                };
-                selectedBroker.value = brokerDropdownMapping[configData.brokerURL] || '';
-
-                // Update the topics list
+                selectedBroker.value = configData.brokerURL;
                 topicsList.value = configData.topicsList;
 
                 // If the user had selected to download data, enable the
@@ -371,8 +393,8 @@ export default defineComponent({
 
         return {
             brokerList,
+            syncTime,
             selectedBroker,
-            brokerURL,
             topicEntry,
             topicsList,
             selectedDirectory,
@@ -391,7 +413,9 @@ export default defineComponent({
             configList,
             showSaveDialog,
             saveConfiguration,
-            configName
+            configName,
+            loadBrokers,
+            syncBrokers
         }
     }
 })

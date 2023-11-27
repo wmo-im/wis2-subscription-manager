@@ -18,6 +18,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('electronAPI', {
   loadConfigNames: () => ipcRenderer.invoke('load-config-names'),
   loadConfig: (config) => ipcRenderer.invoke('load-config', config),
+  syncBrokers: () => ipcRenderer.send('sync-brokers'),
+  loadBrokers: () => ipcRenderer.invoke('load-brokers'),
   openDialog: () => ipcRenderer.invoke('open-directory-dialog'),
   saveConfig: (name, data) => ipcRenderer.send('save-config', name, data),
   handleSubscription: (data) => ipcRenderer.send('handle-subscription', data),

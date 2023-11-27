@@ -13,8 +13,8 @@ if (require("electron-squirrel-startup")) {
 const createWindow = () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 850,
+    width: 1000,
+    height: 800,
     icon: "public/assets/logo-small.png",
     titleBarStyle: 'hidden',
     titleBarOverlay: {
@@ -141,6 +141,50 @@ ipcMain.handle("load-config", async (event, config) => {
   }
 });
 
+// Hanlder for getting the latest broker URLs and synchronisation
+// time when the user presses the 'Sync Brokers' button
+// We name this 'sync-brokers' to be referenced elsewhere
+ipcMain.on("sync-brokers", (event) => {
+  try {
+    const backendPath = 'backend/broker-backend.exe';
+    // Start backend executable
+    const backendProcess = spawn(backendPath, { windowsHide: true });
+    // Log stdout data
+    backendProcess.stdout.on('data', (data) => {
+      console.log(`stdout: ${data}`);
+    });
+    // Log stderr data
+    backendProcess.stderr.on('data', (data) => {
+      console.error(`stderr: ${data}`);
+    });
+    // Log exit code
+    backendProcess.on('close', (code) => {
+      console.log(`Broker sync process exited with code ${code}`);
+    });
+  }
+  catch (error) {
+    console.error("Error in sync-brokers:", error);
+  }
+});
+
+// Handler for reading the latest broker URLs and sychronisation
+// time from the 'brokers.json' file and returning it to the frontend
+// We name this 'read-brokers' to be referenced elsewhere
+ipcMain.handle("load-brokers", async (event) => {
+  try {
+    const filePath = 'backend/brokers.json';
+    // Read the brokers file
+    const brokersJSON = fs.readFileSync(filePath, 'utf8');
+    // Parse the brokers file
+    const brokersData = JSON.parse(brokersJSON);
+    // Return the brokers file
+    return brokersData;
+  }
+  catch (error) {
+    console.error("Error in load-brokers:", error.message);
+  }
+});
+
 // Handler for the choose directory pop up
 // We name this 'open-directory-dialog' to be referenced elsewhere
 ipcMain.handle("open-directory-dialog", async (event) => {
@@ -164,20 +208,16 @@ ipcMain.on("save-config", (event, name, data) => {
     const filePath = `backend/configs/${name}.json`;
     // Write the configuration file
     fs.writeFileSync(filePath, JSON.stringify(data), 'utf8');
-    // Send a message to the frontend
-    // event.sender.send('config-response', { status: 'Configuration saved' });
   }
   catch (error) {
     console.error("Error in save-config:", error.message);
-    // Send a message to the frontend
-    // event.sender.send('config-response', { status: 'Error saving configuration', errorMessage: error.message });
   }
 });
 
 // Handler for the subscription process
 // We name this 'handle-subscription' to be referenced elsewhere
 ipcMain.on("handle-subscription", (event, data) => {
-  const backendPath = 'backend/app.exe';
+  const backendPath = 'backend/subscribe-backend.exe';
   const subscriptionsPath = 'backend/subscriptions.json';
 
   // Remove listeners and kill the backend process if it's already running
