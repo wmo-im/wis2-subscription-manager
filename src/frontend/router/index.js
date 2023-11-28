@@ -5,6 +5,11 @@ const router = createRouter({
   routes: [
     {
       path: '/',
+      name: 'Catalogue',
+      component: () => import('@/components/CatalogueView.vue')
+    },
+    {
+      path: '/configure',
       name: 'Configure',
       component: () => import('@/components/ConfigSub.vue')
     }

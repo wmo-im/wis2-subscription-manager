@@ -4,8 +4,8 @@
 
     <template v-slot:prepend>
       <a href="https://docs.wis2box.wis.wmo.int/en/latest/" target="_blank"><img src="/assets/logo-white.png" alt="Logo" class="wmo-logo" /></a>
-      <v-btn class="login-button" color="white" prepend-icon="mdi-account">Log In</v-btn>
-      <v-btn class="explore-button" color="white" prepend-icon="mdi-cloud-search">Explore</v-btn>
+      <v-btn exact to="/" class="explore-button" color="white" prepend-icon="mdi-cloud-search">Explore</v-btn>
+      <v-btn exact to="/configure" class="configure-button" color="white" prepend-icon="mdi-account">Configure</v-btn>
     </template>
 
   </v-app-bar>
@@ -23,13 +23,13 @@ import { VAppBar, VBtn } from 'vuetify/lib/components/index.mjs';
   height: 50px;
 }
 
-.login-button {
+.configure-button {
   -webkit-app-region: no-drag;
-  margin-left: 10px;
 }
 
 .explore-button {
   -webkit-app-region: no-drag;
+  margin-left: 10px;
 }
 
 .draggable {

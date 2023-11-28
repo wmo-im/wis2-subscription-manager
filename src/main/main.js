@@ -106,6 +106,68 @@ app.on("activate", () => {
 
 // Inter-process communication setup (IPC)
 
+// Handler for accessing the global discovery catalogue
+// using the catalogue-backend executable, with arguments
+// url, query (the search term), and bbox (the bounding box)
+// We name this 'search-catalogue' to be referenced elsewhere
+ipcMain.handle("search-catalogue", async (event, data) => {
+  try {
+    const backendPath = 'backend/catalogue-backend.exe';
+
+    // Build arguments array
+    const args = ['--url', data.url];
+    if (data.query) {
+      args.push('--query');
+      args.push(data.query);
+    }
+    if (data.bbox) {
+      args.push('--bbox');
+      args.push(data.bbox);
+    }
+
+    // Start backend executable with arguments
+    const backendProcess = spawn(backendPath, args,
+    { windowsHide: true });
+    // Log stdout data
+    backendProcess.stdout.on('data', (data) => {
+      console.log(`stdout: ${data}`);
+    });
+    // Log stderr data
+    backendProcess.stderr.on('data', (data) => {
+      console.error(`stderr: ${data}`);
+    });
+    // Log exit code
+    backendProcess.on('close', (code) => {
+      console.log(`Catalogue search process exited with code ${code}`);
+    });
+    // Return a message to the frontend
+    return { status: 'Catalogue search started' };
+  }
+  catch (error) {
+    console.error("Error in search-catalogue:", error);
+    // Return a message to the frontend
+    return { status: 'Error starting catalogue search', errorMessage: error.message };
+  }
+});
+
+// Handler for loading the latest catalogue search results from
+// datasets.json and returning it to the frontend
+// We name this 'load-catalogue' to be referenced elsewhere
+ipcMain.handle("load-catalogue", async (event) => {
+  try {
+    const filePath = 'backend/datasets.json';
+    // Read the datasets file
+    const datasetsJSON = fs.readFileSync(filePath, 'utf8');
+    // Parse the datasets file
+    const datasetsData = JSON.parse(datasetsJSON);
+    // Return the datasets file
+    return datasetsData;
+  }
+  catch (error) {
+    console.error("Error in load-catalogue:", error.message);
+  }
+});
+
 // Handler for loading the configuration names
 // We name this 'load-config-names' to be referenced elsewhere
 ipcMain.handle("load-config-names", async (event) => {

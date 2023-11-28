@@ -219,7 +219,7 @@ export default defineComponent({
                 // Wait for the backend to get the latest brokers from the 
                 // GDC and write them to the JSON file brokers.json
                 window.electronAPI.syncBrokers();
-                // Delay
+                // Delay loading of JSON file to allow time for the backend
                 setTimeout(() => {
                     // Load the brokers from the JSON file
                     loadBrokers();

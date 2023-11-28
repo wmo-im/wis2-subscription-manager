@@ -1,0 +1,10 @@
+[
+    {
+        "id": "urn:x-wmo:md:dza:dz_met_office:surface-based-observations.synop",
+        "center_id": "dza",
+        "title": "Hourly synoptic observations from fixed-land stations (SYNOP) (Algeria)",
+        "topic_hierarchy": "dza/dz_met_office/data/core/weather/surface-based-observations/synop",
+        "creation_date": "2023-11-20T18:22:43Z",
+        "data_policy": "core"
+    }
+]
