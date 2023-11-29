@@ -20,11 +20,11 @@
                         <v-row>
                             <v-col cols="11">
                                 <v-select label="Please choose a broker" :items="brokerList" variant="solo-filled"
-                                    v-model="selectedBroker"></v-select>
+                                    v-model="selectedBroker" :disabled="loadingBoolean"></v-select>
                             </v-col>
                             <v-col cols="1">
                                 <v-btn color="#003DA5" variant="flat" icon="mdi-sync" size="large"
-                                    @click="syncBrokers"></v-btn>
+                                    @click="syncBrokers" :loading="loadingBoolean"></v-btn>
                             </v-col>
                         </v-row>
                     </v-card-item>
@@ -152,6 +152,7 @@ export default defineComponent({
         // Reactive variables
         const brokerList = ref([]);
         const syncTime = ref('');
+        const loadingBoolean = ref(false);
         const selectedBroker = ref('');
         const topicEntry = ref('')
         const topicsList = ref([]);
@@ -216,6 +217,8 @@ export default defineComponent({
         // Get the latest brokers when the synchronisation button is pressed
         const syncBrokers = async () => {
             try {
+                // Set loading animation to true
+                loadingBoolean.value = true;
                 // Wait for the backend to get the latest brokers from the 
                 // GDC and write them to the JSON file brokers.json
                 window.electronAPI.syncBrokers();
@@ -223,6 +226,8 @@ export default defineComponent({
                 setTimeout(() => {
                     // Load the brokers from the JSON file
                     loadBrokers();
+                    // Disable loading animation of button
+                    loadingBoolean.value = false;
                 }, 1000);
             }
             catch (error) {
@@ -394,6 +399,7 @@ export default defineComponent({
         return {
             brokerList,
             syncTime,
+            loadingBoolean,
             selectedBroker,
             topicEntry,
             topicsList,
