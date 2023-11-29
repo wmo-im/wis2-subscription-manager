@@ -7,30 +7,52 @@
                 <v-card-item>
                     <v-row>
                         <v-col cols="4">
-                            <v-select v-model="selectedCatalogue" :items="catalogueList" label="Choose a catalogue"></v-select>
+                            <v-select v-model="selectedCatalogue" :items="catalogueList"
+                                label="Choose a catalogue"></v-select>
                         </v-col>
                         <v-col cols="4">
-                            <v-text-field v-model="query" label="Search for a dataset" hint="Optional" persistent-hint clearable></v-text-field>
+                            <v-text-field v-model="query" label="Search for a dataset" hint="Optional" persistent-hint
+                                clearable></v-text-field>
                         </v-col>
                         <v-col cols="3">
-                            <v-text-field v-model="bbox" mask="####" label="Bounding box" hint="Optional" persistent-hint clearable></v-text-field>
+                            <v-text-field v-model="bbox" label="Bounding box" hint="Optional" persistent-hint
+                                clearable></v-text-field>
                         </v-col>
                         <v-col cols="1">
-                            <v-btn @click="searchCatalogue" icon="mdi-cloud-search" color="#003DA5" variant="flat" :disabled="!catalogueBoolean"
-                            :loading="loadingBoolean"></v-btn>
+                            <v-btn @click="searchCatalogue" icon="mdi-cloud-search" color="#003DA5" variant="flat"
+                                :disabled="!catalogueBoolean" :loading="loadingBoolean"></v-btn>
                         </v-col>
                     </v-row>
                 </v-card-item>
 
                 <!-- Display catalogue datasets searched by user -->
-                <v-container>
-                    <v-data-table :items="datasets" :key="tableKey">
-                        <template v-slot:item.title="{item}">
-                            <v-btn text @click="openDialog(item)">
-                                {{ item.title }}
+                <v-card-item>
+                    <v-table>
+                        <thead>
+                            <tr>
+                                <th class="text-left">
+                                    Datasets Found
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="item in datasets" :key="item.name">
+                                <td>
+                                    <v-btn variant="text" @click="openDialog(item)">
+                                        {{ item.title }}
+                                    </v-btn>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </v-table>
+
+                    <!-- <v-table :items="datasets"> -->
+                    <!-- <template v-slot:item.title="{ item }">
+                            <v-btn @click="openDialog(item)">
+                                {{ item.columns.title }}
                             </v-btn>
-                        </template>
-                    </v-data-table>
+                        </template> -->
+                    <!-- </v-table> -->
 
                     <!-- Dialog to display dataset metadata -->
                     <v-dialog v-model="dialog" max-width="750px">
@@ -47,7 +69,7 @@
                         </v-card>
                     </v-dialog>
 
-                </v-container>
+                </v-card-item>
             </v-card>
         </v-col>
     </v-row>
@@ -89,10 +111,9 @@ export default defineComponent({
         const bbox = ref(null);
         const datasets = ref([]);
         const loadingBoolean = ref(false);
-        const tableKey = ref(0);
         const selectedItem = ref(null);
         const dialog = ref(false);
-        
+
         // Computed properties
 
         // Boolean to check if the catalogue is selected
@@ -128,14 +149,12 @@ export default defineComponent({
 
             // Delay loading of JSON file to allow time for the backend
             setTimeout(() => {
-                    loadCatalogue();
-                    // Add 1 to the key so that the table is forced to update
-                    tableKey.value++
-                    // Disable loading animation of button
-                    loadingBoolean.value = false;
-                }, 1000);
+                loadCatalogue();
+                // Disable loading animation of button
+                loadingBoolean.value = false;
+            }, 1000);
         }
-        
+
         // Open the dialog to display dataset metadata
         const openDialog = (item) => {
             selectedItem.value = item;
@@ -148,7 +167,6 @@ export default defineComponent({
             query,
             bbox,
             loadingBoolean,
-            tableKey,
             catalogueBoolean,
             selectedItem,
             dialog,
@@ -161,6 +179,4 @@ export default defineComponent({
 
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>
