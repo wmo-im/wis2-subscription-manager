@@ -70,10 +70,6 @@ const createWindow = () => {
     } },
     { label: 'Quit', click:  function(){
         app.isQuiting = true;
-        // Kill the backend process if it's already running
-        if (backendProcess) {
-          kill(backendProcess.pid);
-        }
         // Now quit the app
         app.quit();
     } }
@@ -122,7 +118,7 @@ ipcMain.handle("search-catalogue", async (event, data) => {
     }
     if (data.bbox) {
       args.push('--bbox');
-      args.push(data.bbox);
+      args.push(data.bbox[0], data.bbox[1], data.bbox[2], data.bbox[3]);
     }
 
     // Start backend executable with arguments

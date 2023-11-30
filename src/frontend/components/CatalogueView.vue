@@ -1,7 +1,7 @@
 <template>
     <v-row class="justify-center">
         <v-col cols=12 class="max-form-width">
-            <v-card>
+            <v-card min-height="700px">
                 <v-card-title class="big-title">Search a WIS2 Global Discovery Catalogue</v-card-title>
 
                 <v-card-item>
@@ -27,7 +27,7 @@
 
                 <!-- Display catalogue datasets searched by user -->
                 <v-card-item>
-                    <v-table>
+                    <v-table v-if="tableBoolean === true" hover="true">
                         <thead>
                             <tr>
                                 <th class="text-left">
@@ -36,36 +36,36 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="item in datasets" :key="item.name">
+                            <tr v-for="item in sortedDatasets" :key="item.title" @click="openDialog(item)"
+                                class="clickable-row">
                                 <td>
-                                    <v-btn variant="text" @click="openDialog(item)">
-                                        {{ item.title }}
-                                    </v-btn>
+                                    {{ item.title }}
                                 </td>
                             </tr>
                         </tbody>
                     </v-table>
 
-                    <!-- <v-table :items="datasets"> -->
-                    <!-- <template v-slot:item.title="{ item }">
-                            <v-btn @click="openDialog(item)">
-                                {{ item.columns.title }}
-                            </v-btn>
-                        </template> -->
-                    <!-- </v-table> -->
-
                     <!-- Dialog to display dataset metadata -->
-                    <v-dialog v-model="dialog" max-width="750px">
+                    <v-dialog v-model="dialog" max-width="900px">
                         <v-card>
-                            <v-card-title>{{ selectedItem.title }}</v-card-title>
-                            <v-table>
+                            <v-card-title>
+                                {{ selectedItem.title }}
+                                <v-btn icon="mdi-close" variant="text" class="close-button" @click="dialog = false" />
+                            </v-card-title>
+                            <v-table density="comfortable" class="my-4">
                                 <template v-for="(value, key) in selectedItem">
-                                    <tr v-if="key !== 'title'">
-                                        <td>{{ key }}</td>
-                                        <td>{{ value }}</td>
-                                    </tr>
+                                    <tbody>
+                                        <tr v-if="key !== 'title'">
+                                            <td><b>{{ key }}</b></td>
+                                            <td>{{ value }}</td>
+                                        </tr>
+                                    </tbody>
                                 </template>
                             </v-table>
+                            <v-card-actions>
+                                <v-btn color="#64BF40" variant="flat" block>
+                                    Add Dataset to Subscription</v-btn>
+                            </v-card-actions>
                         </v-card>
                     </v-dialog>
 
@@ -99,10 +99,10 @@ export default defineComponent({
     setup() {
 
         // Static variables
-        const catalogueList = ['Canada Catalogue', 'China Catalogue']
+        const catalogueList = ['Meteorological Service of Canada', 'China Meteorological Administration']
         const catalogueMap = {
-            'Canada Catalogue': 'https://api.weather.gc.ca/collections/wis2-discovery-metadata/items',
-            'China Catalogue': 'https://gdc.wis.cma.cn/collections/wis2-discovery-metadata/items'
+            'Meteorological Service of Canada': 'https://api.weather.gc.ca/collections/wis2-discovery-metadata/items',
+            'China Meteorological Administration': 'https://gdc.wis.cma.cn/collections/wis2-discovery-metadata/items'
         }
 
         // Reactive variables
@@ -111,6 +111,7 @@ export default defineComponent({
         const bbox = ref(null);
         const datasets = ref([]);
         const loadingBoolean = ref(false);
+        const tableBoolean = ref(false);
         const selectedItem = ref(null);
         const dialog = ref(false);
 
@@ -126,6 +127,13 @@ export default defineComponent({
             return catalogueMap[selectedCatalogue.value]
         })
 
+        // Sorts dataset by alphabetical order of title
+        const sortedDatasets = computed(() => {
+            return datasets.value.sort((a, b) => {
+                return a.title.localeCompare(b.title)
+            })
+        });
+
         // Methods
 
         // Load catalogue from JSON file
@@ -138,11 +146,13 @@ export default defineComponent({
         const searchCatalogue = async () => {
             // Enable the button loading animation
             loadingBoolean.value = true;
+            // Build bbox array
+            const bboxArray = bbox.value ? bbox.value.split(',').map(Number) : null;
             // Build data object to pass to backend
             const data = {
                 url: catalogueUrl.value,
                 query: query.value,
-                bbox: bbox.value
+                bbox: bboxArray
             }
             // Query the catalogue and write the results to JSON file
             await window.electronAPI.searchCatalogue(data)
@@ -150,6 +160,8 @@ export default defineComponent({
             // Delay loading of JSON file to allow time for the backend
             setTimeout(() => {
                 loadCatalogue();
+                // Display table
+                tableBoolean.value = true;
                 // Disable loading animation of button
                 loadingBoolean.value = false;
             }, 1000);
@@ -167,10 +179,11 @@ export default defineComponent({
             query,
             bbox,
             loadingBoolean,
+            tableBoolean,
             catalogueBoolean,
             selectedItem,
             dialog,
-            datasets,
+            sortedDatasets,
             searchCatalogue,
             openDialog
         }
@@ -179,4 +192,8 @@ export default defineComponent({
 
 </script>
 
-<style scoped></style>
+<style scoped>
+.clickable-row {
+    cursor: pointer;
+}
+</style>

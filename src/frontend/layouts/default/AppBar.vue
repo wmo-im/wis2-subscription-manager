@@ -29,7 +29,7 @@ import { VAppBar, VBtn } from 'vuetify/lib/components/index.mjs';
 
 .explore-button {
   -webkit-app-region: no-drag;
-  margin-left: 10px;
+  margin-left: 15px;
 }
 
 .draggable {

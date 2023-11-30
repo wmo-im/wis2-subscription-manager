@@ -93,9 +93,7 @@
                     <v-card>
                         <v-card-title>
                             Save Configuration
-                            <v-btn icon variant="text" class="close-button" @click="showSaveDialog = false">
-                                <v-icon>mdi-close</v-icon>
-                            </v-btn>
+                            <v-btn icon="mdi-close" variant="text" class="close-button" @click="showSaveDialog = false" />
                         </v-card-title>
                         <v-text-field v-model="configName" label="Configuration Name"></v-text-field>
                         <v-card-actions>
