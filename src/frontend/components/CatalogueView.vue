@@ -5,7 +5,7 @@
                 <v-card-title class="big-title">Search a WIS2 Global Discovery Catalogue</v-card-title>
 
                 <v-card-item>
-                    <v-row>
+                    <v-row dense>
                         <v-col cols="4">
                             <v-select v-model="selectedCatalogue" :items="catalogueList"
                                 label="Choose a catalogue"></v-select>
@@ -20,7 +20,8 @@
                         </v-col>
                         <v-col cols="1">
                             <v-btn @click="searchCatalogue" icon="mdi-cloud-search" color="#003DA5" variant="flat"
-                                :disabled="!catalogueBoolean" :loading="loadingBoolean"></v-btn>
+                                :disabled="!catalogueBoolean" :loading="loadingBoolean"
+                                class="mx-3"></v-btn>
                         </v-col>
                     </v-row>
                 </v-card-item>
