@@ -15,8 +15,8 @@
                                 clearable></v-text-field>
                         </v-col>
                         <v-col cols="3">
-                            <v-text-field v-model="bbox" label="Bounding box" hint="Optional" persistent-hint
-                                clearable></v-text-field>
+                            <v-select v-model="country" :items="countryList"
+                            item-title="country" item-value="code" label="Country" hint="Optional" persistent-hint></v-select>
                         </v-col>
                         <v-col cols="1">
                             <v-btn @click="searchCatalogue" icon="mdi-cloud-search" color="#003DA5" variant="flat"
@@ -32,7 +32,7 @@
                         <thead>
                             <tr>
                                 <th class="text-left">
-                                    Datasets Found
+                                    Discovery Metadata Records Found
                                 </th>
                             </tr>
                         </thead>
@@ -109,7 +109,8 @@ export default defineComponent({
         // Reactive variables
         const selectedCatalogue = ref('');
         const query = ref(null);
-        const bbox = ref(null);
+        const countryList = ref([]);
+        const country = ref(null);
         const datasets = ref([]);
         const loadingBoolean = ref(false);
         const tableBoolean = ref(false);
@@ -137,6 +138,25 @@ export default defineComponent({
 
         // Methods
 
+        // Load country code mappings from JSON file
+        const loadCountries = async () => {
+            try {
+                const response = await fetch('backend/country_codes.json');
+                if (!response.ok) {
+                    throw new Error('Failed to load country codes')
+                }
+                const mappings = await response.json();
+                // Build object containing country names and codes
+                countryList.value = Object.entries(mappings).map(([key, value]) => ({ country: key, code: value }));
+                // Order this by alphabetical order of country name
+                countryList.value.sort((a, b) => {
+                    return a.country.localeCompare(b.country)
+                })
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
         // Load catalogue from JSON file
         const loadCatalogue = async () => {
             // Load the datasets from the JSON file
@@ -147,13 +167,11 @@ export default defineComponent({
         const searchCatalogue = async () => {
             // Enable the button loading animation
             loadingBoolean.value = true;
-            // Build bbox array
-            const bboxArray = bbox.value ? bbox.value.split(',').map(Number) : null;
             // Build data object to pass to backend
             const data = {
                 url: catalogueUrl.value,
                 query: query.value,
-                bbox: bboxArray
+                country: country.value
             }
             // Query the catalogue and write the results to JSON file
             await window.electronAPI.searchCatalogue(data)
@@ -174,11 +192,17 @@ export default defineComponent({
             dialog.value = true;
         }
 
+        // Mounted methods
+        onMounted(() => {
+            loadCountries();
+        })
+
         return {
             catalogueList,
             selectedCatalogue,
             query,
-            bbox,
+            country,
+            countryList,
             loadingBoolean,
             tableBoolean,
             catalogueBoolean,

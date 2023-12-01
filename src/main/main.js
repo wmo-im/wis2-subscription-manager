@@ -116,9 +116,9 @@ ipcMain.handle("search-catalogue", async (event, data) => {
       args.push('--query');
       args.push(data.query);
     }
-    if (data.bbox) {
-      args.push('--bbox');
-      args.push(data.bbox[0], data.bbox[1], data.bbox[2], data.bbox[3]);
+    if (data.country) {
+      args.push('--country');
+      args.push(data.country);
     }
 
     // Start backend executable with arguments

@@ -3,168 +3,168 @@
         "id": "urn:x-wmo:md:lby:ly:surface-weather-observations",
         "center_id": "lby",
         "title": "Surface weather observations from libya",
-        "topic_hierarchy": "lby/ly/data/core/weather/surface-based-observations/synop",
         "creation_date": "2023-08-22T15:42:09Z",
+        "topic_hierarchy": "cache/a/wis2/lby/ly/data/core/weather/surface-based-observations/synop",
         "data_policy": "core"
     },
     {
         "id": "mwi.malawi_met_service.data.core.weather.surface-based-observations.synop",
         "center_id": "core",
         "title": "Surface weather observations from Malawi",
-        "topic_hierarchy": "mwi/malawi_met_service/data/core/weather/surface-based-observations/synop",
         "creation_date": "2023-07-17T06:55:08Z",
+        "topic_hierarchy": "cache/a/wis2/mwi/malawi_met_service/data/core/weather/surface-based-observations/synop",
         "data_policy": "core"
     },
     {
         "id": "urn:x-wmo:md:mar:casablanca_met_centre:surface-based-observations.synop",
         "center_id": "mar",
         "title": "Hourly synoptic observations from fixed-land stations (SYNOP) (Morocco)",
-        "topic_hierarchy": "origin/a/wis2/mar/casablanca_met_centre/data/core/weather/surface-based-observations/synop",
         "creation_date": "2023-10-17T09:28:58Z",
+        "topic_hierarchy": "cache/a/wis2/mar/casablanca_met_centre/data/core/weather/surface-based-observations/synop",
         "data_policy": "core"
     },
     {
         "id": "urn:x-wmo:md:dza:dz_met_office:surface-based-observations.synop",
         "center_id": "dza",
         "title": "Hourly synoptic observations from fixed-land stations (SYNOP) (Algeria)",
-        "topic_hierarchy": "dza/dz_met_office/data/core/weather/surface-based-observations/synop",
         "creation_date": "2023-11-20T18:22:43Z",
+        "topic_hierarchy": "cache/a/wis2/dza/dz_met_office/data/core/weather/surface-based-observations/synop",
         "data_policy": "core"
     },
     {
         "id": "urn:x-wmo:md:arg:sabm:surface-weather-observations",
         "center_id": "arg",
         "title": "Surface weather observations from Argentina",
-        "topic_hierarchy": "arg/sabm/data/core/weather/surface-based-observations/synop",
         "creation_date": "2023-03-29T21:27:36Z",
+        "topic_hierarchy": "cache/a/wis2/arg/sabm/data/core/weather/surface-based-observations/synop",
         "data_policy": "core"
     },
     {
         "id": "urn:x-wmo:md:swz:eswatini_met_service:surface-weather-observations",
         "center_id": "swz",
         "title": "Surface weather observations from swz.eswatini_met_service",
-        "topic_hierarchy": "swz/eswatini_met_service/data/core/weather/surface-based-observations/synop",
         "creation_date": "2023-05-04T11:47:34Z",
+        "topic_hierarchy": "cache/a/wis2/swz/eswatini_met_service/data/core/weather/surface-based-observations/synop",
         "data_policy": "core"
     },
     {
         "id": "urn:x-wmo:md:ind:india_met_centre:upperair-weather-observations",
         "center_id": "ind",
         "title": "Upper-air weather observations from India",
-        "topic_hierarchy": "ind/india_met_centre/data/core/weather/surface-based-observations/temp",
         "creation_date": "2023-08-21T12:12:27Z",
+        "topic_hierarchy": "cache/a/wis2/ind/india_met_centre/data/core/weather/surface-based-observations/temp",
         "data_policy": "core"
     },
     {
         "id": "urn:x-wmo:md:pol.poland:surface-weather-observations",
         "center_id": "pol.poland",
         "title": "Surface weather observations from pol.poland",
-        "topic_hierarchy": "pol/poland/data/core/weather/surface-based-observations/synop",
         "creation_date": "2023-04-20T13:16:10Z",
+        "topic_hierarchy": "cache/a/wis2/pol/poland/data/core/weather/surface-based-observations/synop",
         "data_policy": "core"
     },
     {
         "id": "urn:x-wmo:md:cog:brazza_met_centre:surface-weather-observations",
         "center_id": "cog",
         "title": "Surface weather observations from Congo",
-        "topic_hierarchy": "cog/brazza_met_centre/data/core/weather/surface-based-observations/synop",
         "creation_date": "2023-10-27T18:13:09Z",
+        "topic_hierarchy": "cache/a/wis2/cog/brazza_met_centre/data/core/weather/surface-based-observations/synop",
         "data_policy": "core"
     },
     {
         "id": "urn:x-wmo:md:rus:aviamettelecom:temp-weather-observations",
         "center_id": "rus",
         "title": "Upper air weather observations from Russian Federation",
-        "topic_hierarchy": "rus/aviamettelecom/data/core/weather/surface-based-observations/temp",
         "creation_date": "2023-05-04T13:05:10Z",
+        "topic_hierarchy": "cache/a/wis2/rus/aviamettelecom/data/core/weather/surface-based-observations/temp",
         "data_policy": "core"
     },
     {
         "id": "urn:x-wmo:md:ken:ken_met_centre:surface-weather-observations",
         "center_id": "ken",
         "title": "Surface weather observations from Kenya",
-        "topic_hierarchy": "ken/ken_met_centre/data/core/weather/surface-based-observations/synop",
         "creation_date": "2023-05-31T07:57:23Z",
+        "topic_hierarchy": "cache/a/wis2/ken/ken_met_centre/data/core/weather/surface-based-observations/synop",
         "data_policy": "core"
     },
     {
         "id": "urn:x-wmo:md:kor:kma:surface-based-observations.temp",
         "center_id": "kor",
         "title": "Upper-level temperature/humidity/wind reports from fixed-land stations (TEMP) (South Korea)",
-        "topic_hierarchy": "origin/a/wis2/kor/kma/data/core/weather/surface-based-observations/temp",
         "creation_date": "2023-11-14T06:47:44Z",
+        "topic_hierarchy": "cache/a/wis2/kor/kma/data/core/weather/surface-based-observations/temp",
         "data_policy": "core"
     },
     {
         "id": "urn:x-wmo:md:cub:insmet:surface-hourly-observations",
         "center_id": "cub",
         "title": "Surface hourly observations from Cuba(INSMET)",
-        "topic_hierarchy": "cub/insmet/data/core/weather/surface-based-observations/hourly",
         "creation_date": "2023-10-03T19:24:58Z",
+        "topic_hierarchy": "cache/a/wis2/cub/insmet/data/core/weather/surface-based-observations/hourly",
         "data_policy": "core"
     },
     {
         "id": "urn:x-wmo:md:nam:namibia_met_service:surface-weather-observations-temp",
         "center_id": "nam",
         "title": "Upper-air weather observations from Namibia",
-        "topic_hierarchy": "nam/namibia_met_service/data/core/weather/surface-based-observations/temp",
         "creation_date": "2023-07-04T08:01:21Z",
+        "topic_hierarchy": "cache/a/wis2/nam/namibia_met_service/data/core/weather/surface-based-observations/temp",
         "data_policy": "core"
     },
     {
         "id": "urn:x-wmo:md:idn:bmkg:surface-based-observations.synop",
         "center_id": "idn",
         "title": "Hourly synoptic observations from fixed-land stations (SYNOP) (Indonesia|BMKG)",
-        "topic_hierarchy": "origin/a/wis2/idn/bmkg/data/core/weather/surface-based-observations/synop",
         "creation_date": "2023-10-12T05:32:53Z",
+        "topic_hierarchy": "cache/a/wis2/idn/bmkg/data/core/weather/surface-based-observations/synop",
         "data_policy": "core"
     },
     {
         "id": "urn:x-wmo:md:cmr:yaounde_met_centre:surface-weather-observations",
         "center_id": "cmr",
         "title": "Surface weather observations from cmr.yaounde_met_centre",
-        "topic_hierarchy": null,
         "creation_date": "2023-01-31",
+        "topic_hierarchy": "cache/a/wis2/cmr/yaounde_met_centre/data/core/weather/surface-based-observations/synop",
         "data_policy": "core"
     },
     {
         "id": "urn:x-wmo:md:blz:nmsbelize:surface-based-observations.synop",
         "center_id": "blz",
         "title": "Hourly synoptic observations from fixed-land stations (SYNOP) (Belize)",
-        "topic_hierarchy": "origin/a/wis2/blz/nmsbelize/data/core/weather/surface-based-observations/synop",
         "creation_date": "2023-10-31T15:00:57Z",
+        "topic_hierarchy": "cache/a/wis2/blz/nmsbelize/data/core/weather/surface-based-observations/synop",
         "data_policy": "core"
     },
     {
         "id": "urn:x-wmo:md:msr:montserrat:surface-based-observations.synop",
         "center_id": "msr",
         "title": "Hourly synoptic observations from fixed-land stations (SYNOP) (Monserrat)",
-        "topic_hierarchy": "origin/a/wis2/msr/montserrat/data/core/weather/surface-based-observations/synop",
         "creation_date": "2023-11-09T23:12:51Z",
+        "topic_hierarchy": "cache/a/wis2/msr/montserrat/data/core/weather/surface-based-observations/synop",
         "data_policy": "core"
     },
     {
         "id": "urn:x-wmo:md:usa:synoptic_data_pbc:surface-weather-observations",
         "center_id": "usa",
         "title": "Surface weather observations from USA",
-        "topic_hierarchy": "usa/synoptic_data_pbc/data/core/weather/surface-based-observations/synop",
         "creation_date": "2023-05-19T13:38:31Z",
+        "topic_hierarchy": "cache/a/wis2/usa/synoptic_data_pbc/data/core/weather/surface-based-observations/synop",
         "data_policy": "core"
     },
     {
         "id": "urn:x-wmo:md:ury:uruguay_inumet:surface-weather-observations",
         "center_id": "ury",
         "title": "Surface weather observations from Uruguay - Inumet",
-        "topic_hierarchy": "ury/uruguay_inumet/data/core/weather/surface-based-observations/synop",
         "creation_date": "2023-09-21T17:14:46Z",
+        "topic_hierarchy": "cache/a/wis2/ury/uruguay_inumet/data/core/weather/surface-based-observations/synop",
         "data_policy": "core"
     },
     {
         "id": "urn:x-wmo:md:zwe:zimbabwe_met_service:surface-weather-observations",
         "center_id": "zwe",
         "title": "Surface weather observations from Zimbabwe",
-        "topic_hierarchy": "origin/a/wis2/zwe/zimbabwe_met_service/data/core/weather/surface-based-observations/synop",
         "creation_date": "2023-10-04T18:21:01Z",
+        "topic_hierarchy": "cache/a/wis2/zwe/zimbabwe_met_service/data/core/weather/surface-based-observations/synop",
         "data_policy": "core"
     }
 ]
