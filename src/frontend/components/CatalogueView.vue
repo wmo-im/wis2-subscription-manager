@@ -64,8 +64,18 @@
                                 </template>
                             </v-table>
                             <v-card-actions>
-                                <v-btn color="#64BF40" variant="flat" block>
-                                    Add Dataset to Subscription</v-btn>
+                                <v-row>
+                                    <v-col cols="6">
+                                        <v-btn color="#E09D00" variant="flat" block
+                                        @click="openJSON(selectedItem.id)">
+                                            View JSON
+                                        </v-btn>
+                                    </v-col>
+                                    <v-col cols="6">
+                                        <v-btn color="#64BF40" variant="flat" block>
+                                            Add Dataset to Subscription</v-btn>
+                                    </v-col>
+                                </v-row>
                             </v-card-actions>
                         </v-card>
                     </v-dialog>
@@ -192,6 +202,12 @@ export default defineComponent({
             dialog.value = true;
         }
 
+        // Opens JSON of dataset metadata
+        const openJSON = (id) => {
+            const url = `https://api.weather.gc.ca/collections/wis2-discovery-metadata/items/${id}?f=json`;
+            window.open(url, '_blank');
+        }
+
         // Mounted methods
         onMounted(() => {
             loadCountries();
@@ -210,7 +226,8 @@ export default defineComponent({
             dialog,
             sortedDatasets,
             searchCatalogue,
-            openDialog
+            openDialog,
+            openJSON
         }
     }
 })
