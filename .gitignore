@@ -93,3 +93,6 @@ out/
 
 # Conifg files
 backend/configs/*.json
+
+# GDC files
+backend/datasets.json
