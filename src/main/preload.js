@@ -16,7 +16,6 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 // Expose to renderer to the methods defined in the main process
 contextBridge.exposeInMainWorld('electronAPI', {
-  searchCatalogue: (query) => ipcRenderer.invoke('search-catalogue', query),
   loadConfigNames: () => ipcRenderer.invoke('load-config-names'),
   loadConfig: (config) => ipcRenderer.invoke('load-config', config),
   syncBrokers: () => ipcRenderer.send('sync-brokers'),

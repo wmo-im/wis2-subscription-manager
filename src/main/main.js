@@ -50,15 +50,6 @@ const createWindow = () => {
     mainWindow.hide();
   });
 
-  mainWindow.on('close', function (event) {
-      if(!app.isQuiting){
-          event.preventDefault();
-          mainWindow.hide();
-      }
-
-      return false;
-  });
-
   // Set app icon in the tray
   var appIcon = null;
   appIcon = new Tray("public/assets/logo-small.png")
@@ -101,50 +92,6 @@ app.on("activate", () => {
 });
 
 // Inter-process communication setup (IPC)
-
-// Handler for accessing the global discovery catalogue
-// using the catalogue-backend executable, with arguments
-// url, query (the search term), and bbox (the bounding box)
-// We name this 'search-catalogue' to be referenced elsewhere
-ipcMain.handle("search-catalogue", async (event, data) => {
-  try {
-    const backendPath = 'backend/catalogue-backend.exe';
-
-    // Build arguments array
-    const args = ['--url', data.url];
-    if (data.query) {
-      args.push('--query');
-      args.push(data.query);
-    }
-    if (data.country) {
-      args.push('--country');
-      args.push(data.country);
-    }
-
-    // Start backend executable with arguments
-    const backendProcess = spawn(backendPath, args,
-    { windowsHide: true });
-    // Log stdout data
-    backendProcess.stdout.on('data', (data) => {
-      console.log(`stdout: ${data}`);
-    });
-    // Log stderr data
-    backendProcess.stderr.on('data', (data) => {
-      console.error(`stderr: ${data}`);
-    });
-    // Log exit code
-    backendProcess.on('close', (code) => {
-      console.log(`Catalogue search process exited with code ${code}`);
-    });
-    // Return a message to the frontend
-    return { status: 'Catalogue search started' };
-  }
-  catch (error) {
-    console.error("Error in search-catalogue:", error);
-    // Return a message to the frontend
-    return { status: 'Error starting catalogue search', errorMessage: error.message };
-  }
-});
 
 // Handler for loading the configuration names
 // We name this 'load-config-names' to be referenced elsewhere

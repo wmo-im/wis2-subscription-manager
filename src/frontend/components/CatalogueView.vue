@@ -11,12 +11,12 @@
                                 label="Choose a catalogue"></v-select>
                         </v-col>
                         <v-col cols="4">
-                            <v-text-field v-model="query" label="Search for a dataset" hint="Optional" persistent-hint
+                            <v-text-field v-model="searchedTitle" label="Enter a title" hint="Optional" persistent-hint
                                 clearable></v-text-field>
                         </v-col>
                         <v-col cols="3">
-                            <v-select v-model="country" :items="countryList" item-title="country" item-value="code"
-                                label="Country" hint="Optional" persistent-hint></v-select>
+                            <v-text-field v-model="query" label="Search the catalogue" hint="Optional" persistent-hint
+                                clearable></v-text-field>
                         </v-col>
                         <v-col cols="1">
                             <v-btn @click="searchCatalogue" icon="mdi-cloud-search" color="#003DA5" variant="flat"
@@ -63,7 +63,8 @@
                             <v-card-actions>
                                 <v-row>
                                     <v-col cols="6">
-                                        <v-btn color="#E09D00" variant="flat" block @click="openJSON(selectedItem.id)">
+                                        <v-btn color="#E09D00" variant="flat" block
+                                            @click="openJSON(selectedItem.identifier)" :loading="loadingJsonBoolean">
                                             View JSON
                                         </v-btn>
                                     </v-col>
@@ -76,6 +77,18 @@
                         </v-card>
                     </v-dialog>
 
+                    <!-- Dialog to display the whole JSON object -->
+                    <v-dialog v-model="jsonDialog" transition="dialog-bottom-transition"
+                    max-height="600px" scrollable>
+                        <v-card>
+                            <v-toolbar :title="selectedItem.title" color="#003DA5">
+                                <v-btn icon="mdi-close" variant="text" @click="jsonDialog = false" />
+                            </v-toolbar>
+                            <v-card-text>
+                                <pre>{{ formattedJson }}</pre>
+                            </v-card-text>
+                        </v-card>
+                    </v-dialog>
                 </v-card-item>
             </v-card>
         </v-col>
@@ -114,14 +127,16 @@ export default defineComponent({
 
         // Reactive variables
         const selectedCatalogue = ref('');
+        const searchedTitle = ref(null);
         const query = ref(null);
-        const countryList = ref([]);
-        const country = ref(null);
         const datasets = ref([]);
         const loadingBoolean = ref(false);
         const tableBoolean = ref(false);
         const selectedItem = ref(null);
         const dialog = ref(false);
+        const formattedJson = ref(null);
+        const loadingJsonBoolean = ref(false);
+        const jsonDialog = ref(false);
 
         // Computed properties
 
@@ -137,63 +152,88 @@ export default defineComponent({
 
         // Methods
 
-        // Load country code mappings from JSON file
-        const loadCountries = async () => {
-            try {
-                const response = await fetch('backend/country_codes.json');
-                if (!response.ok) {
-                    throw new Error('Failed to load country codes')
-                }
-                const mappings = await response.json();
-                // Build object containing country names and codes
-                countryList.value = Object.entries(mappings).map(([key, value]) => ({ country: key, code: value }));
-                // Order this by alphabetical order of country name
-                countryList.value.sort((a, b) => {
-                    return a.country.localeCompare(b.country)
-                })
-            } catch (error) {
-                console.error(error);
-            }
-        }
-
-        // Load catalogue from JSON file
-        const loadCatalogue = async () => {
-            try {
-                const response = await fetch('backend/datasets.json');
-                if (!response.ok) {
-                    throw new Error('Failed to load datasets')
-                }
-                datasets.value = await response.json();
-                // Order this by alphabetical order of title
-                datasets.value.sort((a, b) => {
-                    return a.title.localeCompare(b.title)
-                })
-            } catch (error) {
-                console.error(error);
-            }
-        }
-
         // Search the catalogue
         const searchCatalogue = async () => {
             // Enable the button loading animation
             loadingBoolean.value = true;
-            // Build data object to pass to backend
-            const data = {
-                url: catalogueUrl.value,
-                query: query.value,
-                country: country.value
-            }
-            // Query the catalogue and write the results to JSON file
-            await window.electronAPI.searchCatalogue(data)
 
-            // Delay loading of JSON file to allow time for the backend
-            setTimeout(() => {
-                loadCatalogue();
-                // Display table
-                tableBoolean.value = true;
-                // Disable loading animation of button
-                loadingBoolean.value = false;
-            }, 1000);
+            // Query the catalogue and write the results to JSON file
+            const params = new URLSearchParams();
+            // Add searched title if it exists
+            if (searchedTitle.value) {
+                params.append('title', searchedTitle.value);
+            }
+            // Add query if it exists
+            if (query.value) {
+                params.append('q', query.value);
+            }
+
+            // Query the catalogue
+            const response = await fetch(`${catalogueUrl.value}?${params}`);
+            if (!response.ok) {
+                throw new Error('Failed to query catalogue')
+            }
+            const items = await response.json();
+            const features = items.features;
+
+            if (features) {
+                datasets.value = features.map(item => {
+                    const properties = item.properties || {};
+
+                    // Extract features from properties
+                    const identifier = properties.identifier;
+                    const title = properties.title;
+                    const creation_date = properties.created;
+                    const data_policy = properties['wmo:dataPolicy']
+
+                    // Initiate other features we want to extract
+                    let topic_hierarchy = null;
+                    let center_id = null;
+
+                    // The topic hierarchy is found in the 'channel'
+                    // property in 'links' where the 'rel' is 'items'
+                    // and the href starts with 'mqtt'
+                    for (const link of item.links || []) {
+                        if (link.rel === 'items' && link.href.startsWith('mqtt')) {
+                            topic_hierarchy = link.channel;
+                            // Once found, exit loop
+                            break;
+                        }
+                    }
+
+                    // Get the center ID from the identifier,
+                    // depending on the structure of the identifier
+                    if (identifier) {
+                        if (identifier.includes(':')) {
+                            const tokens = identifier.split(':');
+                            center_id = tokens.length < 5 ? tokens[1] : tokens[3];
+                        }
+                        else {
+                            const tokens = identifier.split('.');
+                            center_id = tokens[1];
+                        }
+                    }
+
+                    return {
+                        identifier: identifier,
+                        center_identifier: center_id,
+                        title: title,
+                        creation_date: creation_date,
+                        topic_hierarchy: topic_hierarchy,
+                        data_policy: data_policy,
+                    }
+                })
+            }
+
+            // Order this by alphabetical order of title
+            datasets.value.sort((a, b) => {
+                return a.title.localeCompare(b.title)
+            })
+
+            // Display table
+            tableBoolean.value = true;
+            // Disable loading animation of button
+            loadingBoolean.value = false;
         }
 
         // Open the dialog to display dataset metadata
@@ -214,22 +254,29 @@ export default defineComponent({
         }
 
         // Opens JSON of dataset metadata
-        const openJSON = (id) => {
-            const url = `https://api.weather.gc.ca/collections/wis2-discovery-metadata/items/${id}?f=json`;
-            window.open(url, '_blank');
-        }
+        const openJSON = async (id) => {
+            // Enable the button loading animation
+            loadingJsonBoolean.value = true;
 
-        // Mounted methods
-        onMounted(() => {
-            loadCountries();
-        })
+            const url = `https://api.weather.gc.ca/collections/wis2-discovery-metadata/items/${id}?f=json`;
+
+            // Format the JSON content
+            const response = await fetch(url);
+            const data = await response.json();
+            formattedJson.value = JSON.stringify(data, null, 1);
+
+            // Open the dialog screen
+            jsonDialog.value = true;
+
+            // Disable loading animation of button
+            loadingJsonBoolean.value = false;
+        }
 
         return {
             catalogueList,
             selectedCatalogue,
+            searchedTitle,
             query,
-            country,
-            countryList,
             datasets,
             loadingBoolean,
             tableBoolean,
@@ -239,7 +286,10 @@ export default defineComponent({
             searchCatalogue,
             openDialog,
             formatKey,
-            openJSON
+            openJSON,
+            formattedJson,
+            loadingJsonBoolean,
+            jsonDialog
         }
     }
 })
