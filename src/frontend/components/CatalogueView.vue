@@ -15,13 +15,12 @@
                                 clearable></v-text-field>
                         </v-col>
                         <v-col cols="3">
-                            <v-select v-model="country" :items="countryList"
-                            item-title="country" item-value="code" label="Country" hint="Optional" persistent-hint></v-select>
+                            <v-select v-model="country" :items="countryList" item-title="country" item-value="code"
+                                label="Country" hint="Optional" persistent-hint></v-select>
                         </v-col>
                         <v-col cols="1">
                             <v-btn @click="searchCatalogue" icon="mdi-cloud-search" color="#003DA5" variant="flat"
-                                :disabled="!catalogueBoolean" :loading="loadingBoolean"
-                                class="mx-3"></v-btn>
+                                :disabled="!catalogueBoolean" :loading="loadingBoolean" class="mx-3"></v-btn>
                         </v-col>
                     </v-row>
                 </v-card-item>
@@ -37,8 +36,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="item in datasets" :key="item.title" @click="openDialog(item)"
-                                class="clickable-row">
+                            <tr v-for="item in datasets" :key="item.title" @click="openDialog(item)" class="clickable-row">
                                 <td>
                                     {{ item.title }}
                                 </td>
@@ -47,18 +45,16 @@
                     </v-table>
 
                     <!-- Dialog to display dataset metadata -->
-                    <v-dialog v-model="dialog"
-                    transition="dialog-bottom-transition">
+                    <v-dialog v-model="dialog" transition="dialog-bottom-transition">
                         <v-card class="overflow-hidden">
-                            <v-toolbar :title="selectedItem.title"
-                            color="#003DA5">
+                            <v-toolbar :title="selectedItem.title" color="#003DA5">
                                 <v-btn icon="mdi-close" variant="text" @click="dialog = false" />
                             </v-toolbar>
                             <v-table density="comfortable" class="my-4">
                                 <template v-for="(value, key) in selectedItem">
                                     <tbody>
                                         <tr v-if="key !== 'title'">
-                                            <td><b>{{ key }}</b></td>
+                                            <td><b>{{ formatKey(key) }}</b></td>
                                             <td>{{ value }}</td>
                                         </tr>
                                     </tbody>
@@ -67,8 +63,7 @@
                             <v-card-actions>
                                 <v-row>
                                     <v-col cols="6">
-                                        <v-btn color="#E09D00" variant="flat" block
-                                        @click="openJSON(selectedItem.id)">
+                                        <v-btn color="#E09D00" variant="flat" block @click="openJSON(selectedItem.id)">
                                             View JSON
                                         </v-btn>
                                     </v-col>
@@ -207,6 +202,17 @@ export default defineComponent({
             dialog.value = true;
         }
 
+        // Format the key to be more readable
+        const formatKey = (key) => {
+            return key
+                // Replace underscores with spaces
+                .replace(/_/g, ' ')
+                // Capitalize the first letter of each word
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+        }
+
         // Opens JSON of dataset metadata
         const openJSON = (id) => {
             const url = `https://api.weather.gc.ca/collections/wis2-discovery-metadata/items/${id}?f=json`;
@@ -232,6 +238,7 @@ export default defineComponent({
             dialog,
             searchCatalogue,
             openDialog,
+            formatKey,
             openJSON
         }
     }
