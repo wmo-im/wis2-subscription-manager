@@ -37,7 +37,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="item in sortedDatasets" :key="item.title" @click="openDialog(item)"
+                            <tr v-for="item in datasets" :key="item.title" @click="openDialog(item)"
                                 class="clickable-row">
                                 <td>
                                     {{ item.title }}
@@ -47,12 +47,13 @@
                     </v-table>
 
                     <!-- Dialog to display dataset metadata -->
-                    <v-dialog v-model="dialog" max-width="900px">
-                        <v-card>
-                            <v-card-title>
-                                {{ selectedItem.title }}
-                                <v-btn icon="mdi-close" variant="text" class="close-button" @click="dialog = false" />
-                            </v-card-title>
+                    <v-dialog v-model="dialog"
+                    transition="dialog-bottom-transition">
+                        <v-card class="overflow-hidden">
+                            <v-toolbar :title="selectedItem.title"
+                            color="#003DA5">
+                                <v-btn icon="mdi-close" variant="text" @click="dialog = false" />
+                            </v-toolbar>
                             <v-table density="comfortable" class="my-4">
                                 <template v-for="(value, key) in selectedItem">
                                     <tbody>
@@ -139,13 +140,6 @@ export default defineComponent({
             return catalogueMap[selectedCatalogue.value]
         })
 
-        // Sorts dataset by alphabetical order of title
-        const sortedDatasets = computed(() => {
-            return datasets.value.sort((a, b) => {
-                return a.title.localeCompare(b.title)
-            })
-        });
-
         // Methods
 
         // Load country code mappings from JSON file
@@ -169,8 +163,19 @@ export default defineComponent({
 
         // Load catalogue from JSON file
         const loadCatalogue = async () => {
-            // Load the datasets from the JSON file
-            datasets.value = await window.electronAPI.loadCatalogue()
+            try {
+                const response = await fetch('backend/datasets.json');
+                if (!response.ok) {
+                    throw new Error('Failed to load datasets')
+                }
+                datasets.value = await response.json();
+                // Order this by alphabetical order of title
+                datasets.value.sort((a, b) => {
+                    return a.title.localeCompare(b.title)
+                })
+            } catch (error) {
+                console.error(error);
+            }
         }
 
         // Search the catalogue
@@ -219,12 +224,12 @@ export default defineComponent({
             query,
             country,
             countryList,
+            datasets,
             loadingBoolean,
             tableBoolean,
             catalogueBoolean,
             selectedItem,
             dialog,
-            sortedDatasets,
             searchCatalogue,
             openDialog,
             openJSON

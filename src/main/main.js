@@ -146,24 +146,6 @@ ipcMain.handle("search-catalogue", async (event, data) => {
   }
 });
 
-// Handler for loading the latest catalogue search results from
-// datasets.json and returning it to the frontend
-// We name this 'load-catalogue' to be referenced elsewhere
-ipcMain.handle("load-catalogue", async (event) => {
-  try {
-    const filePath = 'backend/datasets.json';
-    // Read the datasets file
-    const datasetsJSON = fs.readFileSync(filePath, 'utf8');
-    // Parse the datasets file
-    const datasetsData = JSON.parse(datasetsJSON);
-    // Return the datasets file
-    return datasetsData;
-  }
-  catch (error) {
-    console.error("Error in load-catalogue:", error.message);
-  }
-});
-
 // Handler for loading the configuration names
 // We name this 'load-config-names' to be referenced elsewhere
 ipcMain.handle("load-config-names", async (event) => {
