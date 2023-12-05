@@ -27,7 +27,7 @@
 
                 <!-- Display catalogue datasets searched by user -->
                 <v-card-item>
-                    <v-table v-if="tableBoolean === true" hover="true">
+                    <v-table v-if="tableBoolean === true" :hover="true">
                         <thead>
                             <tr>
                                 <th class="text-left">
@@ -39,6 +39,10 @@
                             <tr v-for="item in datasets" :key="item.title" @click="openDialog(item)" class="clickable-row">
                                 <td>
                                     {{ item.title }}
+                                </td>
+                                <td class="check-mark">
+                                    <v-icon v-if="selectedTopics.includes(item.topic_hierarchy)"
+                                    icon="mdi-check-circle" />
                                 </td>
                             </tr>
                         </tbody>
@@ -69,7 +73,8 @@
                                         </v-btn>
                                     </v-col>
                                     <v-col cols="6">
-                                        <v-btn color="#64BF40" variant="flat" block>
+                                        <v-btn color="#64BF40" variant="flat" block
+                                        @click="addToSubscription(selectedItem.topic_hierarchy)">
                                             Add Dataset to Subscription</v-btn>
                                     </v-col>
                                 </v-row>
@@ -137,6 +142,7 @@ export default defineComponent({
         const formattedJson = ref(null);
         const loadingJsonBoolean = ref(false);
         const jsonDialog = ref(false);
+        const selectedTopics = ref([]);
 
         // Computed properties
 
@@ -200,6 +206,8 @@ export default defineComponent({
                             break;
                         }
                     }
+
+
 
                     // Get the center ID from the identifier,
                     // depending on the structure of the identifier
@@ -272,6 +280,16 @@ export default defineComponent({
             loadingJsonBoolean.value = false;
         }
 
+        // When the user clicks 'Add dataset to subscription', add the
+        // associated topic to an array which will be parsed to the Electron API
+        const addToSubscription = (topic) => {
+            console.log("Adding topic to subscription: " + topic)
+            // Make sure there are no duplicates
+            if (!selectedTopics.value.includes(topic)) {
+                selectedTopics.value.push(topic);
+            }
+        }
+
         return {
             catalogueList,
             selectedCatalogue,
@@ -289,7 +307,9 @@ export default defineComponent({
             openJSON,
             formattedJson,
             loadingJsonBoolean,
-            jsonDialog
+            jsonDialog,
+            selectedTopics,
+            addToSubscription
         }
     }
 })
@@ -299,5 +319,10 @@ export default defineComponent({
 <style scoped>
 .clickable-row {
     cursor: pointer;
+}
+
+.check-mark {
+    text-align: right;
+    vertical-align: middle;
 }
 </style>
