@@ -1,7 +1,10 @@
-{
-    "brokers": [
-        "gb.wis.cma.cn",
-        "globalbroker.meteo.fr"
-    ],
-    "sync_time": "2023-11-29 12:16:05"
-}
+[
+  {
+    "title": "China Meteorological Agency Global Broker",
+    "url": "gb.wis.cma.cn"
+  },
+  {
+    "title": "Météo-France Global Broker",
+    "url": "globalbroker.meteo.fr"
+  }
+]

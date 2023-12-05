@@ -8,6 +8,7 @@
                     <v-row dense>
                         <v-col cols="4">
                             <v-select v-model="selectedCatalogue" :items="catalogueList"
+                            item-title="title" item-value="url"
                                 label="Choose a catalogue"></v-select>
                         </v-col>
                         <v-col cols="4">
@@ -41,8 +42,7 @@
                                     {{ item.title }}
                                 </td>
                                 <td class="check-mark">
-                                    <v-icon v-if="selectedTopics.includes(item.topic_hierarchy)"
-                                    icon="mdi-check-circle" />
+                                    <v-icon v-if="selectedTopics.includes(item.topic_hierarchy)" icon="mdi-check-circle" />
                                 </td>
                             </tr>
                         </tbody>
@@ -74,7 +74,7 @@
                                     </v-col>
                                     <v-col cols="6">
                                         <v-btn color="#64BF40" variant="flat" block
-                                        @click="addToSubscription(selectedItem.topic_hierarchy)">
+                                            @click="addToSubscription(selectedItem.topic_hierarchy)">
                                             Add Dataset to Subscription</v-btn>
                                     </v-col>
                                 </v-row>
@@ -83,8 +83,7 @@
                     </v-dialog>
 
                     <!-- Dialog to display the whole JSON object -->
-                    <v-dialog v-model="jsonDialog" transition="dialog-bottom-transition"
-                    max-height="600px" scrollable>
+                    <v-dialog v-model="jsonDialog" transition="dialog-bottom-transition" max-height="600px" scrollable>
                         <v-card>
                             <v-toolbar :title="selectedItem.title" color="#003DA5">
                                 <v-btn icon="mdi-close" variant="text" @click="jsonDialog = false" />
@@ -124,11 +123,10 @@ export default defineComponent({
     setup() {
 
         // Static variables
-        const catalogueList = ['Meteorological Service of Canada', 'China Meteorological Administration']
-        const catalogueMap = {
-            'Meteorological Service of Canada': 'https://api.weather.gc.ca/collections/wis2-discovery-metadata/items',
-            'China Meteorological Administration': 'https://gdc.wis.cma.cn/collections/wis2-discovery-metadata/items'
-        }
+        const catalogueList = [
+            {title: 'Meteorological Service of Canada', url: 'https://api.weather.gc.ca/collections/wis2-discovery-metadata/items'},
+            {title: 'China Meteorological Administration', url: 'https://gdc.wis.cma.cn/collections/wis2-discovery-metadata/items'}
+        ];
 
         // Reactive variables
         const selectedCatalogue = ref('');
@@ -151,11 +149,6 @@ export default defineComponent({
             return selectedCatalogue.value !== ''
         })
 
-        // Map selected catalogue to the catalogue url
-        const catalogueUrl = computed(() => {
-            return catalogueMap[selectedCatalogue.value]
-        })
-
         // Methods
 
         // Search the catalogue
@@ -175,7 +168,7 @@ export default defineComponent({
             }
 
             // Query the catalogue
-            const response = await fetch(`${catalogueUrl.value}?${params}`);
+            const response = await fetch(`${selectedCatalogue.value}?${params}`);
             if (!response.ok) {
                 throw new Error('Failed to query catalogue')
             }
@@ -266,7 +259,7 @@ export default defineComponent({
             // Enable the button loading animation
             loadingJsonBoolean.value = true;
 
-            const url = `https://api.weather.gc.ca/collections/wis2-discovery-metadata/items/${id}?f=json`;
+            const url = `${selectedCatalogue.value}/${id}?f=json`;
 
             // Format the JSON content
             const response = await fetch(url);
@@ -288,7 +281,28 @@ export default defineComponent({
             if (!selectedTopics.value.includes(topic)) {
                 selectedTopics.value.push(topic);
             }
+            // Now send selectedTopics to Electron API as an array
+            window.electronAPI.storeTopics(Array.from(selectedTopics.value));
         }
+
+        // If the user adds a dataset to the subscription and then reloads the
+        // catalogue page, this information is lost. We need to load the topics
+        // from the Electron API and display the check marks in the table
+        const loadTopics = async () => {
+            // Get the topics from the Electron API
+            const topics = await window.electronAPI.loadTopics();
+            if (topics.length > 0) {
+                // Add all topics loaded to the selectedTopics array
+                topics.forEach(topic => {
+                    selectedTopics.value.push(topic);
+                }); s
+            }
+        }
+
+        onMounted(() => {
+            // Load topics from Electron API that were selected earlier
+            loadTopics();
+        })
 
         return {
             catalogueList,

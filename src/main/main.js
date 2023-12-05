@@ -93,6 +93,33 @@ app.on("activate", () => {
 
 // Inter-process communication setup (IPC)
 
+// Handler for storing the selected topics in the GDC page
+// We name this 'store-topics' to be referenced elsewhere
+let storedTopics = [];
+ipcMain.on("store-topics", (event, topics) => {
+  try {
+    // Add topics to variable
+    topics.forEach(topic => {
+      storedTopics.push(topic);
+  });
+  }
+  catch (error) {
+    console.error("Error in store-topics:", error.message);
+  }
+});
+
+// Handler for loading the stored topics into the configuration page
+// We name this 'load-topics' to be referenced elsewhere
+ipcMain.handle("load-topics", async (event) => {
+  try {
+    // Return the stored topics
+    return storedTopics;
+  }
+  catch (error) {
+    console.error("Error in load-topics:", error.message);
+  }
+});
+
 // Handler for loading the configuration names
 // We name this 'load-config-names' to be referenced elsewhere
 ipcMain.handle("load-config-names", async (event) => {
@@ -128,29 +155,19 @@ ipcMain.handle("load-config", async (event, config) => {
   }
 });
 
-// Hanlder for getting the latest broker URLs and synchronisation
-// time when the user presses the 'Sync Brokers' button
-// We name this 'sync-brokers' to be referenced elsewhere
-ipcMain.on("sync-brokers", (event) => {
+// Handler for writing the broker data to the 'brokers.json' file
+// We name this 'write-brokers' to be referenced elsewhere
+ipcMain.on("write-brokers", (event, data) => {
   try {
-    const backendPath = 'backend/broker-backend.exe';
-    // Start backend executable
-    const backendProcess = spawn(backendPath, { windowsHide: true });
-    // Log stdout data
-    backendProcess.stdout.on('data', (data) => {
-      console.log(`stdout: ${data}`);
-    });
-    // Log stderr data
-    backendProcess.stderr.on('data', (data) => {
-      console.error(`stderr: ${data}`);
-    });
-    // Log exit code
-    backendProcess.on('close', (code) => {
-      console.log(`Broker sync process exited with code ${code}`);
-    });
+    const filePath = 'backend/brokers.json';
+    // Convert data to a JSON string
+    console.log("Broker data received:", data)
+    const dataString = JSON.stringify(data, null, 2);
+    // Write the data to this file
+    fs.writeFileSync(filePath, dataString, 'utf8');
   }
   catch (error) {
-    console.error("Error in sync-brokers:", error);
+    console.error("Error in writing broker information to disk:", error);
   }
 });
 

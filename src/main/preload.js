@@ -16,9 +16,11 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 // Expose to renderer to the methods defined in the main process
 contextBridge.exposeInMainWorld('electronAPI', {
+  storeTopics: (topics) => ipcRenderer.send('store-topics', topics),
+  loadTopics: () => ipcRenderer.invoke('load-topics'),
   loadConfigNames: () => ipcRenderer.invoke('load-config-names'),
   loadConfig: (config) => ipcRenderer.invoke('load-config', config),
-  syncBrokers: () => ipcRenderer.send('sync-brokers'),
+  writeBrokers: (data) => ipcRenderer.send('write-brokers', data),
   loadBrokers: () => ipcRenderer.invoke('load-brokers'),
   openDialog: () => ipcRenderer.invoke('open-directory-dialog'),
   saveConfig: (name, data) => ipcRenderer.send('save-config', name, data),

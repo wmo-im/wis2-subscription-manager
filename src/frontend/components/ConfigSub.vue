@@ -19,12 +19,13 @@
                         <v-card-title>Global broker</v-card-title>
                         <v-row>
                             <v-col cols="11">
-                                <v-select label="Please choose a broker" :items="brokerList" variant="solo-filled"
+                                <v-select label="Please choose a broker" :items="brokerList"
+                                item-title="title" item-value="url" variant="solo-filled"
                                     v-model="selectedBroker" :disabled="loadingBoolean"></v-select>
                             </v-col>
                             <v-col cols="1">
-                                <v-btn color="#003DA5" variant="flat" icon="mdi-sync" size="large"
-                                    @click="syncBrokers" :loading="loadingBoolean"></v-btn>
+                                <v-btn color="#003DA5" variant="flat" icon="mdi-sync" size="large" @click="syncBrokers"
+                                    :loading="loadingBoolean"></v-btn>
                             </v-col>
                         </v-row>
                     </v-card-item>
@@ -149,7 +150,6 @@ export default defineComponent({
 
         // Reactive variables
         const brokerList = ref([]);
-        const syncTime = ref('');
         const loadingBoolean = ref(false);
         const selectedBroker = ref('');
         const topicEntry = ref('')
@@ -204,22 +204,55 @@ export default defineComponent({
         const loadBrokers = async () => {
             try {
                 const data = await window.electronAPI.loadBrokers();
-                brokerList.value = data.brokers;
-                syncTime.value = data.sync_time;
+                brokerList.value = data;
             }
             catch (error) {
                 console.error('Error loading brokers: ', error);
             }
         };
 
-        // Get the latest brokers when the synchronisation button is pressed
+        // Get the latest list of brokers for the Canada GDC API
         const syncBrokers = async () => {
             try {
                 // Set loading animation to true
                 loadingBoolean.value = true;
-                // Wait for the backend to get the latest brokers from the 
-                // GDC and write them to the JSON file brokers.json
-                window.electronAPI.syncBrokers();
+
+                // Query the catalogue
+                const CANADA_GDC_API = "https://api.weather.gc.ca/collections/wis2-discovery-metadata/items"
+                const response = await fetch(CANADA_GDC_API);
+                if (!response.ok) {
+                    throw new Error('Failed to query catalogue')
+                }
+                const items = await response.json();
+                const firstFeature = items.features[0];
+
+                if (firstFeature) {
+                    // Initialise array for broker URLs and titles
+                    const brokerList = [];
+                    let brokerURL = '';
+                    let brokerTitle = '';
+
+                    // In the links where the rel is 'items', the href starts with 'mqtt',
+                    // and the channel starts with 'cache', the global broker URLs can be found
+                    // in the the href after the 'mqtt://every.everyone@' part and before
+                    // the ':8883' part, and the global broker titles can be found
+                    // in the title after the 'Notifications from ' part
+                    firstFeature.links.forEach(link => {
+                        if (link.rel === 'items' && link.href.startsWith('mqtt') && link.channel.startsWith('cache')) {
+                            brokerURL = link.href.split('@')[1].split(':')[0];
+                            if (link.title) {
+                                brokerTitle = link.title.split('Notifications from ')[1];
+                            }
+                            else {
+                                brokerTitle = brokerURL;
+                            }
+                            brokerList.push({title: brokerTitle, url: brokerURL});
+                        }
+                    });
+                    // Write it to the JSON file 'backend/brokers.json'
+                    window.electronAPI.writeBrokers(brokerList);
+                }
+
                 // Delay loading of JSON file to allow time for the backend
                 setTimeout(() => {
                     // Load the brokers from the JSON file
@@ -230,6 +263,25 @@ export default defineComponent({
             }
             catch (error) {
                 console.error('Error syncing brokers: ', error);
+            }
+        };
+
+        // Load the topics selected in the GDC page
+        const loadTopics = async () => {
+            try {
+                const topics = await window.electronAPI.loadTopics();
+                // Add all topics loaded to the topicsList array
+                if (topics.length > 0) {
+                    topics.forEach(topic => {
+                        // Ensure there are no duplicate topics
+                        if (!topicsList.value.includes(topic)) {
+                            topicsList.value.push(topic);
+                        }
+                    });
+                }
+            }
+            catch (error) {
+                console.error('Error loading topics: ', error);
             }
         };
 
@@ -340,6 +392,8 @@ export default defineComponent({
         };
 
         onMounted(() => {
+            // Get topics list
+            loadTopics();
             // Get config list
             loadConfigNames();
             // Get broker list
@@ -396,7 +450,6 @@ export default defineComponent({
 
         return {
             brokerList,
-            syncTime,
             loadingBoolean,
             selectedBroker,
             topicEntry,
