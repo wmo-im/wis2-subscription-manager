@@ -2,17 +2,46 @@
     <v-row class="justify-center">
         <v-col cols=12 class="max-form-width">
             <v-card>
-                <v-row>
-                    <v-col cols="7">
+                <v-row dense>
+                    <v-col cols="auto">
                         <v-card-title class="big-title">WIS2 Subscription Configuration</v-card-title>
                     </v-col>
                     <v-spacer />
-                    <v-col cols="3">
-                        <v-select label="Configurations" density="comfortable" variant="solo-filled" :items="configList"
-                            v-model="selectedConfig"></v-select>
+                    <v-col cols="4">
+                        <v-select label="Configurations" density="comfortable" variant="solo-filled"
+                        class="mx-3" :items="configList"
+                        v-model="selectedConfig"></v-select>
+                    </v-col>
+                    <v-col cols="1">
+                        <v-btn color="#003DA5" variant="flat" icon="mdi-delete" class="mx-1"
+                        @click="configDialog = true"/>
                     </v-col>
                 </v-row>
 
+                <!-- Open configuration deletion dialog -->
+                <!-- NEEDS FINISHING -->
+                <v-dialog v-model="configDialog" max-width="300px">
+                    <v-card>
+                        <v-toolbar title="Delete Configurations" color="#003DA5">
+                            <v-btn icon="mdi-close" variant="text" @click="configDialog = false" />
+                            </v-toolbar>
+                        <v-card-text>
+                            <v-list>
+                                <v-list-item-group v-model="selectedConfigs">
+                                    <v-list-item v-for="(config, index) in configList" :key="index">
+                                        <v-list-item-content>
+                                            <v-list-item-title>{{ config }}</v-list-item-title>
+                                            <v-checkbox-btn :value="config"></v-checkbox-btn>
+                                        </v-list-item-content>
+                                    </v-list-item>
+                                </v-list-item-group>
+                            </v-list>
+                        </v-card-text>
+                        <v-card-actions>
+                            <v-btn @click="deleteConfigurations" color="#E09D00" variant="flat" block>Delete Configurations</v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
 
                 <v-form>
                     <v-card-item class="py-0">
@@ -147,6 +176,7 @@ export default defineComponent({
     setup() {
 
         // Reactive variables
+        const configDialog = ref(false);
         const brokerList = ref([]);
         const loadingBoolean = ref(false);
         const selectedBroker = ref('');
@@ -453,6 +483,7 @@ export default defineComponent({
             toggleSubscription,
             selectedConfig,
             configList,
+            configDialog,
             showSaveDialog,
             saveConfiguration,
             configName,
