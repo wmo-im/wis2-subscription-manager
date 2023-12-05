@@ -245,16 +245,8 @@ ipcMain.on("handle-subscription", (event, data) => {
       fs.writeFileSync(subscriptionsPath, JSON.stringify(subscriptions), 'utf8');
 
       // Start backend executable with arguments
-      if (data.downloadDirectory === "") {
-        // If no download directory given, do not pass as argument
-        backendProcess = spawn(backendPath, ['--broker', data.broker],
-        { windowsHide: true });
-      }
-      else {
-        // If download directory given, pass as argument
-        backendProcess = spawn(backendPath, ['--broker', data.broker, '--download_dir', data.downloadDirectory],
-        { windowsHide: true });
-      }
+      backendProcess = spawn(backendPath, ['--broker', data.broker, '--download_dir', data.downloadDirectory],
+      { windowsHide: true });
       
       // Send stdout and stderr data to frontend
       backendProcess.stdout.on('data', (data) => {

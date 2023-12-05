@@ -55,13 +55,11 @@
                     <v-card-item class="py-4">
                         <v-row align="center" class="ma-1">
                             <v-card-title>Download data</v-card-title>
-                            <v-checkbox-btn color="#003DA5" v-model="downloadBoolean"
-                                :disabled="!isBrokerSelected"></v-checkbox-btn>
                         </v-row>
-                        <v-row v-if="downloadBoolean === true" align="center">
+                        <v-row align="center">
                             <v-col cols="auto">
                                 <v-btn prepend-icon="mdi-folder-download" color="#003DA5" variant="flat"
-                                    @click="selectDirectory">Select a
+                                    :disabled="!isBrokerSelected" @click="selectDirectory">Select a
                                     folder</v-btn>
                             </v-col>
                             <v-col cols="auto">
@@ -155,7 +153,6 @@ export default defineComponent({
         const topicEntry = ref('')
         const topicsList = ref([]);
         const selectedDirectory = ref('');
-        const downloadBoolean = ref(false);
         const subscribePressed = ref(false);
         const backendOutput = ref('');
         const latestResponse = ref(null);
@@ -174,7 +171,7 @@ export default defineComponent({
         // Checks if the global broker has been selected and at
         // least one topic has been added
         const canSubscribe = computed(() => {
-            return isBrokerSelected.value && topicsList.value.length > 0
+            return isBrokerSelected.value && topicsList.value.length > 0 && selectedDirectory.value !== '';
         });
 
         // Truncates the selected folder directory if it is too long
@@ -350,11 +347,6 @@ export default defineComponent({
             // When subscribe/cancel button pressed, change boolean state
             subscribePressed.value = !subscribePressed.value;
 
-            // Make sure the data is not downloaded if the user unticks the box
-            if (downloadBoolean.value === false) {
-                selectedDirectory.value = '';
-            }
-
             try {
                 // Construct data to be sent
                 const data = {
@@ -417,13 +409,7 @@ export default defineComponent({
 
                 selectedBroker.value = configData.brokerURL;
                 topicsList.value = configData.topicsList;
-
-                // If the user had selected to download data, enable the
-                // checkbox and update the directory
-                if (configData.selectedDirectory) {
-                    downloadBoolean.value = true;
-                    selectedDirectory.value = configData.selectedDirectory;
-                }
+                selectedDirectory.value = configData.selectedDirectory;
             }
         });
 
@@ -458,7 +444,6 @@ export default defineComponent({
             isBrokerSelected,
             canSubscribe,
             truncatedDirectory,
-            downloadBoolean,
             addTopic,
             removeTopic,
             selectDirectory,
