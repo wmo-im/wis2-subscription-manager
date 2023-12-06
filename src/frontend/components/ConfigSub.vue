@@ -8,37 +8,28 @@
                     </v-col>
                     <v-spacer />
                     <v-col cols="4">
-                        <v-select label="Configurations" density="comfortable" variant="solo-filled"
-                        class="mx-3" :items="configList"
-                        v-model="selectedConfig"></v-select>
+                        <v-select label="Configurations" density="comfortable" variant="solo-filled" class="mx-3"
+                            :items="configList" v-model="selectedConfig"></v-select>
                     </v-col>
                     <v-col cols="1">
-                        <v-btn color="#003DA5" variant="flat" icon="mdi-delete" class="mx-1"
-                        @click="configDialog = true"/>
+                        <v-btn color="#003DA5" variant="flat" icon="mdi-delete" class="mx-1" @click="configDialog = true" />
                     </v-col>
                 </v-row>
 
-                <!-- Open configuration deletion dialog -->
-                <!-- NEEDS FINISHING -->
+                <!-- Configuration deletion dialog -->
                 <v-dialog v-model="configDialog" max-width="300px">
                     <v-card>
                         <v-toolbar title="Delete Configurations" color="#003DA5">
                             <v-btn icon="mdi-close" variant="text" @click="configDialog = false" />
-                            </v-toolbar>
+                        </v-toolbar>
                         <v-card-text>
-                            <v-list>
-                                <v-list-item-group v-model="selectedConfigs">
-                                    <v-list-item v-for="(config, index) in configList" :key="index">
-                                        <v-list-item-content>
-                                            <v-list-item-title>{{ config }}</v-list-item-title>
-                                            <v-checkbox-btn :value="config"></v-checkbox-btn>
-                                        </v-list-item-content>
-                                    </v-list-item>
-                                </v-list-item-group>
-                            </v-list>
+                            <div v-if="configList.length === 0">No configurations to delete</div>
+                            <v-checkbox v-for="(config, index) in configList" :key="index" :label="config" :value="config"
+                                color="#E09D00" @change="handleCheckboxes(config)" />
                         </v-card-text>
                         <v-card-actions>
-                            <v-btn @click="deleteConfigurations" color="#E09D00" variant="flat" block>Delete Configurations</v-btn>
+                            <v-btn @click="deleteConfigs" color="#E09D00" variant="flat" block
+                                :loading="deleteLoadingBoolean">Delete Configurations</v-btn>
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
@@ -48,13 +39,13 @@
                         <v-card-title>Global broker</v-card-title>
                         <v-row>
                             <v-col cols="11">
-                                <v-select label="Please choose a broker" :items="brokerList"
-                                item-title="title" item-value="url" variant="solo-filled"
-                                    v-model="selectedBroker" :disabled="loadingBoolean"></v-select>
+                                <v-select label="Please choose a broker" :items="brokerList" item-title="title"
+                                    item-value="url" variant="solo-filled" v-model="selectedBroker"
+                                    :disabled="syncLoadingBoolean"></v-select>
                             </v-col>
                             <v-col cols="1">
                                 <v-btn color="#003DA5" variant="flat" icon="mdi-sync" size="large" @click="syncBrokers"
-                                    :loading="loadingBoolean"></v-btn>
+                                    :loading="syncLoadingBoolean"></v-btn>
                             </v-col>
                         </v-row>
                     </v-card-item>
@@ -177,8 +168,9 @@ export default defineComponent({
 
         // Reactive variables
         const configDialog = ref(false);
+        const deleteLoadingBoolean = ref(false);
         const brokerList = ref([]);
-        const loadingBoolean = ref(false);
+        const syncLoadingBoolean = ref(false);
         const selectedBroker = ref('');
         const topicEntry = ref('')
         const topicsList = ref([]);
@@ -190,6 +182,7 @@ export default defineComponent({
         const configList = ref([]);
         const showSaveDialog = ref(false);
         const configName = ref('');
+        const configsToDelete = ref([]);
 
         // Computed
 
@@ -227,6 +220,41 @@ export default defineComponent({
             }
         };
 
+        // Adds or removes configurations to delete
+        const handleCheckboxes = (config) => {
+            if (configsToDelete.value.includes(config)) {
+                // Remove it if it's already there
+                configsToDelete.value.splice(configsToDelete.value.indexOf(config), 1);
+            }
+            else {
+                // If it's not there, add it
+                configsToDelete.value.push(config);
+            }
+        };
+
+        // Deletes this configurations selected in the dialog
+        const deleteConfigs = async () => {
+            try {
+                // Enable loading animation of button
+                deleteLoadingBoolean.value = true;
+                // Send array of configs to delete to backend
+                await window.electronAPI.deleteConfigs(Array.from(configsToDelete.value));
+                // Reload the list of configurations after a short delay
+                setTimeout(() => {
+                    loadConfigNames();
+                    // Close the dialog
+                    configDialog.value = false;
+                    // Disable loading animation of button
+                    deleteLoadingBoolean.value = false;
+                    // Clear the list of configs to delete
+                    configsToDelete.value = [];
+                }, 1000);
+            }
+            catch (error) {
+                console.error('Error deleting configurations: ', error);
+            }
+        };
+
         // Load the list of brokers from the JSON file when application is started
         const loadBrokers = async () => {
             try {
@@ -242,7 +270,7 @@ export default defineComponent({
         const syncBrokers = async () => {
             try {
                 // Set loading animation to true
-                loadingBoolean.value = true;
+                syncLoadingBoolean.value = true;
 
                 // Query the catalogue
                 const CANADA_GDC_API = "https://api.weather.gc.ca/collections/wis2-discovery-metadata/items"
@@ -273,7 +301,7 @@ export default defineComponent({
                             else {
                                 brokerTitle = brokerURL;
                             }
-                            brokerList.push({title: brokerTitle, url: brokerURL});
+                            brokerList.push({ title: brokerTitle, url: brokerURL });
                         }
                     });
                     // Write it to the JSON file 'backend/brokers.json'
@@ -285,7 +313,7 @@ export default defineComponent({
                     // Load the brokers from the JSON file
                     loadBrokers();
                     // Disable loading animation of button
-                    loadingBoolean.value = false;
+                    syncLoadingBoolean.value = false;
                 }, 1000);
             }
             catch (error) {
@@ -466,7 +494,7 @@ export default defineComponent({
 
         return {
             brokerList,
-            loadingBoolean,
+            syncLoadingBoolean,
             selectedBroker,
             topicEntry,
             topicsList,
@@ -488,7 +516,11 @@ export default defineComponent({
             saveConfiguration,
             configName,
             loadBrokers,
-            syncBrokers
+            syncBrokers,
+            configsToDelete,
+            handleCheckboxes,
+            deleteConfigs,
+            deleteLoadingBoolean
         }
     }
 })

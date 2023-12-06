@@ -155,6 +155,21 @@ ipcMain.handle("load-config", async (event, config) => {
   }
 });
 
+// Handler for deleting the configurations from the 'configs' directory
+// We name this 'delete-configs' to be referenced elsewhere
+ipcMain.on("delete-configs", (event, configs) => {
+  try {
+    configs.forEach(config => {
+      const filePath = `backend/configs/${config}.json`;
+      // Delete the configuration file
+      fs.unlinkSync(filePath);
+    });
+  }
+  catch (error) {
+    console.error("Error in delete-configs:", error.message);
+  }
+});
+
 // Handler for writing the broker data to the 'brokers.json' file
 // We name this 'write-brokers' to be referenced elsewhere
 ipcMain.on("write-brokers", (event, data) => {
