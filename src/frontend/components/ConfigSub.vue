@@ -25,7 +25,7 @@
                         <v-card-text>
                             <div v-if="configList.length === 0">No configurations to delete</div>
                             <v-checkbox v-for="(config, index) in configList" :key="index" :label="config" :value="config"
-                                color="#E09D00" @change="handleCheckboxes(config)" />
+                                color="#E09D00" density="compact" @change="handleConfigBoxes(config)" />
                         </v-card-text>
                         <v-card-actions>
                             <v-btn @click="deleteConfigs" color="#E09D00" variant="flat" block
@@ -104,6 +104,11 @@
                             <v-btn v-if="subscribePressed" @click="toggleSubscription" color="#E09D00" variant="flat"
                                 class="ma-1" block>Cancel Subscription</v-btn>
                         </div>
+                        <div class="d-flex justify-center">
+                            <!-- Add or remove topics from on going subscription -->
+                            <v-btn v-if="subscribePressed" @click="showTopicDialog = true" color="#00A9CE" variant="flat"
+                                class="ma-1" block>Add or Delete Topics</v-btn>
+                        </div>
                     </v-card-item>
                 </v-form>
 
@@ -117,6 +122,64 @@
                         <v-text-field v-model="configName" label="Configuration Name"></v-text-field>
                         <v-card-actions>
                             <v-btn @click="saveConfiguration" color="#64BF40" variant="flat" block>Save As Preset</v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
+
+                <!-- Dialog that displays the topics list as checkboxes -->
+                <!-- NEED TO ADD FUNCTIONALITY -->
+                <v-dialog v-model="showTopicDialog" max-width="750px">
+                    <v-card>
+                        <v-toolbar title="Current Topics Subscribed To" color="#00A9CE">
+                            <v-btn icon="mdi-close" variant="text" @click="showTopicDialog = false" />
+                        </v-toolbar>
+                        <v-list lines="one">
+                            <v-list-item v-for="(topic, index) in topicsList" :key="index" :title="topic">
+                                <template v-slot:append>
+                                    <v-btn icon="mdi-minus" variant="flat" @click="confirmTopicDelete(topic)" />
+                                </template>
+                            </v-list-item>
+                        </v-list>
+                        <v-card-actions>
+                            <v-btn color="#64BF40" variant="flat" block @click="showAddTopicDialog = true">Add A New Topic
+                                To Subscription</v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
+
+                <!-- Dialog for confirming they want to delete that topic -->
+                <v-dialog v-model="showWarningDialog" max-width="750px">
+                    <v-card>
+                        <v-toolbar title="Warning!" color="#D90429">
+                            <v-btn icon="mdi-close" variant="text" @click="showWarningDialog = false" />
+                        </v-toolbar>
+                        <v-card-text>
+                            Are you sure you want to delete the following topic:
+                            <br><b><center>{{ topicToDelete }}</center></b>from your subscription?
+                        </v-card-text>
+                        <v-card-actions>
+                            <v-btn @click="manageTopics(topic, 'delete')" color="#64BF40" variant="flat" block>I Confirm</v-btn>
+
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
+
+                <!-- Dialog for typing the name of the topic to add -->
+                <v-dialog v-model="showAddTopicDialog" max-width="750px">
+                    <v-card>
+                        <v-card-title>
+                            Add A New Topic
+                            <v-btn icon="mdi-close" variant="text" class="close-button"
+                                @click="showAddTopicDialog = false" />
+                        </v-card-title>
+                        <v-card-text>
+                            <v-text-field label="Please enter a new topic" variant="solo-filled" v-model="topicToAdd"
+                                @keyup.enter="manageTopics(topicToAdd, 'add')">
+                            </v-text-field>
+                        </v-card-text>
+                        <v-card-actions>
+                            <v-btn @click="manageTopics(topicToAdd, 'add')" color="#64BF40" variant="flat" block>Add
+                                Topic</v-btn>
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
@@ -183,6 +246,11 @@ export default defineComponent({
         const showSaveDialog = ref(false);
         const configName = ref('');
         const configsToDelete = ref([]);
+        const showTopicDialog = ref(false);
+        const showAddTopicDialog = ref(false);
+        const topicToAdd = ref('');
+        const showWarningDialog = ref(false);
+        const topicToDelete = ref('');
 
         // Computed
 
@@ -221,7 +289,7 @@ export default defineComponent({
         };
 
         // Adds or removes configurations to delete
-        const handleCheckboxes = (config) => {
+        const handleConfigBoxes = (config) => {
             if (configsToDelete.value.includes(config)) {
                 // Remove it if it's already there
                 configsToDelete.value.splice(configsToDelete.value.indexOf(config), 1);
@@ -441,6 +509,40 @@ export default defineComponent({
             backendOutput.value += "\n" + message + "\n";
         };
 
+        // Store topic to delete and open confirmation dialog
+        const confirmTopicDelete = (topic) => {
+            topicToDelete.value = topic;
+            showWarningDialog.value = true;
+        };
+
+        // Manage topics for existing subscription
+        const manageTopics = async (topic, action) => {
+            if (action === 'add') {
+                // Add topic to topic list so it appears in the UI
+                topicsList.value.push(topic);
+                // Send topic to backend to add to subscription
+                const data = {
+                    topic: topic,
+                    action: 'add'
+                }
+                // await window.electronAPI.manageTopics(data);
+                // Now close the add topic dialog
+                showAddTopicDialog.value = false;
+            }
+            else if (action === 'delete') {
+                // Remove from topic list so it no longer shows in the UI
+                topicsList.value.splice(topicsList.value.indexOf(topic), 1);
+                // Send topic to backend to delete from subscription
+                const data = {
+                    topic: topic,
+                    action: 'delete'
+                }
+                // await window.electronAPI.manageTopics(data);
+                // Close warning dialog
+                showWarningDialog.value = false;
+            }
+        };
+
         onMounted(() => {
             // Get topics list
             loadTopics();
@@ -518,9 +620,16 @@ export default defineComponent({
             loadBrokers,
             syncBrokers,
             configsToDelete,
-            handleCheckboxes,
+            handleConfigBoxes,
             deleteConfigs,
-            deleteLoadingBoolean
+            deleteLoadingBoolean,
+            showTopicDialog,
+            showAddTopicDialog,
+            topicToAdd,
+            manageTopics,
+            showWarningDialog,
+            topicToDelete,
+            confirmTopicDelete
         }
     }
 })
