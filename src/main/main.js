@@ -155,18 +155,16 @@ ipcMain.handle("load-config", async (event, config) => {
   }
 });
 
-// Handler for deleting the configurations from the 'configs' directory
-// We name this 'delete-configs' to be referenced elsewhere
-ipcMain.on("delete-configs", (event, configs) => {
+// Handler for deleting the configuration from the 'configs' directory
+// We name this 'delete-config' to be referenced elsewhere
+ipcMain.on("delete-config", (event, config) => {
   try {
-    configs.forEach(config => {
       const filePath = `backend/configs/${config}.json`;
       // Delete the configuration file
       fs.unlinkSync(filePath);
-    });
   }
   catch (error) {
-    console.error("Error in delete-configs:", error.message);
+    console.error("Error in delete-config:", error.message);
   }
 });
 

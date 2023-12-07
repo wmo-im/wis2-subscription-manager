@@ -24,12 +24,32 @@
                         </v-toolbar>
                         <v-card-text>
                             <div v-if="configList.length === 0">No configurations to delete</div>
-                            <v-checkbox v-for="(config, index) in configList" :key="index" :label="config" :value="config"
-                                color="#E09D00" density="compact" @change="handleConfigBoxes(config)" />
+                            <v-list lines="one">
+                                <v-list-item v-for="(config, index) in configList" :key="index" :title="config">
+                                    <template v-slot:append>
+                                        <v-btn icon="mdi-minus" variant="flat" @click="confirmConfigDelete(config)" />
+                                    </template>
+                                </v-list-item>
+                            </v-list>
+                        </v-card-text>
+                    </v-card>
+                </v-dialog>
+
+                <!-- Open dialog for show to confirm deletion of config -->
+                <v-dialog v-model="showConfigWarningDialog" max-width="750px">
+                    <v-card>
+                        <v-toolbar title="Warning!" color="#D90429">
+                            <v-btn icon="mdi-close" variant="text" @click="showConfigWarningDialog = false" />
+                        </v-toolbar>
+                        <v-card-text>
+                            Are you sure you want to delete the following configuration:
+                            <br><b>
+                                <center>{{ configToDelete }}</center>
+                            </b>
                         </v-card-text>
                         <v-card-actions>
-                            <v-btn @click="deleteConfigs" color="#E09D00" variant="flat" block
-                                :loading="deleteLoadingBoolean">Delete Configurations</v-btn>
+                            <v-btn @click="deleteConfig(configToDelete)" color="#64BF40" variant="flat" block
+                            :loading="deleteLoadingBoolean">I Confirm</v-btn>
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
@@ -148,17 +168,20 @@
                 </v-dialog>
 
                 <!-- Dialog for confirming they want to delete that topic -->
-                <v-dialog v-model="showWarningDialog" max-width="750px">
+                <v-dialog v-model="showTopicWarningDialog" max-width="750px">
                     <v-card>
                         <v-toolbar title="Warning!" color="#D90429">
-                            <v-btn icon="mdi-close" variant="text" @click="showWarningDialog = false" />
+                            <v-btn icon="mdi-close" variant="text" @click="showTopicWarningDialog = false" />
                         </v-toolbar>
                         <v-card-text>
                             Are you sure you want to delete the following topic:
-                            <br><b><center>{{ topicToDelete }}</center></b>from your subscription?
+                            <br><b>
+                                <center>{{ topicToDelete }}</center>
+                            </b>from your subscription?
                         </v-card-text>
                         <v-card-actions>
-                            <v-btn @click="manageTopics(topic, 'delete')" color="#64BF40" variant="flat" block>I Confirm</v-btn>
+                            <v-btn @click="manageTopics(topic, 'delete')" color="#64BF40" variant="flat" block>I
+                                Confirm</v-btn>
 
                         </v-card-actions>
                     </v-card>
@@ -245,11 +268,12 @@ export default defineComponent({
         const configList = ref([]);
         const showSaveDialog = ref(false);
         const configName = ref('');
-        const configsToDelete = ref([]);
+        const configToDelete = ref('');
+        const showConfigWarningDialog = ref(false);
         const showTopicDialog = ref(false);
         const showAddTopicDialog = ref(false);
         const topicToAdd = ref('');
-        const showWarningDialog = ref(false);
+        const showTopicWarningDialog = ref(false);
         const topicToDelete = ref('');
 
         // Computed
@@ -288,34 +312,26 @@ export default defineComponent({
             }
         };
 
-        // Adds or removes configurations to delete
-        const handleConfigBoxes = (config) => {
-            if (configsToDelete.value.includes(config)) {
-                // Remove it if it's already there
-                configsToDelete.value.splice(configsToDelete.value.indexOf(config), 1);
-            }
-            else {
-                // If it's not there, add it
-                configsToDelete.value.push(config);
-            }
+        // Store config to delete and open confirmation dialog
+        const confirmConfigDelete = (config) => {
+            configToDelete.value = config;
+            showConfigWarningDialog.value = true;
         };
 
-        // Deletes this configurations selected in the dialog
-        const deleteConfigs = async () => {
+        // Deletes the configuration selected in the dialog
+        const deleteConfig = async () => {
             try {
                 // Enable loading animation of button
                 deleteLoadingBoolean.value = true;
                 // Send array of configs to delete to backend
-                await window.electronAPI.deleteConfigs(Array.from(configsToDelete.value));
+                await window.electronAPI.deleteConfig(configToDelete.value);
                 // Reload the list of configurations after a short delay
                 setTimeout(() => {
                     loadConfigNames();
-                    // Close the dialog
-                    configDialog.value = false;
+                    // Close the warning dialog
+                    showConfigWarningDialog.value = false;
                     // Disable loading animation of button
                     deleteLoadingBoolean.value = false;
-                    // Clear the list of configs to delete
-                    configsToDelete.value = [];
                 }, 1000);
             }
             catch (error) {
@@ -512,7 +528,7 @@ export default defineComponent({
         // Store topic to delete and open confirmation dialog
         const confirmTopicDelete = (topic) => {
             topicToDelete.value = topic;
-            showWarningDialog.value = true;
+            showTopicWarningDialog.value = true;
         };
 
         // Manage topics for existing subscription
@@ -530,6 +546,8 @@ export default defineComponent({
                 showAddTopicDialog.value = false;
             }
             else if (action === 'delete') {
+                // Start loading animation of delete button
+                deleteLoadingBoolean.value = true;
                 // Remove from topic list so it no longer shows in the UI
                 topicsList.value.splice(topicsList.value.indexOf(topic), 1);
                 // Send topic to backend to delete from subscription
@@ -539,7 +557,9 @@ export default defineComponent({
                 }
                 // await window.electronAPI.manageTopics(data);
                 // Close warning dialog
-                showWarningDialog.value = false;
+                showTopicWarningDialog.value = false;
+                // Stop loading animation
+                deleteLoadingBoolean.value = false;
             }
         };
 
@@ -619,15 +639,16 @@ export default defineComponent({
             configName,
             loadBrokers,
             syncBrokers,
-            configsToDelete,
-            handleConfigBoxes,
-            deleteConfigs,
+            configToDelete,
+            deleteConfig,
+            showConfigWarningDialog,
+            confirmConfigDelete,
             deleteLoadingBoolean,
             showTopicDialog,
             showAddTopicDialog,
             topicToAdd,
             manageTopics,
-            showWarningDialog,
+            showTopicWarningDialog,
             topicToDelete,
             confirmTopicDelete
         }
@@ -643,5 +664,4 @@ export default defineComponent({
     overflow-y: auto;
     white-space: pre-wrap;
     /* To respect line breaks and spaces */
-}
-</style>
+}</style>

@@ -20,7 +20,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   loadTopics: () => ipcRenderer.invoke('load-topics'),
   loadConfigNames: () => ipcRenderer.invoke('load-config-names'),
   loadConfig: (config) => ipcRenderer.invoke('load-config', config),
-  deleteConfigs: (configs) => ipcRenderer.send('delete-configs', configs),
+  deleteConfig: (config) => ipcRenderer.send('delete-config', config),
   writeBrokers: (data) => ipcRenderer.send('write-brokers', data),
   loadBrokers: () => ipcRenderer.invoke('load-brokers'),
   openDialog: () => ipcRenderer.invoke('open-directory-dialog'),
