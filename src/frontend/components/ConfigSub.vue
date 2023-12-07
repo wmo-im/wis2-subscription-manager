@@ -180,7 +180,7 @@
                             </b>from your subscription?
                         </v-card-text>
                         <v-card-actions>
-                            <v-btn @click="manageTopics(topic, 'delete')" color="#64BF40" variant="flat" block>I
+                            <v-btn @click="manageTopics(topicToDelete, 'delete')" color="#64BF40" variant="flat" block>I
                                 Confirm</v-btn>
 
                         </v-card-actions>
@@ -541,7 +541,7 @@ export default defineComponent({
                     topic: topic,
                     action: 'add'
                 }
-                // await window.electronAPI.manageTopics(data);
+                await window.electronAPI.manageTopics(data);
                 // Now close the add topic dialog
                 showAddTopicDialog.value = false;
             }
@@ -555,7 +555,7 @@ export default defineComponent({
                     topic: topic,
                     action: 'delete'
                 }
-                // await window.electronAPI.manageTopics(data);
+                await window.electronAPI.manageTopics(data);
                 // Close warning dialog
                 showTopicWarningDialog.value = false;
                 // Stop loading animation

@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openDialog: () => ipcRenderer.invoke('open-directory-dialog'),
   saveConfig: (name, data) => ipcRenderer.send('save-config', name, data),
   handleSubscription: (data) => ipcRenderer.send('handle-subscription', data),
+  manageTopics: (data) => ipcRenderer.send('manage-topics', data),
   onSubscriptionResponse: (callback) => ipcRenderer.on('subscription-response', callback),
   onBackendStdout: (callback) => ipcRenderer.on('backend-stdout', callback),
   onBackendStderr: (callback) => ipcRenderer.on('backend-stderr', callback),
