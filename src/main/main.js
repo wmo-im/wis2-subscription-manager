@@ -235,7 +235,7 @@ ipcMain.on("save-config", (event, name, data) => {
 // We name this 'handle-subscription' to be referenced elsewhere
 ipcMain.on("handle-subscription", (event, data) => {
   const backendPath = 'backend/subscribe-backend.exe';
-  const subscriptionsPath = 'backend/subscriptions.json';
+  const configPath = 'backend/config.json';
 
   // Remove listeners and kill the backend process if it's already running
   if (backendProcess) {
@@ -246,20 +246,19 @@ ipcMain.on("handle-subscription", (event, data) => {
 
   if (data.shouldSubscribe) {
     try {
-      let subscriptions = {};
+      // Replace the backslashes in the download directory with forward slashes
+      data.downloadDirectory = data.downloadDirectory.replaceAll('\\', '/');
 
-      // Structure the subscription JSON file with format
-      // "topic1": "download/directory" (in Linux format)
-      data.topics.forEach(topic => {
-        subscriptions[topic] = data.downloadDirectory.replaceAll('\\', '/');
-      });
+      // Remove the shouldSubscribe property from the data
+      const configData = { 'broker': data.broker,
+                          'topics': data.topics,
+                          'download_directory': data.downloadDirectory };
 
-      // Write topics to subscriptions.json before starting backend
-      fs.writeFileSync(subscriptionsPath, JSON.stringify(subscriptions), 'utf8');
+      // Write configuration information to a file before starting backend
+      fs.writeFileSync(configPath, JSON.stringify(configData), 'utf8');
 
-      // Start backend executable with arguments
-      backendProcess = spawn(backendPath, ['--broker', data.broker, '--download_dir', data.downloadDirectory],
-      { windowsHide: true });
+      // Start backend executable
+      backendProcess = spawn(backendPath, { windowsHide: true });
       
       // Send stdout and stderr data to frontend
       backendProcess.stdout.on('data', (data) => {
