@@ -1,1 +1,1 @@
-{"broker":"globalbroker.meteo.fr","topics":["cache/a/wis2/arg/sabm/data/core/weather/surface-based-observations/synop","cache/a/wis2/+/+/data/core/weather/surface-based-observations/#"],"download_directory":"C:/Users/rptb2/Code/WMO/PubSub/data"}
+{"broker":"gb.wis.cma.cn","topics":["test","test2"],"download_directory":"C:/Users/rptb2/Code/WMO/PubSub/data"}

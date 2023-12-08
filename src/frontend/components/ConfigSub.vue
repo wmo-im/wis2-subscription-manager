@@ -42,10 +42,12 @@
                             <v-btn icon="mdi-close" variant="text" @click="showConfigWarningDialog = false" />
                         </v-toolbar>
                         <v-card-text>
-                            Are you sure you want to delete the following configuration:
-                            <br><b>
-                                <center>{{ configToDelete }}</center>
-                            </b>
+                            <v-row>
+                                Are you sure you want to delete the following configuration:
+                            </v-row>
+                            <v-row justify="center">
+                                <b>{{ configToDelete }}</b>
+                            </v-row>
                         </v-card-text>
                         <v-card-actions>
                             <v-btn @click="deleteConfig(configToDelete)" color="#64BF40" variant="flat" block
@@ -99,11 +101,11 @@
                         <v-row align="center">
                             <v-col cols="auto">
                                 <v-btn prepend-icon="mdi-folder-download" color="#003DA5" variant="flat"
-                                    :disabled="!isBrokerSelected" @click="selectDirectory">Select a
+                                    :disabled="!isBrokerSelected" @click="selectDirectory('download')">Select a
                                     folder</v-btn>
                             </v-col>
                             <v-col cols="auto">
-                                <v-chip label v-if="selectedDirectory">{{ truncatedDirectory }}</v-chip>
+                                <v-chip label v-if="downloadDirectory">{{ truncatedDirectory }}</v-chip>
                             </v-col>
                         </v-row>
                     </v-card-item>
@@ -136,12 +138,18 @@
                 <v-dialog v-model="showSaveDialog" max-width="750px">
                     <v-card>
                         <v-card-title>
-                            Save Configuration
+                            Please enter a name for your configuration
                             <v-btn icon="mdi-close" variant="text" class="close-button" @click="showSaveDialog = false" />
                         </v-card-title>
                         <v-text-field v-model="configName" label="Configuration Name"></v-text-field>
                         <v-card-actions>
-                            <v-btn @click="saveConfiguration" color="#64BF40" variant="flat" block>Save As Preset</v-btn>
+                            <v-col cols="6">
+                                <v-btn @click="saveConfiguration" color="#64BF40" variant="flat" block>Save</v-btn>
+                            </v-col>
+                            <v-col cols="6">
+                                <!-- Button that opens the directory dialog -->
+                                <v-btn @click="selectDirectory('save')" color="#E09D00" variant="flat" block>Save As</v-btn>
+                            </v-col>
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
@@ -174,10 +182,15 @@
                             <v-btn icon="mdi-close" variant="text" @click="showTopicWarningDialog = false" />
                         </v-toolbar>
                         <v-card-text>
-                            Are you sure you want to delete the following topic:
-                            <br><b>
-                                <center>{{ topicToDelete }}</center>
-                            </b>from your subscription?
+                            <v-row>
+                                Are you sure you want to delete the following topic:
+                            </v-row>
+                            <v-row justify="center">
+                                <b>{{ topicToDelete }}</b>
+                            </v-row>
+                            <v-row>
+                                from your subscription?
+                            </v-row>
                         </v-card-text>
                         <v-card-actions>
                             <v-btn @click="manageTopics(topicToDelete, 'delete')" color="#64BF40" variant="flat" block>I
@@ -260,7 +273,7 @@ export default defineComponent({
         const selectedBroker = ref('');
         const topicEntry = ref('')
         const topicsList = ref([]);
-        const selectedDirectory = ref('');
+        const downloadDirectory = ref('');
         const subscribePressed = ref(false);
         const backendOutput = ref('');
         const latestResponse = ref(null);
@@ -268,6 +281,7 @@ export default defineComponent({
         const configList = ref([]);
         const showSaveDialog = ref(false);
         const configName = ref('');
+        const configDirectory = ref('');
         const configToDelete = ref('');
         const showConfigWarningDialog = ref(false);
         const showTopicDialog = ref(false);
@@ -286,17 +300,17 @@ export default defineComponent({
         // Checks if the global broker has been selected and at
         // least one topic has been added
         const canSubscribe = computed(() => {
-            return isBrokerSelected.value && topicsList.value.length > 0 && selectedDirectory.value !== '';
+            return isBrokerSelected.value && topicsList.value.length > 0 && downloadDirectory.value !== '';
         });
 
         // Truncates the selected folder directory if it is too long
         const truncatedDirectory = computed(() => {
             const maxPathLength = 30;
-            if (selectedDirectory.value.length > maxPathLength) {
-                return '...' + selectedDirectory.value.slice(-maxPathLength);
+            if (downloadDirectory.value.length > maxPathLength) {
+                return '...' + downloadDirectory.value.slice(-maxPathLength);
             }
             // If the selected directory is less than 30 characters, leave as is
-            return selectedDirectory.value;
+            return downloadDirectory.value;
         });
 
         // Methods
@@ -441,12 +455,24 @@ export default defineComponent({
 
         // Communicates with the electron API to use the
         // openDialog method, allowing the user to pick a folder
-        const selectDirectory = async () => {
+        const selectDirectory = async (action) => {
             try {
                 // Use the method exposed in preload.js
                 const path = await window.electronAPI.openDialog();
                 if (path) {
-                    selectedDirectory.value = path;
+                    // Assign the directory depending on whether the user
+                    // intends this directory to be for downloading of data
+                    // or the saving of a configuration
+                    if (action == 'download') {
+                        downloadDirectory.value = path;
+                    }
+                    else if (action == 'save') {
+                        configDirectory.value = path;
+                        // Save the configuration
+                        saveConfiguration();
+                        // Close the save dialog
+                        showSaveDialog.value = false;
+                    }
                 }
             }
             catch (error) {
@@ -457,21 +483,24 @@ export default defineComponent({
         // Saves the configuration settings to a local JSON file
         const saveConfiguration = () => {
             try {
-                const name = configName.value;
+                const metadata = {
+                    'name': configName.value,
+                    'directory': configDirectory.value
+                };
 
                 const data = {
                     brokerURL: selectedBroker.value,
                     topicsList: Array.from(topicsList.value), // Convert Proxy to regular array
-                    selectedDirectory: selectedDirectory.value
+                    downloadDirectory: downloadDirectory.value
                 };
 
                 // Write to file named by user
-                window.electronAPI.saveConfig(name, data);
+                window.electronAPI.saveConfig(metadata, data);
 
                 // Check if the config name already exists in the list,
                 // if not, add it
-                if (!configList.value.includes(name)) {
-                    configList.value.push(name);
+                if (!configList.value.includes(metadata.name)) {
+                    configList.value.push(metadata.name);
                 };
 
                 // Close the dialog
@@ -494,7 +523,7 @@ export default defineComponent({
                 const data = {
                     broker: selectedBroker.value,
                     topics: Array.from(topicsList.value), // Convert Proxy to regular array
-                    downloadDirectory: selectedDirectory.value,
+                    downloadDirectory: downloadDirectory.value,
                     shouldSubscribe: subscribePressed.value
                 };
 
@@ -589,7 +618,7 @@ export default defineComponent({
 
                 selectedBroker.value = configData.brokerURL;
                 topicsList.value = configData.topicsList;
-                selectedDirectory.value = configData.selectedDirectory;
+                downloadDirectory.value = configData.downloadDirectory;
             }
         });
 
@@ -620,7 +649,7 @@ export default defineComponent({
             selectedBroker,
             topicEntry,
             topicsList,
-            selectedDirectory,
+            downloadDirectory,
             isBrokerSelected,
             canSubscribe,
             truncatedDirectory,
@@ -637,6 +666,7 @@ export default defineComponent({
             showSaveDialog,
             saveConfiguration,
             configName,
+            configDirectory,
             loadBrokers,
             syncBrokers,
             configToDelete,

@@ -220,11 +220,26 @@ ipcMain.handle("open-directory-dialog", async (event) => {
 
 // Handler for the saving the configuration
 // We name this 'save-config' to be referenced elsewhere
-ipcMain.on("save-config", (event, name, data) => {
+ipcMain.on("save-config", (event, metadata, data) => {
   try {
-    const filePath = `backend/configs/${name}.json`;
-    // Write the configuration file
-    fs.writeFileSync(filePath, JSON.stringify(data), 'utf8');
+    // Get the file name
+    const name = metadata.name;
+    // Get the default file path
+    const defaultPath = `backend/configs/${name}.json`;
+    // Write the configuration file to the default path
+    fs.writeFileSync(defaultPath, JSON.stringify(data), 'utf8');
+
+    // If the user has also chosen to save the configuration to a different path
+    // then write the configuration file to that path as well
+    if (metadata.directory) {
+      // Replace the backslashes in the path with forward slashes
+      metadata.directory = metadata.directory.replaceAll('\\', '/');
+      // Create the custom file path
+      const customPath = `${metadata.directory}/${name}.json`;
+      console.log("Custom path:", customPath);
+      // Write the configuration file to the chosen path
+      fs.writeFileSync(customPath, JSON.stringify(data), 'utf8');
+    };
   }
   catch (error) {
     console.error("Error in save-config:", error.message);
