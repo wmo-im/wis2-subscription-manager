@@ -283,6 +283,8 @@ export default defineComponent({
             }
             // Now send selectedTopics to Electron API as an array
             window.electronAPI.storeTopics(Array.from(selectedTopics.value));
+            // Close the dialog
+            dialog.value = false;
         }
 
         // If the user adds a dataset to the subscription and then reloads the
