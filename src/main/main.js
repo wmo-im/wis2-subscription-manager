@@ -93,6 +93,9 @@ app.on("activate", () => {
 
 // Inter-process communication setup (IPC)
 
+// Boolean for subscription status (true = subscribed, false = unsubscribed)
+let subscriptionStatus = false;
+
 // Handler for storing the selected topics in the GDC page
 // We name this 'store-topics' to be referenced elsewhere
 let storedTopics = [];
@@ -108,6 +111,20 @@ ipcMain.on("store-topics", (event, topics) => {
   }
 });
 
+// Handler for storing the topic to be removed by the user in
+// the GDC page
+// We name this 'topic-to-remove' to be referenced elsewhere
+let topicsToRemove = [];
+ipcMain.on("topic-to-remove", (event, topic) => {
+  try {
+    // Add this topic to the list of topics to remove
+    topicsToRemove.push(topic);
+  }
+  catch (error) {
+    console.error("Error in topic-to-remove:", error.message);
+  }
+});
+
 // Handler for loading the stored topics into the configuration page
 // We name this 'load-topics' to be referenced elsewhere
 ipcMain.handle("load-topics", async (event) => {
@@ -117,6 +134,18 @@ ipcMain.handle("load-topics", async (event) => {
   }
   catch (error) {
     console.error("Error in load-topics:", error.message);
+  }
+});
+
+// Handler for loading the topics to be removed by the user in the GDC page
+// We name this 'load-topics-to-remove' to be referenced elsewhere
+ipcMain.handle("load-topics-to-remove", async (event) => {
+  try {
+    // Return the topics to remove
+    return topicsToRemove;
+  }
+  catch (error) {
+    console.error("Error in load-topics-to-remove:", error.message);
   }
 });
 
@@ -261,6 +290,8 @@ ipcMain.on("handle-subscription", (event, data) => {
 
   if (data.shouldSubscribe) {
     try {
+      // Update subscription status
+      subscriptionStatus = true;
       // Replace the backslashes in the download directory with forward slashes
       data.downloadDirectory = data.downloadDirectory.replaceAll('\\', '/');
 
@@ -302,6 +333,8 @@ ipcMain.on("handle-subscription", (event, data) => {
     }
   }
   else {
+    // Update subscription status
+    subscriptionStatus = false;
     // Send a message to the frontend
     event.sender.send('subscription-response', { status: 'Subscription cancelled' });
   }

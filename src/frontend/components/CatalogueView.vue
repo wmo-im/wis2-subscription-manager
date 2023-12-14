@@ -7,8 +7,7 @@
                 <v-card-item>
                     <v-row dense>
                         <v-col cols="4">
-                            <v-select v-model="selectedCatalogue" :items="catalogueList"
-                            item-title="title" item-value="url"
+                            <v-select v-model="selectedCatalogue" :items="catalogueList" item-title="title" item-value="url"
                                 label="Choose a catalogue"></v-select>
                         </v-col>
                         <v-col cols="4">
@@ -31,7 +30,7 @@
                     <v-table v-if="tableBoolean === true" :hover="true">
                         <thead>
                             <tr>
-                                <th class="text-left">
+                                <th scope="row" class="text-left">
                                     Discovery Metadata Records Found
                                 </th>
                             </tr>
@@ -73,9 +72,14 @@
                                         </v-btn>
                                     </v-col>
                                     <v-col cols="6">
-                                        <v-btn color="#64BF40" variant="flat" block
-                                            @click="addToSubscription(selectedItem.topic_hierarchy)">
+                                        <!-- If topic not added, allow them to add -->
+                                        <v-btn v-if="!selectedTopics.includes(selectedItem.topic_hierarchy)" color="#64BF40"
+                                            variant="flat" block @click="addToSubscription(selectedItem.topic_hierarchy)">
                                             Add Dataset to Subscription</v-btn>
+                                        <v-btn v-if="selectedTopics.includes(selectedItem.topic_hierarchy)" color="#D90429"
+                                            variant="flat" block
+                                            @click="removeFromSubscription(selectedItem.topic_hierarchy)">
+                                            Remove Dataset from Subscription</v-btn>
                                     </v-col>
                                 </v-row>
                             </v-card-actions>
@@ -100,7 +104,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { defineComponent, ref, computed, onMounted } from 'vue';
 import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VTable } from 'vuetify/lib/components/index.mjs';
 import { VDataTable } from 'vuetify/lib/labs/VDataTable/index.mjs';
 
@@ -124,8 +128,8 @@ export default defineComponent({
 
         // Static variables
         const catalogueList = [
-            {title: 'Meteorological Service of Canada', url: 'https://api.weather.gc.ca/collections/wis2-discovery-metadata/items'},
-            {title: 'China Meteorological Administration', url: 'https://gdc.wis.cma.cn/collections/wis2-discovery-metadata/items'}
+            { title: 'Meteorological Service of Canada', url: 'https://api.weather.gc.ca/collections/wis2-discovery-metadata/items' },
+            { title: 'China Meteorological Administration', url: 'https://gdc.wis.cma.cn/collections/wis2-discovery-metadata/items' }
         ];
 
         // Reactive variables
@@ -287,6 +291,20 @@ export default defineComponent({
             dialog.value = false;
         }
 
+        // When the user clicks 'Remove dataset from subscription', remove
+        // the associated topic from the array which will be parsed to the Electron API
+        const removeFromSubscription = (topic) => {
+            console.log("Removing topic from subscription: " + topic)
+            // Remove it from the array
+            if (selectedTopics.value.includes(topic)) {
+                selectedTopics.value.splice(selectedTopics.value.indexOf(topic), 1);
+            }
+            // Now send the topic to remove to Electron API
+            window.electronAPI.topicToRemove(topic);
+            // Close the dialog
+            dialog.value = false;
+        }
+
         // If the user adds a dataset to the subscription and then reloads the
         // catalogue page, this information is lost. We need to load the topics
         // from the Electron API and display the check marks in the table
@@ -297,7 +315,18 @@ export default defineComponent({
                 // Add all topics loaded to the selectedTopics array
                 topics.forEach(topic => {
                     selectedTopics.value.push(topic);
-                }); s
+                });
+            }
+            // Now check if there are topics that have been removed
+            // from the configuration page
+            const topicsToRemove = await window.electronAPI.loadTopicsToRemove();
+            if (topicsToRemove.length > 0) {
+                topicsToRemove.forEach(topic => {
+                    // Ensure that the topic is in the list before removing
+                    if (selectedTopics.value.includes(topic)) {
+                        selectedTopics.value.splice(selectedTopics.value.indexOf(topic), 1);
+                    }
+                });
             }
         }
 
@@ -325,7 +354,8 @@ export default defineComponent({
             loadingJsonBoolean,
             jsonDialog,
             selectedTopics,
-            addToSubscription
+            addToSubscription,
+            removeFromSubscription
         }
     }
 })

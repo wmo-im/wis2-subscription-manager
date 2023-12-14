@@ -155,7 +155,6 @@
                 </v-dialog>
 
                 <!-- Dialog that displays the topics list as checkboxes -->
-                <!-- NEED TO ADD FUNCTIONALITY -->
                 <v-dialog v-model="showTopicDialog" max-width="750px">
                     <v-card>
                         <v-toolbar title="Current Topics Subscribed To" color="#00A9CE">
@@ -423,12 +422,24 @@ export default defineComponent({
         const loadTopics = async () => {
             try {
                 const topics = await window.electronAPI.loadTopics();
+                console.log('Topics loaded: ', topics);
                 // Add all topics loaded to the topicsList array
                 if (topics.length > 0) {
                     topics.forEach(topic => {
                         // Ensure there are no duplicate topics
                         if (!topicsList.value.includes(topic)) {
                             topicsList.value.push(topic);
+                        }
+                    });
+                }
+                // Now check if there are topics to be removed when
+                // the user uses the GDC page
+                const topicsToRemove = await window.electronAPI.loadTopicsToRemove();
+                if (topicsToRemove.length > 0) {
+                    topicsToRemove.forEach(topic => {
+                        // Ensure that the topic is in the list before removing
+                        if (topicsList.value.includes(topic)) {
+                            topicsList.value.splice(topicsList.value.indexOf(topic), 1);
                         }
                     });
                 }
@@ -445,12 +456,18 @@ export default defineComponent({
                 topicsList.value.push(topicEntry.value);
                 topicEntry.value = '';
             }
+            // Store topics to be accessed by GDC
+            window.electronAPI.storeTopics(Array.from(topicsList.value));
         };
 
         // If the user clicks the 'close' button on a pre-entered topic,
         // the topic will be removed from the list
         const removeTopic = (index) => {
+            const topicToRemove = topicsList.value[index];
             topicsList.value.splice(index, 1);
+            // Send this topic to the electron API so that the associated
+            // dataset is not checked in the GDC page
+            window.electronAPI.topicToRemove(topicToRemove);
         };
 
         // Communicates with the electron API to use the
