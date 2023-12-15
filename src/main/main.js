@@ -96,56 +96,26 @@ app.on("activate", () => {
 // Boolean for subscription status (true = subscribed, false = unsubscribed)
 let subscriptionStatus = false;
 
-// Handler for storing the selected topics in the GDC page
-// We name this 'store-topics' to be referenced elsewhere
-let storedTopics = [];
-ipcMain.on("store-topics", (event, topics) => {
+// Handler for storing the shared settings between pages
+// We name this 'store-settings' to be referenced elsewhere
+let settings = {broker: "", topics: [], downloadDirectory: "", shouldSubscribe: false};
+ipcMain.on("store-settings", (event, newSettings) => {
   try {
-    // Add topics to variable
-    topics.forEach(topic => {
-      storedTopics.push(topic);
-  });
+    settings = newSettings;
   }
   catch (error) {
-    console.error("Error in store-topics:", error.message);
+    console.error("Error in store-settings:", error.message);
   }
 });
 
-// Handler for storing the topic to be removed by the user in
-// the GDC page
-// We name this 'topic-to-remove' to be referenced elsewhere
-let topicsToRemove = [];
-ipcMain.on("topic-to-remove", (event, topic) => {
+// Hander for loading the shared settings between pages
+// We name this 'load-settings' to be referenced elsewhere
+ipcMain.handle("load-settings", async (event) => {
   try {
-    // Add this topic to the list of topics to remove
-    topicsToRemove.push(topic);
+    return settings;
   }
   catch (error) {
-    console.error("Error in topic-to-remove:", error.message);
-  }
-});
-
-// Handler for loading the stored topics into the configuration page
-// We name this 'load-topics' to be referenced elsewhere
-ipcMain.handle("load-topics", async (event) => {
-  try {
-    // Return the stored topics
-    return storedTopics;
-  }
-  catch (error) {
-    console.error("Error in load-topics:", error.message);
-  }
-});
-
-// Handler for loading the topics to be removed by the user in the GDC page
-// We name this 'load-topics-to-remove' to be referenced elsewhere
-ipcMain.handle("load-topics-to-remove", async (event) => {
-  try {
-    // Return the topics to remove
-    return topicsToRemove;
-  }
-  catch (error) {
-    console.error("Error in load-topics-to-remove:", error.message);
+    console.error("Error in load-settings:", error.message);
   }
 });
 

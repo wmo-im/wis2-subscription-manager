@@ -51,7 +51,7 @@
                         </v-card-text>
                         <v-card-actions>
                             <v-btn @click="deleteConfig(configToDelete)" color="#64BF40" variant="flat" block
-                            :loading="deleteLoadingBoolean">I Confirm</v-btn>
+                                :loading="deleteLoadingBoolean">I Confirm</v-btn>
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
@@ -314,6 +314,22 @@ export default defineComponent({
 
         // Methods
 
+        // Load the saved information from the electron API
+        const loadSettings = async () => {
+            try {
+                const settings =  await window.electronAPI.loadSettings();
+                if (settings) {
+                    selectedBroker.value = settings.broker;
+                    topicsList.value = settings.topics;
+                    downloadDirectory.value = settings.downloadDirectory;
+                    subscribePressed.value = settings.subscribeStatus;
+                }
+            }
+            catch (error) {
+                console.error('Error loading settings: ', error);
+            }
+        }
+
         // Load the list of saved configurations
         const loadConfigNames = async () => {
             try {
@@ -418,37 +434,6 @@ export default defineComponent({
             }
         };
 
-        // Load the topics selected in the GDC page
-        const loadTopics = async () => {
-            try {
-                const topics = await window.electronAPI.loadTopics();
-                console.log('Topics loaded: ', topics);
-                // Add all topics loaded to the topicsList array
-                if (topics.length > 0) {
-                    topics.forEach(topic => {
-                        // Ensure there are no duplicate topics
-                        if (!topicsList.value.includes(topic)) {
-                            topicsList.value.push(topic);
-                        }
-                    });
-                }
-                // Now check if there are topics to be removed when
-                // the user uses the GDC page
-                const topicsToRemove = await window.electronAPI.loadTopicsToRemove();
-                if (topicsToRemove.length > 0) {
-                    topicsToRemove.forEach(topic => {
-                        // Ensure that the topic is in the list before removing
-                        if (topicsList.value.includes(topic)) {
-                            topicsList.value.splice(topicsList.value.indexOf(topic), 1);
-                        }
-                    });
-                }
-            }
-            catch (error) {
-                console.error('Error loading topics: ', error);
-            }
-        };
-
         // If the user types a topic and presses +, it will add it to the
         // topic list and reset the text field
         const addTopic = () => {
@@ -456,18 +441,12 @@ export default defineComponent({
                 topicsList.value.push(topicEntry.value);
                 topicEntry.value = '';
             }
-            // Store topics to be accessed by GDC
-            window.electronAPI.storeTopics(Array.from(topicsList.value));
         };
 
         // If the user clicks the 'close' button on a pre-entered topic,
         // the topic will be removed from the list
         const removeTopic = (index) => {
-            const topicToRemove = topicsList.value[index];
             topicsList.value.splice(index, 1);
-            // Send this topic to the electron API so that the associated
-            // dataset is not checked in the GDC page
-            window.electronAPI.topicToRemove(topicToRemove);
         };
 
         // Communicates with the electron API to use the
@@ -610,8 +589,8 @@ export default defineComponent({
         };
 
         onMounted(() => {
-            // Get topics list
-            loadTopics();
+            // Get settings from GDC or previous usage of configuration page
+            loadSettings();
             // Get config list
             loadConfigNames();
             // Get broker list
@@ -632,12 +611,25 @@ export default defineComponent({
                 console.log('Config data obtained: ', configData);
 
                 // Update the UI
-
                 selectedBroker.value = configData.brokerURL;
                 topicsList.value = configData.topicsList;
                 downloadDirectory.value = configData.downloadDirectory;
             }
         });
+
+        // Watch for changes in any of the user inputs, so that if they
+        // navigate to the Explore page and return, their configuration is not lost
+        watch([selectedBroker, topicsList, downloadDirectory, subscribePressed], () => {
+            const settings = {
+                broker: selectedBroker.value, 
+                topics: Array.from(topicsList.value), 
+                downloadDirectory: downloadDirectory.value,
+                subscribeStatus: subscribePressed.value
+            };
+            console.log("Storing settings:", settings);
+            // Store the information in the electron API
+            window.electronAPI.storeSettings(settings);
+        }, { deep: true }); // Use deep watch to track nested array
 
         // Watch for changes in backendOutput and scroll to bottom
         watch(backendOutput, () => {
@@ -711,4 +703,5 @@ export default defineComponent({
     overflow-y: auto;
     white-space: pre-wrap;
     /* To respect line breaks and spaces */
-}</style>
+}
+</style>

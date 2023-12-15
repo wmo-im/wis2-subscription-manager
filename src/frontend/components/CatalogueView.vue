@@ -104,7 +104,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, onMounted } from 'vue';
+import { defineComponent, ref, computed, watch, onMounted } from 'vue';
 import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VTable } from 'vuetify/lib/components/index.mjs';
 import { VDataTable } from 'vuetify/lib/labs/VDataTable/index.mjs';
 
@@ -145,6 +145,9 @@ export default defineComponent({
         const loadingJsonBoolean = ref(false);
         const jsonDialog = ref(false);
         const selectedTopics = ref([]);
+        const broker = ref("");
+        const downloadDirectory = ref("");
+        const subscribeStatus = ref(false);
 
         // Computed properties
 
@@ -154,6 +157,22 @@ export default defineComponent({
         })
 
         // Methods
+
+        // Load the saved information from the electron API
+        const loadSettings = async () => {
+            try {
+                const settings = await window.electronAPI.loadSettings();
+                if (settings) {
+                    broker.value = settings.broker;
+                    selectedTopics.value = settings.topics;
+                    downloadDirectory.value = settings.downloadDirectory;
+                    subscribeStatus.value = settings.subscribeStatus;
+                }
+            }
+            catch (error) {
+                console.error('Error loading settings: ', error);
+            }
+        }
 
         // Search the catalogue
         const searchCatalogue = async () => {
@@ -203,8 +222,6 @@ export default defineComponent({
                             break;
                         }
                     }
-
-
 
                     // Get the center ID from the identifier,
                     // depending on the structure of the identifier
@@ -285,8 +302,7 @@ export default defineComponent({
             if (!selectedTopics.value.includes(topic)) {
                 selectedTopics.value.push(topic);
             }
-            // Now send selectedTopics to Electron API as an array
-            window.electronAPI.storeTopics(Array.from(selectedTopics.value));
+            // Add functionality to make API call if the user is subscribed
             // Close the dialog
             dialog.value = false;
         }
@@ -299,40 +315,27 @@ export default defineComponent({
             if (selectedTopics.value.includes(topic)) {
                 selectedTopics.value.splice(selectedTopics.value.indexOf(topic), 1);
             }
-            // Now send the topic to remove to Electron API
-            window.electronAPI.topicToRemove(topic);
+            // Add functionality to make API call if the user is subscribed
             // Close the dialog
             dialog.value = false;
         }
 
-        // If the user adds a dataset to the subscription and then reloads the
-        // catalogue page, this information is lost. We need to load the topics
-        // from the Electron API and display the check marks in the table
-        const loadTopics = async () => {
-            // Get the topics from the Electron API
-            const topics = await window.electronAPI.loadTopics();
-            if (topics.length > 0) {
-                // Add all topics loaded to the selectedTopics array
-                topics.forEach(topic => {
-                    selectedTopics.value.push(topic);
-                });
-            }
-            // Now check if there are topics that have been removed
-            // from the configuration page
-            const topicsToRemove = await window.electronAPI.loadTopicsToRemove();
-            if (topicsToRemove.length > 0) {
-                topicsToRemove.forEach(topic => {
-                    // Ensure that the topic is in the list before removing
-                    if (selectedTopics.value.includes(topic)) {
-                        selectedTopics.value.splice(selectedTopics.value.indexOf(topic), 1);
-                    }
-                });
-            }
-        }
+        // Watch for changes in the selected topics
+        watch(selectedTopics, (newValue, oldValue) => {
+            const settings = {
+                broker: broker.value,
+                topics: Array.from(selectedTopics.value),
+                downloadDirectory: downloadDirectory.value,
+                subscribeStatus: subscribeStatus.value
+            };
+            console.log("Storing settings:", settings);
+            // Store the information in the electron API
+            window.electronAPI.storeSettings(settings);
+        }, { deep: true }); // Use deep watch to track nested array
 
         onMounted(() => {
-            // Load topics from Electron API that were selected earlier
-            loadTopics();
+            // Get settings from GDC or previous usage of configuration page
+            loadSettings();
         })
 
         return {
@@ -355,7 +358,8 @@ export default defineComponent({
             jsonDialog,
             selectedTopics,
             addToSubscription,
-            removeFromSubscription
+            removeFromSubscription,
+            subscribeStatus
         }
     }
 })

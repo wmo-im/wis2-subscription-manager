@@ -16,10 +16,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 // Expose to renderer to the methods defined in the main process
 contextBridge.exposeInMainWorld('electronAPI', {
-  storeTopics: (topics) => ipcRenderer.send('store-topics', topics),
-  topicToRemove: (topic) => ipcRenderer.send('topic-to-remove', topic),
-  loadTopics: () => ipcRenderer.invoke('load-topics'),
-  loadTopicsToRemove: (topics) => ipcRenderer.invoke('load-topics-to-remove', topics),
+  storeSettings: (settings) => ipcRenderer.send('store-settings', settings),
+  loadSettings: () => ipcRenderer.invoke('load-settings'),
   loadConfigNames: () => ipcRenderer.invoke('load-config-names'),
   loadConfig: (config) => ipcRenderer.invoke('load-config', config),
   deleteConfig: (config) => ipcRenderer.send('delete-config', config),
