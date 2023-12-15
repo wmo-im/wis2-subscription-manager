@@ -296,26 +296,40 @@ export default defineComponent({
 
         // When the user clicks 'Add dataset to subscription', add the
         // associated topic to an array which will be parsed to the Electron API
-        const addToSubscription = (topic) => {
+        const addToSubscription = async (topic) => {
             console.log("Adding topic to subscription: " + topic)
             // Make sure there are no duplicates
             if (!selectedTopics.value.includes(topic)) {
                 selectedTopics.value.push(topic);
             }
-            // Add functionality to make API call if the user is subscribed
+            // If the user is currently subscribed, handle the Flask API call
+            if (subscribedStatus.value) {
+                const data = {
+                    topic: topic,
+                    action: 'add'
+                }
+                await window.electronAPI.manageTopics(data);
+            }
             // Close the dialog
             dialog.value = false;
         }
 
         // When the user clicks 'Remove dataset from subscription', remove
         // the associated topic from the array which will be parsed to the Electron API
-        const removeFromSubscription = (topic) => {
+        const removeFromSubscription = async (topic) => {
             console.log("Removing topic from subscription: " + topic)
             // Remove it from the array
             if (selectedTopics.value.includes(topic)) {
                 selectedTopics.value.splice(selectedTopics.value.indexOf(topic), 1);
             }
-            // Add functionality to make API call if the user is subscribed
+            // If the user is currently subscribed, handle the Flask API call
+            if (subscribedStatus.value) {
+                const data = {
+                    topic: topic,
+                    action: 'delete'
+                }
+                await window.electronAPI.manageTopics(data);
+            }
             // Close the dialog
             dialog.value = false;
         }
