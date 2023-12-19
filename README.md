@@ -24,5 +24,19 @@ npm install
 Lastly, to start the application
 
 ```
-npm start
+npm run start
+```
+
+## How to Package the Application
+
+Firstly, the Vue 3 frontend should be built using
+
+```
+npm run build
+```
+
+Then, we can Electron Forge's `make` command to package the application
+
+```
+npm run make
 ```

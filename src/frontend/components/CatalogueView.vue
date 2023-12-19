@@ -303,7 +303,7 @@ export default defineComponent({
                 selectedTopics.value.push(topic);
             }
             // If the user is currently subscribed, handle the Flask API call
-            if (subscribedStatus.value) {
+            if (subscribeStatus.value) {
                 const data = {
                     topic: topic,
                     action: 'add'
@@ -323,7 +323,7 @@ export default defineComponent({
                 selectedTopics.value.splice(selectedTopics.value.indexOf(topic), 1);
             }
             // If the user is currently subscribed, handle the Flask API call
-            if (subscribedStatus.value) {
+            if (subscribeStatus.value) {
                 const data = {
                     topic: topic,
                     action: 'delete'
