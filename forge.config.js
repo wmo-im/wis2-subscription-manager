@@ -9,13 +9,18 @@ module.exports = {
     asar: {
       unpack: "backend/**/*|src/frontend/**/*|src/main/**/*|public/assets/**/*"
     },
-    icon: 'public/assets/logo-small.png'
+    icon: 'public/assets/logo-circle.png'
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
-      config: {},
+      config: {
+        name: 'wis2-downloader',
+        authors: 'World Meteorological Organization',
+        exe: 'wis2-downloader.exe',
+        icon: 'public/assets/logo-circle.ico',
+      },
     },
     {
       name: '@electron-forge/maker-zip',
@@ -23,11 +28,12 @@ module.exports = {
     },
     {
       name: '@electron-forge/maker-deb',
-      config: {},
-    },
-    {
-      name: '@electron-forge/maker-rpm',
-      config: {},
+      platforms: ['linux'],
+      config: {
+        name: 'wis2-downloader',
+        icon: 'public/assets/logo-circle.ico',
+
+      },
     },
   ],
   plugins: [

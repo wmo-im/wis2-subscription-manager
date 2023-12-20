@@ -15,7 +15,7 @@ const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 1000,
     height: 800,
-    icon: "public/assets/logo-small.png",
+    icon: "public/assets/logo-circle.png",
     titleBarStyle: 'hidden',
     titleBarOverlay: {
       color: '#14418F',
@@ -52,7 +52,7 @@ const createWindow = () => {
 
   // Set app icon in the tray
   var appIcon = null;
-  appIcon = new Tray("public/assets/logo-small.png")
+  appIcon = new Tray("public/assets/logo-circle.png")
 
   // Restore application from the tray
   const contextMenu = Menu.buildFromTemplate([
@@ -248,7 +248,17 @@ ipcMain.on("save-config", (event, metadata, data) => {
 // Handler for the subscription process
 // We name this 'handle-subscription' to be referenced elsewhere
 ipcMain.on("handle-subscription", (event, data) => {
-  const backendPath = 'backend/subscribe-backend.exe';
+  let backendPath = '';
+
+  // If on Windows, use the Windows executable
+  if (process.platform === "win32") {
+    backendPath = 'backend/subscribe-backend.exe';
+  }
+  // If on Linux, use the Linux executable
+  else if (process.platform === "linux") {
+    backendPath = 'backend/subscribe-backend-linux';
+  }
+  
   const configPath = 'backend/config.json';
 
   // Remove listeners and kill the backend process if it's already running
