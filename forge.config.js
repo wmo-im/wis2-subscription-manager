@@ -2,13 +2,18 @@ module.exports = {
   packagerConfig: {
     // Point to Electron entry file main.js
     entry: 'src/main/main.js',
-    // `asar` is used to improve the read performance of packaged Electron applications.
+    // ASAR is used to improve the read performance of packaged Electron applications.
     // It archives files into a single file, similar to tar or zip, but optimized for random access.
     // The `unpack` option specifies files or directories to exclude from the ASAR archive.
     // These files will be copied to the app's resources directory instead.
+    // NOTE: ASAR should only be used for static files, so the backend folder should be excluded.
     asar: {
-      unpack: "backend/**/*|src/frontend/**/*|src/main/**/*|public/assets/**/*"
+      unpack: "src/frontend/**/*|src/main/**/*|public/assets/**/*"
     },
+    // Put backend executables into extra resources
+    extraResource: [
+      'backend', 'backend/configs'
+    ],
     icon: 'public/assets/logo-circle.png'
   },
   rebuildConfig: {},

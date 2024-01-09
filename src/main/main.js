@@ -91,6 +91,52 @@ app.on("activate", () => {
   }
 });
 
+// We need to check whether we are in development mode or
+// production mode, and handle the path to the backend data (backend processes and JSON files) accordingly
+
+const inProductionMode = process.env.NODE_ENV === 'production';
+
+// Note: The app data directory retured get app.getPath('userData') is different depending on the OS
+const userDataPath = app.getPath('userData');
+
+// Define a function to copy the backend JSON files to the user's app data directory, so that they can be updated during the application's lifetime
+function copyFileToUserDataDir(filename) {
+  const destFilePath = path.join(userDataPath, filename);
+
+  if (!fs.existsSync(destFilePath)) {
+    const sourceFilePath = path.join(__dirname, filename);
+    fs.copyFileSync(sourceFilePath, destFilePath);
+  }
+}
+
+let backendFolder = 'backend';
+
+// If in production mode, copy the files and set the backend path to the app data directory. Otherwise, use the backend directory in the project root
+if (inProductionMode) {
+  copyFileToUserDataDir('backend/config.json');
+  copyFileToUserDataDir('backend/brokers.json');
+  files.forEach(file => {
+    copyFileToUserDataDir('backend/configs/' + file);
+  });
+
+  // Set the backend path to the app data directory
+  backendFolder = userDataPath;
+}
+
+// Now set the file paths to the backend JSON files
+const configPath = path.join(backendFolder, 'config.json');
+const brokersPath = path.join(backendFolder, 'brokers.json');
+
+// Set the file path to the backend process, depending on the OS
+let backendPath = null;
+if (process.platform === "win32") {
+  backendPath = path.join(backendFolder, 'subscribe-backend-win32.exe');
+}
+else if (process.platform === "linux") {
+  backendPath = path.join(backendFolder, 'subscribe-backend-linux');
+}
+
+
 // Inter-process communication setup (IPC)
 
 // Boolean for subscription status (true = subscribed, false = unsubscribed)
@@ -124,7 +170,7 @@ ipcMain.handle("load-settings", async (event) => {
 ipcMain.handle("load-config-names", async (event) => {
   try {
     // Read the configuration directory
-    const files = fs.readdirSync('backend/configs');
+    const files = fs.readdirSync(path.join(backendFolder, 'configs'));
     // Create an array of the file basename excluding the .json extension
     const configNames = files.map(file => path.basename(file, '.json'));
     // Return the configuration names
@@ -141,7 +187,7 @@ ipcMain.handle("load-config-names", async (event) => {
 // We name this 'load-config' to be referenced elsewhere
 ipcMain.handle("load-config", async (event, config) => {
   try {
-    const filePath = `backend/configs/${config}.json`;
+    const filePath = path.join(backendFolder, 'configs', `${config}.json`);
     // Read the configuration file
     const configJSON = fs.readFileSync(filePath, 'utf8');
     // Parse the configuration file
@@ -158,7 +204,7 @@ ipcMain.handle("load-config", async (event, config) => {
 // We name this 'delete-config' to be referenced elsewhere
 ipcMain.on("delete-config", (event, config) => {
   try {
-      const filePath = `backend/configs/${config}.json`;
+      const filePath = path.join(backendFolder, 'configs', `${config}.json`);
       // Delete the configuration file
       fs.unlinkSync(filePath);
   }
@@ -171,12 +217,11 @@ ipcMain.on("delete-config", (event, config) => {
 // We name this 'write-brokers' to be referenced elsewhere
 ipcMain.on("write-brokers", (event, data) => {
   try {
-    const filePath = 'backend/brokers.json';
     // Convert data to a JSON string
     console.log("Broker data received:", data)
     const dataString = JSON.stringify(data, null, 2);
-    // Write the data to this file
-    fs.writeFileSync(filePath, dataString, 'utf8');
+    // Write the data to the brokers.json file
+    fs.writeFileSync(brokerPath, dataString, 'utf8');
   }
   catch (error) {
     console.error("Error in writing broker information to disk:", error);
@@ -188,9 +233,8 @@ ipcMain.on("write-brokers", (event, data) => {
 // We name this 'read-brokers' to be referenced elsewhere
 ipcMain.handle("load-brokers", async (event) => {
   try {
-    const filePath = 'backend/brokers.json';
     // Read the brokers file
-    const brokersJSON = fs.readFileSync(filePath, 'utf8');
+    const brokersJSON = fs.readFileSync(brokersPath, 'utf8');
     // Parse the brokers file
     const brokersData = JSON.parse(brokersJSON);
     // Return the brokers file
@@ -224,7 +268,7 @@ ipcMain.on("save-config", (event, metadata, data) => {
     // Get the file name
     const name = metadata.name;
     // Get the default file path
-    const defaultPath = `backend/configs/${name}.json`;
+    const defaultPath = path.join(backendFolder, 'configs', `${name}.json`);
     // Write the configuration file to the default path
     fs.writeFileSync(defaultPath, JSON.stringify(data), 'utf8');
 
@@ -248,18 +292,6 @@ ipcMain.on("save-config", (event, metadata, data) => {
 // Handler for the subscription process
 // We name this 'handle-subscription' to be referenced elsewhere
 ipcMain.on("handle-subscription", (event, data) => {
-  let backendPath = '';
-
-  // If on Windows, use the Windows executable
-  if (process.platform === "win32") {
-    backendPath = 'backend/subscribe-backend.exe';
-  }
-  // If on Linux, use the Linux executable
-  else if (process.platform === "linux") {
-    backendPath = 'backend/subscribe-backend-linux';
-  }
-  
-  const configPath = 'backend/config.json';
 
   // Remove listeners and kill the backend process if it's already running
   if (backendProcess) {
@@ -345,7 +377,6 @@ ipcMain.on("manage-topics", async (event, data) => {
       // Send a message to the frontend
       event.sender.send('subscription-response', { status: `Topic ${data.topic} removed from subscription` });
     }
-
   }
   catch (error) {
     console.error("Error in manage-topics:", error);
