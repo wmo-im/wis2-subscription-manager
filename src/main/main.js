@@ -2,7 +2,7 @@ const { app, BrowserWindow, Menu, Tray, ipcMain, dialog } = require("electron");
 const path = require("path");
 const fs = require('fs');
 const spawn = require('child_process').spawn;
-var kill  = require('tree-kill');
+const kill = require('tree-kill');
 let backendProcess = null;
 
 // Handle creating/removing shortcuts on Winrsdows when installing/uninstalling.
@@ -51,7 +51,7 @@ const createWindow = () => {
   });
 
   // Set app icon in the tray
-  var appIcon = null;
+  let appIcon = null;
   appIcon = new Tray("public/assets/logo-circle.png")
 
   // Restore application from the tray
@@ -94,17 +94,23 @@ app.on("activate", () => {
 // We need to check whether we are in development mode or
 // production mode, and handle the path to the backend data (backend processes and JSON files) accordingly
 
-const inProductionMode = process.env.NODE_ENV === 'production';
+const inProductionMode = process.env.NODE_ENV !== 'development';
+console.log("Production Mode:", inProductionMode);
 
 // Note: The app data directory retured get app.getPath('userData') is different depending on the OS
 const userDataPath = app.getPath('userData');
+console.log("User data path:", userDataPath);
+
+// Get the executable path
+const exeFolder = path.dirname(app.getPath('exe'));
+console.log("Executable path:", exeFolder);
 
 // Define a function to copy the backend JSON files to the user's app data directory, so that they can be updated during the application's lifetime
-function copyFileToUserDataDir(filename) {
+function copyFileToUserDataDir(sourceFilePath) {
+  const filename = path.basename(sourceFilePath);
   const destFilePath = path.join(userDataPath, filename);
 
   if (!fs.existsSync(destFilePath)) {
-    const sourceFilePath = path.join(__dirname, filename);
     fs.copyFileSync(sourceFilePath, destFilePath);
   }
 }
@@ -113,10 +119,10 @@ let backendFolder = 'backend';
 
 // If in production mode, copy the files and set the backend path to the app data directory. Otherwise, use the backend directory in the project root
 if (inProductionMode) {
-  copyFileToUserDataDir('backend/config.json');
-  copyFileToUserDataDir('backend/brokers.json');
+  copyFileToUserDataDir(path.join(exeFolder, 'resources/backend/config.json'));
+  copyFileToUserDataDir(path.join(exeFolder, 'resources/backend/brokers.json'));
   files.forEach(file => {
-    copyFileToUserDataDir('backend/configs/' + file);
+    copyFileToUserDataDir(path.join(exeFolder,'backend/configs/', file));
   });
 
   // Set the backend path to the app data directory
@@ -127,13 +133,14 @@ if (inProductionMode) {
 const configPath = path.join(backendFolder, 'config.json');
 const brokersPath = path.join(backendFolder, 'brokers.json');
 
-// Set the file path to the backend process, depending on the OS
+// Set the file path to the backend process, depending on the OS. Note that the backend process
+// is not copied to the app data directory, so we launch it directly from resources/backend
 let backendPath = null;
 if (process.platform === "win32") {
-  backendPath = path.join(backendFolder, 'subscribe-backend-win32.exe');
+  backendPath = path.join(exeFolder, 'resources/backend/subscribe-backend-win32.exe');
 }
 else if (process.platform === "linux") {
-  backendPath = path.join(backendFolder, 'subscribe-backend-linux');
+  backendPath = path.join(exeFolder, 'resources/backend/subscribe-backend-linux');
 }
 
 

@@ -12,7 +12,7 @@ module.exports = {
     },
     // Put backend executables into extra resources
     extraResource: [
-      'backend', 'backend/configs'
+      'backend'
     ],
     icon: 'public/assets/logo-circle.png'
   },
