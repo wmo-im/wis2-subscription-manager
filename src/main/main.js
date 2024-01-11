@@ -69,10 +69,76 @@ const createWindow = () => {
   appIcon.setContextMenu(contextMenu);
 };
 
+// Define path variables that will be decided in the handleBackendStorage method
+let backendFolder = 'backend';
+let configPath = 'backend/config.json';
+let brokersPath = 'backend/brokers.json';
+let backendPath = null;
+
+// Method for copying the backend executable to the userData directory
+// if in production mode
+const copyBackendFile = (file, userDataPath) => {
+
+  // Get the executable path to find where the backend file is stored
+  const exeFolder = path.dirname(app.getPath('exe'));
+  
+  const sourcePath = path.join(exeFolder, 'resources', file);
+  const destinationPath = path.join(userDataPath, file);
+
+  // Check if the file already exists in the userData directory
+  if (!fs.existsSync(destinationPath)) {
+    // If the file does not exist, copy it
+    if (fs.existsSync(sourcePath)) {
+      fs.copyFileSync(sourcePath, destinationPath);
+    }
+  }
+}
+
+// Method for handling the storage of backend files
+const handleBackendStorage = () => {
+  // We need to check whether we are in development mode or production mode to decide how to handle the backend files
+  const inProductionMode = process.env.NODE_ENV !== 'development';
+  console.log("Production Mode:", inProductionMode);
+
+  // Note: The app data directory retured get app.getPath('userData') is different depending on the OS
+  const userDataPath = app.getPath('userData');
+  console.log("User data path:", userDataPath);
+
+
+  // If in production mode, set the path to the backend folder and the config/brokers files
+  if (inProductionMode) {
+    backendFolder = userDataPath;
+    configPath = path.join(backendFolder, 'config.json');
+    brokersPath = path.join(backendFolder, 'brokers.json');
+
+    // Copy the backend executable to the userData directory,
+    // depending on the OS
+    if (process.platform === "win32") {
+      copyBackendFile('subscribe-backend-win32.exe', userDataPath);
+    }
+    if (process.platform === "linux") {
+      copyBackendFile('subscribe-backend-linux', userDataPath);
+    }
+  }
+
+  // Now set the file path to the backend process, depending on the OS
+  // (If in production mode, this will be the userData directory,
+  // if in deployment mode, it will be in the project root backend folder)
+  if (process.platform === "win32") {
+    backendPath = path.join(backendFolder, 'subscribe-backend-win32.exe');
+  }
+  else if (process.platform === "linux") {
+    backendPath = path.join(backendFolder, 'subscribe-backend-linux');
+  }
+};
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on("ready", createWindow);
+app.on("ready", () => {
+  handleBackendStorage();
+  createWindow();
+});
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
@@ -90,59 +156,6 @@ app.on("activate", () => {
     createWindow();
   }
 });
-
-// We need to check whether we are in development mode or
-// production mode, and handle the path to the backend data (backend processes and JSON files) accordingly
-
-const inProductionMode = process.env.NODE_ENV !== 'development';
-console.log("Production Mode:", inProductionMode);
-
-// Note: The app data directory retured get app.getPath('userData') is different depending on the OS
-const userDataPath = app.getPath('userData');
-console.log("User data path:", userDataPath);
-
-// Get the executable path
-const exeFolder = path.dirname(app.getPath('exe'));
-console.log("Executable path:", exeFolder);
-
-// Define a function to copy the backend JSON files to the user's app data directory, so that they can be updated during the application's lifetime
-function copyFileToUserDataDir(sourceFilePath) {
-  const filename = path.basename(sourceFilePath);
-  const destFilePath = path.join(userDataPath, filename);
-
-  if (!fs.existsSync(destFilePath)) {
-    fs.copyFileSync(sourceFilePath, destFilePath);
-  }
-}
-
-let backendFolder = 'backend';
-
-// If in production mode, copy the files and set the backend path to the app data directory. Otherwise, use the backend directory in the project root
-if (inProductionMode) {
-  copyFileToUserDataDir(path.join(exeFolder, 'resources/backend/config.json'));
-  copyFileToUserDataDir(path.join(exeFolder, 'resources/backend/brokers.json'));
-  files.forEach(file => {
-    copyFileToUserDataDir(path.join(exeFolder,'backend/configs/', file));
-  });
-
-  // Set the backend path to the app data directory
-  backendFolder = userDataPath;
-}
-
-// Now set the file paths to the backend JSON files
-const configPath = path.join(backendFolder, 'config.json');
-const brokersPath = path.join(backendFolder, 'brokers.json');
-
-// Set the file path to the backend process, depending on the OS. Note that the backend process
-// is not copied to the app data directory, so we launch it directly from resources/backend
-let backendPath = null;
-if (process.platform === "win32") {
-  backendPath = path.join(exeFolder, 'resources/backend/subscribe-backend-win32.exe');
-}
-else if (process.platform === "linux") {
-  backendPath = path.join(exeFolder, 'resources/backend/subscribe-backend-linux');
-}
-
 
 // Inter-process communication setup (IPC)
 
@@ -228,7 +241,7 @@ ipcMain.on("write-brokers", (event, data) => {
     console.log("Broker data received:", data)
     const dataString = JSON.stringify(data, null, 2);
     // Write the data to the brokers.json file
-    fs.writeFileSync(brokerPath, dataString, 'utf8');
+    fs.writeFileSync(brokersPath, dataString, 'utf8');
   }
   catch (error) {
     console.error("Error in writing broker information to disk:", error);
@@ -240,6 +253,14 @@ ipcMain.on("write-brokers", (event, data) => {
 // We name this 'read-brokers' to be referenced elsewhere
 ipcMain.handle("load-brokers", async (event) => {
   try {
+    // Check if the brokers file exists
+    if (!fs.existsSync(brokersPath)) {
+      // If the brokers file doesn't exist, create it
+      fs.writeFileSync(brokersPath, JSON.stringify({}), 'utf8');
+      // Return an empty object, as clearly there is no data
+      return {};
+    }
+
     // Read the brokers file
     const brokersJSON = fs.readFileSync(brokersPath, 'utf8');
     // Parse the brokers file

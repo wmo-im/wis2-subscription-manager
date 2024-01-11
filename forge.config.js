@@ -12,7 +12,8 @@ module.exports = {
     },
     // Put backend executables into extra resources
     extraResource: [
-      'backend'
+      "./backend/subscribe-backend-win32.exe",
+      "./backend/subscribe-backend-linux"
     ],
     icon: 'public/assets/logo-circle.png'
   },
