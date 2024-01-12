@@ -255,10 +255,19 @@ ipcMain.handle("load-brokers", async (event) => {
   try {
     // Check if the brokers file exists
     if (!fs.existsSync(brokersPath)) {
-      // If the brokers file doesn't exist, create it
-      fs.writeFileSync(brokersPath, JSON.stringify({}), 'utf8');
-      // Return an empty object, as clearly there is no data
-      return {};
+      const defaultBrokers = [
+        {
+          "title": "China Meteorological Agency Global Broker",
+          "url": "gb.wis.cma.cn"
+        },
+        {
+          "title": "Météo-France Global Broker",
+          "url": "globalbroker.meteo.fr"
+        }
+      ];
+      // If the brokers file doesn't exist, create it with the
+      // default broker information
+      fs.writeFileSync(brokersPath, JSON.stringify(defaultBrokers), 'utf8');
     }
 
     // Read the brokers file
@@ -295,8 +304,14 @@ ipcMain.on("save-config", (event, metadata, data) => {
   try {
     // Get the file name
     const name = metadata.name;
-    // Get the default file path
-    const defaultPath = path.join(backendFolder, 'configs', `${name}.json`);
+    // Get the config folder path
+    const configsFolder = path.join(backendFolder, 'configs');
+    // Check if the config folder exists
+    if (!fs.existsSync(configsFolder)) {
+      fs.mkdirSync(configsFolder, { recursive: true });
+    }
+    // Now create the default file path of the config file using the above
+    const defaultPath = path.join(configsFolder, `${name}.json`);
     // Write the configuration file to the default path
     fs.writeFileSync(defaultPath, JSON.stringify(data), 'utf8');
 
