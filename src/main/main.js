@@ -116,8 +116,11 @@ const handleBackendStorage = () => {
     if (process.platform === "win32") {
       copyBackendFile('subscribe-backend-win32.exe', userDataPath);
     }
-    if (process.platform === "linux") {
+    else if (process.platform === "linux") {
       copyBackendFile('subscribe-backend-linux', userDataPath);
+    }
+    else if (process.platform === "darwin") {
+      copyBackendFile('subscribe-backend-darwin', userDataPath);
     }
   }
 
@@ -129,6 +132,9 @@ const handleBackendStorage = () => {
   }
   else if (process.platform === "linux") {
     backendPath = path.join(backendFolder, 'subscribe-backend-linux');
+  }
+  else if (process.platform === "darwin") {
+    backendPath = path.join(backendFolder, 'subscribe-backend-darwin');
   }
 };
 

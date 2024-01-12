@@ -47,41 +47,27 @@ This will create the application in the `out/wis2-downloader-win32-x64` folder.
 
 ### Linux
 
-To package for Linux on a Windows computer, you will need to use WSL and the Ubuntu terminal.
+To package for Linux on a Windows computer, you will need to use the Dockerfile included.
 
-Firstly, create a user and password in the Ubuntu terminal.
-
-Then, update the environment with the relevant packages:
+Firslty, build the Docker image as follows:
 
 ```
-sudo apt update -y
-sudo apt full-upgrade -y
-sudo apt install nodejs npm
-sudo npm install -g @electron-forge/cli
+docker build -t linux-installer .
 ```
 
-Update npm to version 14:
+Then, run the container with bash, mounting your project root directory to the app folder of the container:
 
 ```
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
-nvm install 14
-nvm use 14
-
+docker run -it -v ${PWD}:/app linux-installer bash
 ```
 
-Next, the Ubuntu environment needs to have the correct permissions on the C:/ drive. This can be done with the following commands:
+Note: The above is intended for Powershell. The correct syntax of `${PWD}` will vary per console used.
+
+Inside the container, install the dependencies and then run the installer (`make`):
 
 ```
-sudo umount /mnt/c {USER}
-sudo mount -t drvfs C: /mnt/c -o metadata,uid=1000,gid=1000,umask=22,fmask=111
-```
-
-Finally, navigate to the application directory, install the dependencies, and build the application:
-
-```
-cd /mnt/c/Users/USER/.../wis2-downloader
 npm install
 npm run make
 ```
 
-This will create the application in the `out/wis2-downloader-linux-x64` folder.
+This will create the application in the `out/wis2-downloader-linux-x64` folder in your project root.
