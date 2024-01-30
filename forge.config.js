@@ -22,7 +22,7 @@ module.exports = {
     {
       name: '@electron-forge/maker-squirrel',
       config: {
-        name: 'wis2-downloader',
+        name: 'WIS2 Downloader',
         authors: 'World Meteorological Organization',
         exe: 'wis2-downloader.exe',
         icon: 'public/assets/logo-circle.ico',
