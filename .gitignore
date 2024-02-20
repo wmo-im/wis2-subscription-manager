@@ -93,3 +93,10 @@ out/
 
 # Conifg files
 backend/configs/*.json
+
+# Backend pyinstaller files
+backend/script/build
+backend/script/dist
+backend/script/instance
+backend/script/venv
+backend/script/*.spec

@@ -87,8 +87,8 @@
                         </v-row>
 
                         <v-chip-group>
-                            <v-chip v-for="(topic, index) in topicsList" closable :key="index"
-                                @click:close="removeTopic(index)">
+                            <v-chip v-for="topic in topicsList" :key="topic" closable label
+                                @click:close="removeTopic(topic)">
                                 {{ topic }}
                             </v-chip>
                         </v-chip-group>
@@ -445,8 +445,18 @@ export default defineComponent({
 
         // If the user clicks the 'close' button on a pre-entered topic,
         // the topic will be removed from the list
-        const removeTopic = (index) => {
-            topicsList.value.splice(index, 1);
+        const removeTopic = (topic) => {
+            const index = topicsList.value.indexOf(topic);
+            if (index > -1) {
+                /// Create a shallow copy first
+                let updatedTopicsList = [...topicsList.value];
+
+                // Remove the item at the specified index
+                updatedTopicsList.splice(index, 1);
+
+                // Reassign the topic list to the updated one
+                topicsList.value = updatedTopicsList;
+            }
         };
 
         // Communicates with the electron API to use the
