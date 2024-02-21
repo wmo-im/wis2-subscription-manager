@@ -150,6 +150,8 @@ def on_subscribe(client, userdata, mid, granted_qos):
 
 
 def main():
+    # Log system arguments received
+    LOGGER.debug(f"Received command-line arguments: {sys.argv}")
     # Parse system argument: the directory of the configuration file
     parser = argparse.ArgumentParser(
         description="WIS2 Downloader Backend Configuration")
@@ -178,6 +180,8 @@ def main():
     # Load configuration data
     with open(config_path, 'r') as f:
         config = json.load(f)
+    # Log configuration data loaded
+    LOGGER.debug(f"Loaded configuration: {config}")
     broker = config['broker']
     topics = config['topics']
     download_dir = config['download_directory']

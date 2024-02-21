@@ -15,10 +15,11 @@ module.exports = {
       "./backend/subscribe-backend-win32.exe",
       "./backend/subscribe-backend-linux"
     ],
-    icon: 'public/assets/logo-circle.png'
+    icon: 'public/assets/logo-circle'
   },
   rebuildConfig: {},
   makers: [
+    // Windows maker
     {
       name: '@electron-forge/maker-squirrel',
       config: {
@@ -26,21 +27,30 @@ module.exports = {
         productName: 'WIS2 Downloader',
         authors: 'World Meteorological Organization',
         exe: 'wis2-downloader.exe',
-        icon: 'public/assets/logo-circle.ico',
+        iconUrl: 'public/assets/logo-circle.ico',
+        setupIcon: 'public/assets/logo-circle.ico',
       },
     },
-    {
-      name: '@electron-forge/maker-zip',
-      platforms: ['darwin'],
-    },
+    // Linux maker
     {
       name: '@electron-forge/maker-deb',
       platforms: ['linux'],
       config: {
         name: 'wis2-downloader',
         productName: 'WIS2 Downloader',
-        icon: 'public/assets/logo-circle.ico',
-
+        options: {
+          icon: 'public/assets/logo-circle.ico'
+        }
+      },
+    },
+    // MacOS maker
+    {
+      name: '@electron-forge/maker-dmg',
+      platforms: ['darwin'],
+      config: {
+        name: 'wis2-downloader',
+        productName: 'WIS2 Downloader',
+        icon: 'public/assets/logo-circle.icns',
       },
     },
   ],

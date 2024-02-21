@@ -495,9 +495,9 @@ export default defineComponent({
                 };
 
                 const data = {
-                    brokerURL: selectedBroker.value,
-                    topicsList: Array.from(topicsList.value), // Convert Proxy to regular array
-                    downloadDirectory: downloadDirectory.value
+                    broker: selectedBroker.value,
+                    topics: Array.from(topicsList.value), // Convert Proxy to regular array
+                    download_directory: downloadDirectory.value
                 };
 
                 // Write to file named by user
@@ -621,9 +621,9 @@ export default defineComponent({
                 console.log('Config data obtained: ', configData);
 
                 // Update the UI
-                selectedBroker.value = configData.brokerURL;
-                topicsList.value = configData.topicsList;
-                downloadDirectory.value = configData.downloadDirectory;
+                selectedBroker.value = configData.broker;
+                topicsList.value = configData.topics;
+                downloadDirectory.value = configData['download_directory'];
             }
         });
 
