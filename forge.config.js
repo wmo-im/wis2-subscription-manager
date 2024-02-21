@@ -27,7 +27,7 @@ module.exports = {
         productName: 'WIS2 Downloader',
         authors: 'World Meteorological Organization',
         exe: 'wis2-downloader.exe',
-        iconUrl: 'public/assets/logo-circle.ico',
+        iconUrl: 'https://raw.githubusercontent.com/wmo-im/wis2-downloader/main/public/assets/logo-circle.ico',
         setupIcon: 'public/assets/logo-circle.ico',
       },
     },
