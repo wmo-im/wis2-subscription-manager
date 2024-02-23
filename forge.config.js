@@ -29,6 +29,7 @@ module.exports = {
         exe: 'wis2-downloader.exe',
         iconUrl: 'https://raw.githubusercontent.com/wmo-im/wis2-downloader/main/public/assets/logo-circle.ico',
         setupIcon: 'public/assets/logo-circle.ico',
+        loadingGif: 'public/assets/wmo-banner.gif'
       },
     },
     // Linux maker
