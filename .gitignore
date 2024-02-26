@@ -91,6 +91,9 @@ typings/
 # Electron-Forge
 out/
 
+# Dist folder
+dist/
+
 # Conifg files
 backend/configs/*.json
 
