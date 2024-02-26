@@ -16,6 +16,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 // Expose to renderer to the methods defined in the main process
 contextBridge.exposeInMainWorld('electronAPI', {
+  getOS: () => ipcRenderer.invoke('get-os'),
   storeSettings: (settings) => ipcRenderer.send('store-settings', settings),
   loadSettings: () => ipcRenderer.invoke('load-settings'),
   loadConfigNames: () => ipcRenderer.invoke('load-config-names'),

@@ -15,7 +15,7 @@ const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 1000,
     height: 800,
-    icon: "public/assets/logo-circle.png",
+    icon: "public/assets/logo-circle",
     titleBarStyle: 'hidden',
     titleBarOverlay: {
       color: '#14418F',
@@ -42,7 +42,7 @@ const createWindow = () => {
   mainWindow.webContents.insertCSS("body::-webkit-scrollbar { display: none !important; }");
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
 
   // Always minimise to tray
   mainWindow.on('minimize',function(event){
@@ -50,9 +50,24 @@ const createWindow = () => {
     mainWindow.hide();
   });
 
-  // Set app icon in the tray
-  let appIcon = null;
-  appIcon = new Tray("public/assets/logo-circle.png")
+  // Set app icon in the tray depending on the OS
+  let appIcon;
+  let iconPath;
+  
+  switch (process.platform) {
+    case 'win32':
+      iconPath = "public/assets/tray-icon-win32.png";
+      break;
+    case 'linux':
+      iconPath = "public/assets/tray-icon-linux.png";
+      break;
+    case 'darwin':
+      iconPath = "public/assets/tray-icon-darwin.png";
+      break;
+    default:
+      iconPath = "public/assets/tray-icon-win32.png";
+  }
+  appIcon = new Tray(iconPath);
 
   // Restore application from the tray
   const contextMenu = Menu.buildFromTemplate([
@@ -113,28 +128,36 @@ const handleBackendStorage = () => {
 
     // Copy the backend executable to the userData directory,
     // depending on the OS
-    if (process.platform === "win32") {
-      copyBackendFile('subscribe-backend-win32.exe', userDataPath);
-    }
-    else if (process.platform === "linux") {
-      copyBackendFile('subscribe-backend-linux', userDataPath);
-    }
-    else if (process.platform === "darwin") {
-      copyBackendFile('subscribe-backend-darwin', userDataPath);
+    switch (process.platform) {
+      case 'win32':
+        copyBackendFile('subscribe-backend-win32.exe', userDataPath);
+        break;
+      case 'linux':
+        copyBackendFile('subscribe-backend-linux', userDataPath);
+        break;
+      case 'darwin':
+        copyBackendFile('subscribe-backend-darwin', userDataPath);
+        break;
+      default:
+        copyBackendFile('subscribe-backend-win32.exe', userDataPath);
     }
   }
 
   // Now set the file path to the backend process, depending on the OS
   // (If in production mode, this will be the userData directory,
   // if in deployment mode, it will be in the project root backend folder)
-  if (process.platform === "win32") {
-    backendPath = path.join(backendFolder, 'subscribe-backend-win32.exe');
-  }
-  else if (process.platform === "linux") {
-    backendPath = path.join(backendFolder, 'subscribe-backend-linux');
-  }
-  else if (process.platform === "darwin") {
-    backendPath = path.join(backendFolder, 'subscribe-backend-darwin');
+  switch (process.platform) {
+    case 'win32':
+      backendPath = path.join(backendFolder, 'subscribe-backend-win32.exe');
+      break;
+    case 'linux':
+      backendPath = path.join(backendFolder, 'subscribe-backend-linux');
+      break;
+    case 'darwin':
+      backendPath = path.join(backendFolder, 'subscribe-backend-darwin');
+      break;
+    default:
+      backendPath = path.join(backendFolder, 'subscribe-backend-win32.exe');
   }
 };
 
@@ -167,6 +190,12 @@ app.on("activate", () => {
 
 // Boolean for subscription status (true = subscribed, false = unsubscribed)
 let subscriptionStatus = false;
+
+// Handler to return the OS platform, to enable OS specific functionality
+// We name this 'get-os' to be referenced elsewhere
+ipcMain.handle("get-os", async (event) => {
+  return process.platform;
+});
 
 // Handler for storing the shared settings between pages
 // We name this 'store-settings' to be referenced elsewhere
