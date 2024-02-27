@@ -56,16 +56,16 @@ const createWindow = () => {
   
   switch (process.platform) {
     case 'win32':
-      iconPath = "public/assets/tray-icon-win32.png";
+      iconPath = "public/assets/tray-icon-win32.ico";
       break;
     case 'linux':
       iconPath = "public/assets/tray-icon-linux.png";
       break;
     case 'darwin':
-      iconPath = "public/assets/tray-icon-darwin.png";
+      iconPath = "public/assets/tray-icon-darwinTemplate.png";
       break;
     default:
-      iconPath = "public/assets/tray-icon-win32.png";
+      iconPath = "public/assets/tray-icon-win32.ico";
   }
   appIcon = new Tray(iconPath);
 
