@@ -1,5 +1,5 @@
 flask
 paho-mqtt
-urllib3
+urllib3==1.26.6
 requests
 pyinstaller

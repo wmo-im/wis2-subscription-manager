@@ -249,20 +249,34 @@ def get_config_data(args):
     return config
 
 
-def on_connect():
+def on_connect(client, userdata, flags, rc):
     """
     When the MQTT client connects to the broker, this function is called.
+    Note: These four arguments are required even if not explicitly used.
+
+    Args:
+        client (mqtt.client): The client that connects to the broker
+        and subscribes to the topics.
+        userdata (Any): The user data that is passed to the client
+        when it connects to the broker.
+        flags (dict): The response flags sent by the broker.
+        rc (int): The result code returned when the client connects
+        to the broker.
     """
     LOGGER.debug("Connected")
 
 
-def on_message(msg):
+def on_message(client, userdata, msg):
     """
     When the MQTT client receives a message, this function is called
     to inform the user of the message received and add the message
     to the queue.
+    Note: These three arguments are required even if two aren't explicitly used.
 
     Args:
+        client (mqtt.client): The client that connects to the broker.
+        userdata (Any): The user data that is passed to the client 
+        when a message is received.
         msg (dict): The message received from the MQTT client.
     """
     # Declare urlQ as global
@@ -278,9 +292,18 @@ def on_message(msg):
     urlQ.put(job)
 
 
-def on_subscribe():
+def on_subscribe(client, usedata, mid, granted_qos):
     """
     When the MQTT client subscribes to a topic, this function is called.
+    Note: These four arguments are required even if not explicitly used.
+
+    Args:
+        client (mqtt.client): The client that connects to the broker.
+        userdata (Any): The user data that is passed to the client
+        when a subscription is started.
+        mid (int): The message ID of the subscription message.
+        granted_qos (list): The list of granted QoS levels for the
+        requested topics.
     """
     LOGGER.debug(("On subscribe"))
 
