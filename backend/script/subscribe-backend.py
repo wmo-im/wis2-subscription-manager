@@ -350,9 +350,6 @@ def main():
     starts the MQTT thread and creates the Flask app to handle
     updates to an on-going subscription.
     """
-
-    # Log system arguments received
-    LOGGER.debug(f"Received command-line arguments: {sys.argv}")
     # Parse system argument: the directory of the configuration file
     parser = argparse.ArgumentParser(
         description="WIS2 Downloader Backend Configuration")
@@ -365,7 +362,6 @@ def main():
     config = get_config_data(args)
 
     # Log configuration data loaded
-    LOGGER.debug(f"Loaded configuration: {config}")
     broker = config['broker']
     topics = config['topics']
     download_dir = config['download_directory']
@@ -397,7 +393,9 @@ def main():
     except Exception as e:
         LOGGER.error(f"Error starting Flask app due to: {e}")
 
-    app.run(debug=True)
+    # To prevent issues with reloading when the application is frozen
+    # by Pyinstaller, we disable the reloader of the Flask app
+    app.run(debug=True, use_reloader=False)
 
 
 if __name__ == '__main__':
