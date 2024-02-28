@@ -41,9 +41,6 @@ const createWindow = () => {
   // Hide scroll bar
   mainWindow.webContents.insertCSS("body::-webkit-scrollbar { display: none !important; }");
 
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools();
-
   // Always minimise to tray
   mainWindow.on('minimize',function(event){
     event.preventDefault();
