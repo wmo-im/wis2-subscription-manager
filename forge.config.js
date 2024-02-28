@@ -16,8 +16,14 @@ module.exports = {
     // Put backend executables into extra resources
     extraResource: [
       "./backend/subscribe-backend-win32.exe",
-      "./backend/subscribe-backend-linux"
+      "./backend/subscribe-backend-linux",
+      "./backend/subscribe-backend-darwin",
     ],
+    // Configure x64ArchFiles to use the same
+    // darwin backend for x64 and arm64
+    osxUniversal: {
+      x64ArchFiles: "**/subscribe-backend-darwin"
+    },
     // Icon for both Windows and MacOS, no file extension needed
     icon: 'public/assets/app-icon'
   },

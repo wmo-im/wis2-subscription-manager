@@ -95,10 +95,21 @@ let backendPath = null;
 // if in production mode
 const copyBackendFile = (file, userDataPath) => {
 
-  // Get the executable path to find where the backend file is stored
-  const exeFolder = path.dirname(app.getPath('exe'));
+  // Get the folder where the app is located
+  let appFolder
+  appFolder = path.dirname(app.getPath('exe'));
+
+  // In MacOS, the resources folder is one level above the app folder
+  if (process.platform === 'darwin') {
+    appFolder = path.join(appFolder, '..');
+  }
   
-  const sourcePath = path.join(exeFolder, 'resources', file);
+  // Get the resources folder path, which is where the backend files 
+  // are located
+  const sourcePath = path.join(appFolder, 'resources', file);
+
+  // Determine where we should copy the backend file to so that it
+  // can read and write data
   const destinationPath = path.join(userDataPath, file);
 
   // Check if the file already exists in the userData directory
