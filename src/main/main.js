@@ -108,6 +108,11 @@ const copyBackendFile = (file, userDataPath) => {
       fs.copyFileSync(sourcePath, destinationPath);
     }
   }
+
+  // If on MacOS, set the permissions of the copied file to be executable
+  if (process.platform === 'darwin') {
+    fs.chmodSync(destinationPath, 0o755);
+  }
 }
 
 // Method for handling the storage of backend files
@@ -119,7 +124,6 @@ const handleBackendStorage = () => {
   // Note: The app data directory retured get app.getPath('userData') is different depending on the OS
   const userDataPath = app.getPath('userData');
   console.log("User data path:", userDataPath);
-
 
   // If in production mode, set the path to the backend folder and the config/brokers files
   if (inProductionMode) {
