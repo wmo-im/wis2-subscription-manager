@@ -5,7 +5,7 @@ const spawn = require('child_process').spawn;
 const kill = require('tree-kill');
 let backendProcess = null;
 
-// Handle creating/removing shortcuts on Winrsdows when installing/uninstalling.
+// Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
   app.quit();
 }

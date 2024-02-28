@@ -1,5 +1,8 @@
 module.exports = {
   packagerConfig: {
+    // Name of app
+    name: 'WIS2 Downloader',
+    executableName: 'WIS2 Downloader',
     // Point to Electron entry file main.js
     entry: 'src/main/main.js',
     // ASAR is used to improve the read performance of packaged Electron applications.
@@ -23,10 +26,7 @@ module.exports = {
     {
       name: '@electron-forge/maker-squirrel',
       config: {
-        name: 'wis2-downloader',
-        productName: 'WIS2 Downloader',
         authors: 'World Meteorological Organization',
-        exe: 'wis2-downloader.exe',
         iconUrl: 'https://raw.githubusercontent.com/wmo-im/wis2-downloader/main/public/assets/logo-circle.ico',
         setupIcon: 'public/assets/logo-circle.ico',
         loadingGif: 'public/assets/wmo-banner.gif'
@@ -37,8 +37,6 @@ module.exports = {
       name: '@electron-forge/maker-deb',
       platforms: ['linux'],
       config: {
-        name: 'wis2-downloader',
-        productName: 'WIS2 Downloader',
         options: {
           icon: 'public/assets/logo-circle.ico'
         }
@@ -49,8 +47,6 @@ module.exports = {
       name: '@electron-forge/maker-dmg',
       platforms: ['darwin'],
       config: {
-        name: 'wis2-downloader',
-        productName: 'WIS2 Downloader',
         icon: 'public/assets/logo-circle.icns',
       },
     },

@@ -1,6 +1,6 @@
 {
   "name": "wis2-downloader",
-  "productName": "wis2-downloader",
+  "productName": "WIS2 Downloader",
   "version": "0.1.0",
   "description": "This standalone application allows you to connect to WIS2 global brokers, explore the Global Discovery Catalogues and download data from the WIS2 network.",
   "main": ".vite/build/main.js",
