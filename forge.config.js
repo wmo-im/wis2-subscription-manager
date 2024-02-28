@@ -2,7 +2,7 @@ module.exports = {
   packagerConfig: {
     // Name of app
     name: 'WIS2 Downloader',
-    executableName: 'WIS2 Downloader',
+    executableName: 'wis2-downloader',
     // Point to Electron entry file main.js
     entry: 'src/main/main.js',
     // ASAR is used to improve the read performance of packaged Electron applications.
