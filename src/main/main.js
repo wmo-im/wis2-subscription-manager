@@ -86,9 +86,9 @@ const createWindow = () => {
 };
 
 // Define path variables that will be decided in the handleBackendStorage method
-let backendFolder = 'backend';
-let configPath = 'backend/config.json';
-let brokersPath = 'backend/brokers.json';
+let backendFolder = path.join(__dirname, '..', '..', 'backend');
+let configPath = path.join(backendFolder, 'config.json');
+let brokersPath = path.join(backendFolder, 'brokers.json');
 let backendPath = null;
 
 // Method for copying the backend executable to the userData directory

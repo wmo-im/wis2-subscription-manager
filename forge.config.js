@@ -47,7 +47,7 @@ module.exports = {
       name: '@electron-forge/maker-dmg',
       platforms: ['darwin'],
       config: {
-        icon: 'public/assets/logo-circle.icns',
+        icon: 'public/assets/logo-square.icns',
       },
     },
   ],
