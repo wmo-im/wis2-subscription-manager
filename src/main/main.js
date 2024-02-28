@@ -108,11 +108,6 @@ const copyBackendFile = (file, userDataPath) => {
       fs.copyFileSync(sourcePath, destinationPath);
     }
   }
-
-  // If on MacOS, set the permissions of the copied file to be executable
-  if (process.platform === 'darwin') {
-    fs.chmodSync(destinationPath, 0o755);
-  }
 }
 
 // Method for handling the storage of backend files
