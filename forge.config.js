@@ -18,7 +18,8 @@ module.exports = {
       "./backend/subscribe-backend-win32.exe",
       "./backend/subscribe-backend-linux"
     ],
-    icon: 'public/assets/logo-circle'
+    // Icon for both Windows and MacOS, no file extension needed
+    icon: 'public/assets/app-icon'
   },
   rebuildConfig: {},
   makers: [
@@ -27,9 +28,9 @@ module.exports = {
       name: '@electron-forge/maker-squirrel',
       config: {
         authors: 'World Meteorological Organization',
-        iconUrl: 'https://raw.githubusercontent.com/wmo-im/wis2-downloader/main/public/assets/logo-circle.ico',
-        setupIcon: 'public/assets/logo-circle.ico',
-        loadingGif: 'public/assets/wmo-banner.gif'
+        iconUrl: 'https://raw.githubusercontent.com/wmo-im/wis2-downloader/main/public/assets/app-icon.ico',
+        setupIcon: 'public/assets/app-icon.ico',
+        loadingGif: 'public/assets/install-banner.gif'
       },
     },
     // Linux maker
@@ -38,7 +39,7 @@ module.exports = {
       platforms: ['linux'],
       config: {
         options: {
-          icon: 'public/assets/logo-circle.ico'
+          icon: 'public/assets/app-icon.png'
         }
       },
     },
@@ -47,7 +48,7 @@ module.exports = {
       name: '@electron-forge/maker-dmg',
       platforms: ['darwin'],
       config: {
-        icon: 'public/assets/logo-square.icns',
+        icon: 'public/assets/app-icon.icns',
       },
     },
   ],
