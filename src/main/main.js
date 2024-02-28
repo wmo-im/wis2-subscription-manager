@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, Tray, ipcMain, dialog } = require("electron");
+const { app, BrowserWindow, Menu, Tray, nativeImage, ipcMain, dialog } = require("electron");
 const path = require("path");
 const fs = require('fs');
 const spawn = require('child_process').spawn;
@@ -50,28 +50,29 @@ const createWindow = () => {
     mainWindow.hide();
   });
 
-  // Set app icon in the tray depending on the OS
-  let appIcon;
+  // Build the tray depending on the OS
+  let tray;
   let iconPath;
   
   switch (process.platform) {
     case 'win32':
-      iconPath = "public/assets/tray-icon-win32.ico";
+      iconPath = path.join(__dirname, '..', '..', 'public/assets/tray-icon-win32.ico');
       break;
     case 'linux':
-      iconPath = "public/assets/tray-icon-linux.png";
+      iconPath = path.join(__dirname, '..', '..', 'public/assets/tray-icon-linux.png');
       break;
     case 'darwin':
-      iconPath = "public/assets/tray-icon-darwinTemplate.png";
+      iconPath = path.join(__dirname, '..', '..', 'public/assets/tray-icon-darwinTemplate.png');
       break;
     default:
-      iconPath = "public/assets/tray-icon-win32.ico";
+      iconPath = path.join(__dirname, '..', '..', 'public/assets/tray-icon-win32.ico');
   }
-  appIcon = new Tray(iconPath);
+  const icon = nativeImage.createFromPath(iconPath);
+  tray = new Tray(icon);
 
   // Restore application from the tray
   const contextMenu = Menu.buildFromTemplate([
-    { label: 'Show App', click:  function(){
+    { label: 'Show Downloader', click:  function(){
         mainWindow.show();
     } },
     { label: 'Quit', click:  function(){
@@ -81,7 +82,7 @@ const createWindow = () => {
     } }
   ]);
 
-  appIcon.setContextMenu(contextMenu);
+  tray.setContextMenu(contextMenu);
 };
 
 // Define path variables that will be decided in the handleBackendStorage method
