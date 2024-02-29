@@ -13,7 +13,7 @@
       </div>
 
       <v-btn exact to="/" class="explore-button" color="white" prepend-icon="mdi-cloud-search">Explore</v-btn>
-      <v-btn exact to="/configure" class="configure-button" color="white" prepend-icon="mdi-account">Configure</v-btn>
+      <v-btn exact to="/configure" class="configure-button" color="white" prepend-icon="mdi-account">Subscribe</v-btn>
     </template>
 
     <template v-slot:append v-if="isDarwin == true">

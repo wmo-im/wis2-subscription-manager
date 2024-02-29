@@ -8,7 +8,7 @@
                     </v-col>
                     <v-spacer />
                     <v-col cols="4">
-                        <v-select label="Configurations" density="comfortable" variant="solo-filled" class="mx-3"
+                        <v-select label="My subscriptions" density="comfortable" variant="solo-filled" class="mx-3"
                             :items="configList" v-model="selectedConfig"></v-select>
                     </v-col>
                     <v-col cols="1">
@@ -16,16 +16,31 @@
                     </v-col>
                 </v-row>
 
+                <!-- Configuration naming dialog -->
+                <v-dialog v-model="showNameDialog" max-width="500px">
+                    <v-card>
+                        <v-card-title>
+                            Please enter the name of the subscription
+                            <v-btn icon="mdi-close" variant="text" class="close-button" @click="showNameDialog = false" />
+                        </v-card-title>
+                        <v-text-field v-model="configToAdd" placeholder="my-subscription-name" :rules="[rules.newConfig]"></v-text-field>
+                        <v-card-actions>
+                            <v-btn @click="addConfiguration" color="#003DA5" variant="flat" block :disabled="configToAdd == ''">Confirm</v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
+
                 <!-- Configuration deletion dialog -->
                 <v-dialog v-model="configDialog" max-width="300px">
                     <v-card>
-                        <v-toolbar title="Delete Configurations" color="#003DA5">
+                        <v-toolbar title="Delete Subscriptions" color="#003DA5">
                             <v-btn icon="mdi-close" variant="text" @click="configDialog = false" />
                         </v-toolbar>
                         <v-card-text>
-                            <div v-if="configList.length === 0">No configurations to delete</div>
+                            <div v-if="configList.length === 1">No subscriptions to delete</div>
                             <v-list lines="one">
-                                <v-list-item v-for="(config, index) in configList" :key="index" :title="config">
+                                <!-- Only display non 'Create New...' configs to delete -->
+                                <v-list-item v-for="(config, index) in configList.filter(config => config !== 'Create New...')" :key="index" :title="config">
                                     <template v-slot:append>
                                         <v-btn icon="mdi-minus" variant="flat" @click="confirmConfigDelete(config)" />
                                     </template>
@@ -96,7 +111,7 @@
 
                     <v-card-item class="py-4">
                         <v-row align="center" class="ma-1">
-                            <v-card-title>Download data</v-card-title>
+                            <v-card-title>Download location</v-card-title>
                         </v-row>
                         <v-row align="center">
                             <v-col cols="auto">
@@ -112,12 +127,17 @@
 
 
                     <v-card-item>
-                        <div class="d-flex justify-center">
-                            <!-- Save configuration button -->
-                            <v-btn @click="showSaveDialog = true" :disabled="!canSubscribe" color="#64BF40" variant="flat"
-                                class="ma-1" block>
-                                Save Configuration</v-btn>
-                        </div>
+                            <v-row dense>
+                                <v-col cols="6">
+                                    <v-btn @click="saveConfiguration" color="#64BF40" variant="flat" block>Save</v-btn>
+                                </v-col>
+                                <v-col cols="6">
+                                    <v-btn @click="showSaveDialog = true" :disabled="!canSubscribe" color="#E09D00" variant="flat"
+                                        block>
+                                        Save As</v-btn>
+                                </v-col>
+                            </v-row>
+                        
                         <div class="d-flex justify-center">
 
                             <!-- Subscribe/Unsubscribe buttons -->
@@ -134,22 +154,17 @@
                     </v-card-item>
                 </v-form>
 
-                <!-- Dialog for saving configuration, appears when 'Save Configuration' clicked -->
+                <!-- Dialog for saving configuration, appears when 'Save As' clicked -->
                 <v-dialog v-model="showSaveDialog" max-width="750px">
                     <v-card>
                         <v-card-title>
-                            Please enter a name for your configuration
+                            Please enter the name of the file and select the directory to save
                             <v-btn icon="mdi-close" variant="text" class="close-button" @click="showSaveDialog = false" />
                         </v-card-title>
-                        <v-text-field v-model="configName" label="Configuration Name"></v-text-field>
+                        <v-text-field v-model="configFileName" placeholder="my-subscription-filename"></v-text-field>
                         <v-card-actions>
-                            <v-col cols="6">
-                                <v-btn @click="saveConfiguration" color="#64BF40" variant="flat" block>Save</v-btn>
-                            </v-col>
-                            <v-col cols="6">
-                                <!-- Button that opens the directory dialog -->
-                                <v-btn @click="selectDirectory('save')" color="#E09D00" variant="flat" block>Save As</v-btn>
-                            </v-col>
+                            <!-- Button that opens the directory dialog -->
+                            <v-btn @click="selectDirectory('save')" color="#E09D00" variant="flat" block :disabled="configFileName == ''">Save locally</v-btn>
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
@@ -264,7 +279,16 @@ export default defineComponent({
     },
     setup() {
 
+        // Static variables
+        const rules = {
+            newConfig: [
+                (name) => !!name || 'Name is required',
+                (name) => !configList.value.includes(name) || 'Name already exists'
+            ]
+        };
+
         // Reactive variables
+        const showNameDialog = ref(false);
         const configDialog = ref(false);
         const deleteLoadingBoolean = ref(false);
         const brokerList = ref([]);
@@ -279,7 +303,8 @@ export default defineComponent({
         const selectedConfig = ref(null);
         const configList = ref([]);
         const showSaveDialog = ref(false);
-        const configName = ref('');
+        const configFileName = ref('');
+        const configToAdd = ref(null);
         const configDirectory = ref('');
         const configToDelete = ref('');
         const showConfigWarningDialog = ref(false);
@@ -335,9 +360,21 @@ export default defineComponent({
             try {
                 const configs = await window.electronAPI.loadConfigNames();
                 configList.value = configs;
+                // Add 'Create New...' to the end
+                configList.value.push('Create New...');
             }
             catch (error) {
                 console.error('Error loading config list: ', error);
+            }
+        };
+
+        // Add the new config name to the list of configs and select it
+        const addConfiguration = () => {
+            if (configToAdd.value) {
+                // Put the new config name to the front of the list
+                configList.value.unshift(configToAdd.value);
+                selectedConfig.value = configToAdd.value;
+                showNameDialog.value = false;
             }
         };
 
@@ -490,7 +527,7 @@ export default defineComponent({
         const saveConfiguration = () => {
             try {
                 const metadata = {
-                    'name': configName.value,
+                    'name': selectedConfig.value,
                     'directory': configDirectory.value
                 };
 
@@ -613,7 +650,11 @@ export default defineComponent({
 
         // Watch for changes in selectedConfig and update the UI
         watch(selectedConfig, async () => {
-            if (selectedConfig.value) {
+            if (selectedConfig.value == 'Create New...') {
+                // Open a dialog for the user to choose a name for the new configuration
+                showNameDialog.value = true;
+            }
+            else if (selectedConfig.value) {
                 // Get the config data from the file
                 const configData = await window.electronAPI.loadConfig(selectedConfig.value);
 
@@ -663,6 +704,7 @@ export default defineComponent({
         });
 
         return {
+            rules,
             brokerList,
             syncLoadingBoolean,
             selectedBroker,
@@ -681,10 +723,13 @@ export default defineComponent({
             toggleSubscription,
             selectedConfig,
             configList,
+            configToAdd,
+            addConfiguration,
             configDialog,
+            showNameDialog,
             showSaveDialog,
             saveConfiguration,
-            configName,
+            configFileName,
             configDirectory,
             loadBrokers,
             syncBrokers,
