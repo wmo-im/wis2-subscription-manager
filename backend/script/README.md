@@ -1,6 +1,6 @@
 # wis2-downloader-backend
 
-## How to create a frozen executable for Windows
+## How to Create a Frozen Backend for Windows
 
 Install dependencies
 
@@ -22,25 +22,16 @@ pyinstaller -F --paths=D:\env\Lib\site-packages subscribe-backend.py
 
 This will create the executable ready to be used with a configuration file.
 
-## How to create a frozen executable for Linux
+## How to Create a Frozen Backend for Linux
 
-Pyinstaller does not allow for cross-compiling (that is, compiling for an OS different to that which is used). So, the strategy is to run pyinstaller in a Docker container.
+Pyinstaller does not allow for cross-compiling (that is, compiling for an OS different to that which is used). To ensure the backend is compatible with Ubuntu, I've found the best approach is to compile the backend script in a WSL (Windows Subsystem for Linux) environment, which can be downloaded from the [Microsoft Store](https://apps.microsoft.com/detail/9pn20msr04dw?hl=en-US&gl=US). This is convenient because the Electron app will also need to be made in this environment. 
 
-Build the Docker image
+## How to Create a Frozen Backend for MacOS
 
-``
-docker build -t pyinstaller-image .
-``
+This should be done on a genuine Macbook, following the steps for Windows described above.
 
-Then run the container to generate the Linux compatible executable
-
-``
-docker run -v /$(pwd)/dist:/app/dist pyinstaller-im
-age
-``
-
-## How to use the subscribe backend executable
-### The configuration file
+## How to Use the Frozen subscribe backend
+### The Configuration File
 To use the backend executable standalone, a configuration file must be made. This is a JSON file with three keys:
 
 - `broker`: The URL of the global broker to be used in the subscription.
@@ -51,7 +42,7 @@ Note:
 - The entries in this JSON file should be strings.
 - The download directory should be specified with forward slashes `/`.
 
-### Launching the executable
+### Launching the Executable
 Now the configuration file has been made, the executable can be run using
 
 ``
@@ -63,25 +54,25 @@ There is one argument for this executable:
 
 Once the executable is launched, it will continuously download the latest notifications from the specified topics. It will continue running until manually terminated or the computer is fully powered off.
 
-## Managing topics of an on-going subscription
+## Managing Topics of an On-Going Subscription
 
 To add, delete, or list subscriptions, we can make use of the Flask app created by the executable. That is, we can make an API call (HTTP GET) to do this.
 
-### Add topic to subscription
+### Add Topic to Subscription
 For example, to add topic: `cache/a/wis2/+/+/data/core/weather/surface-based-observations/#`, we run
 
 ``
 curl http://localhost:5000/wis2/subscriptions/add?topic=cache/a/wis2/%2B/%2B/data/core/weather/surface-based-observations/%23
 ``
 
-### Delete topic from subscription
+### Delete Topic from Subscription
 For example, to delete topic: `cache/a/wis2/+/+/data/core/weather/surface-based-observations/#`, we run
 
 ``
 curl http://localhost:5000/wis2/subscriptions/delete?topic=cache/a/wis2/%2B/%2B/data/core/weather/surface-based-observations/%23
 ``
 
-### List topics currently subscribed to
+### List Topics Currently Subscribed To
 This is done by running
 
 ``
@@ -99,7 +90,7 @@ curl http://localhost:5000/wis2/subscriptions/list
 
 ## Workflow
 
-### Search and subscribe
+### Search and Subscribe
 
 ```mermaid
 sequenceDiagram
