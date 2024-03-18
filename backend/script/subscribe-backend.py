@@ -12,6 +12,9 @@ import threading
 import urllib3
 from urllib.parse import urlsplit
 import argparse
+from datetime import datetime as dt
+import hashlib
+import base64
 
 # LOGGER
 logging.basicConfig(
@@ -69,8 +72,6 @@ def create_app(subs, download_dir, client):
             target=download_worker, args=(subs, download_dir), daemon=True)
         t.start()
 
-    # Allow the user to list, add, and delete subscriptions
-
     @app.route('/wis2/subscriptions/list')
     def list_subscriptions():
         return subs
@@ -84,6 +85,40 @@ def create_app(subs, download_dir, client):
         return handle_delete_subscription(subs, client)
 
     return app
+
+
+def get_expected_hash(job):
+    """
+    Returns the expected hash value from the job payload,
+    which can be later compared to the actual hash value
+    of the downloaded file.
+
+    Args:
+        job (dict): Contains the topic and payload.
+
+    Returns:
+        tuple: The hash method, expected hash value, and hash function.
+    """
+    if 'integrity' not in job['payload']['properties']:
+        return
+
+    method = job['payload']['properties']['integrity']['method']
+    expected = job['payload']['properties']['integrity']['value']
+    hash_function = getattr(hashlib, method, None)
+
+    return expected, hash_function
+
+
+def get_todays_date():
+    """
+    Returns today's date in the format yyyy/mm/dd.
+    """
+    today = dt.now()
+    yyyy = f"{today.year:04}"
+    mm = f"{today.month:02}"
+    dd = f"{today.day:02}"
+
+    return f"{yyyy}/{mm}/{dd}"
 
 
 def download_worker(subs, download_dir):
@@ -105,6 +140,9 @@ def download_worker(subs, download_dir):
         LOGGER.debug(f"Messages in queue: {urlQ.qsize()}")
         job = urlQ.get()
 
+        # Check for the hash
+        hash_expected_value, hash_function = get_expected_hash(job)  # noqa
+
         # Determine the output directory (if for some reason a topic does
         # not have an associated download directory, use the default directory)
         output_dir = subs.get(job['topic'], download_dir)
@@ -114,7 +152,12 @@ def download_worker(subs, download_dir):
         dataid = Path(job['payload']['properties']['data_id'])
         # We need to replace colons in output path
         dataid = Path(str(dataid).replace(":", ""))
-        output_path = Path(output_dir, dataid)
+
+        # Get date (used in output path due to number of files)
+        today = get_todays_date()
+
+        output_path = Path(output_dir, today, dataid)
+
         # Create directory
         output_path.parent.mkdir(exist_ok=True, parents=True)
         LOGGER.debug(f"Directory created at: {output_path.parent}")
@@ -122,12 +165,36 @@ def download_worker(subs, download_dir):
         # Now download the files
         for link in job['payload']['links']:
             if link['rel'] == "canonical":
-                download_and_save_file(link['href'], output_path)
+                download_and_save_file(link['href'], output_path, hash_expected_value, hash_function)  # noqa
 
         urlQ.task_done()
 
 
-def download_and_save_file(url, output_path):
+def compare_hashes(data, expected, hash_function):
+    """
+    Compares the hash of the downloaded file with the expected hash value.
+
+    Args:
+        data (dict): _description_
+        hash_expected_value (str): The expected hash value of the file.
+        hash_function (function): The hash function to use to hash the file.
+    """
+    if None in (hash_function, expected):
+        LOGGER.debug("No hash function or expected hash found to compare")
+        return
+
+    hash_value = hash_function(data).digest()
+
+    # Encode the hash to Base64
+    hash_value_base64 = base64.b64encode(hash_value).decode('utf-8')
+
+    if hash_value_base64 == expected:
+        LOGGER.debug("Hashes match")
+    else:
+        LOGGER.error("Hashes do not match")
+
+
+def download_and_save_file(url, output_path, hash_expected_value, hash_function):  # noqa
     """
     Downloads the file from the given URL and saves it to the
     given output path.
@@ -135,6 +202,8 @@ def download_and_save_file(url, output_path):
     Args:
         url (str): The URL of the file to download.
         output_path (Path): The path where the file should be saved.
+        hash_expected_value (str): The expected hash value of the file.
+        hash_function (function): The hash function to use to hash the file.
     """
     path = urlsplit(url).path
     filename = os.path.basename(path)
@@ -145,9 +214,15 @@ def download_and_save_file(url, output_path):
         LOGGER.info(f"File {filename} already downloaded. Skipping.")
         return
 
-    # Try to download the file
+    download_start = dt.now()
+
+    # Try to download and verify the file
     try:
         response = http.request("GET", url)
+        # Get filesize in KB
+        filesize = len(response.data) / 1024
+        # Check if the hash matches the expected hash value
+        compare_hashes(response.data, hash_expected_value, hash_function)
     except Exception as e:
         LOGGER.error(f"Error downloading {url}")
         LOGGER.error(e)
@@ -155,6 +230,9 @@ def download_and_save_file(url, output_path):
     # Try to save the file to disk
     try:
         output_path.write_bytes(response.data)
+        download_end = dt.now()
+        time_to_download = (download_end - download_start).total_seconds()
+        LOGGER.info(f"Downloaded {filename} of size {round(filesize, 2)}KB in {round(time_to_download, 2)} seconds")  # noqa
     except Exception as e:
         LOGGER.error(f"Error saving to disk: {output_path}/{filename}")
         LOGGER.error(e)
