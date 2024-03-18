@@ -1,4 +1,5 @@
 from flask import Flask, request
+import socket
 import json
 import logging
 import os
@@ -14,8 +15,8 @@ import argparse
 
 # LOGGER
 logging.basicConfig(
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    level=logging.DEBUG,
+    format="%(asctime)s %(levelname)s: %(message)s",
+    level=logging.INFO,
     datefmt="%Y-%m-%d %H:%M:%S"
 )
 LOGGER = logging.getLogger(__name__)
@@ -56,15 +57,20 @@ def create_app(subs, download_dir, client):
 
     # Check if the directory exists and is writable before
     # starting the download thread
-    if (os.path.exists(download_dir) and
-            os.access(download_dir, os.W_OK)):
-        downloadThread = threading.Thread(
-            target=download_worker, args=(subs, download_dir), daemon=True)
-        downloadThread.start()
-    else:
+    if not (os.path.exists(download_dir) and os.access(download_dir, os.W_OK)):  # noqa
         raise FileNotFoundError("Specified download directory does not exist or is not writable.")  # noqa
 
+    # Set the number of worker threads
+    num_worker_threads = 10
+
+    # Start the download worker for each thread
+    for _ in range(num_worker_threads):
+        t = threading.Thread(
+            target=download_worker, args=(subs, download_dir), daemon=True)
+        t.start()
+
     # Allow the user to list, add, and delete subscriptions
+
     @app.route('/wis2/subscriptions/list')
     def list_subscriptions():
         return subs
@@ -111,7 +117,7 @@ def download_worker(subs, download_dir):
         output_path = Path(output_dir, dataid)
         # Create directory
         output_path.parent.mkdir(exist_ok=True, parents=True)
-        LOGGER.info(f"Directory created at: {output_path.parent}")
+        LOGGER.debug(f"Directory created at: {output_path.parent}")
 
         # Now download the files
         for link in job['payload']['links']:
@@ -132,11 +138,11 @@ def download_and_save_file(url, output_path):
     """
     path = urlsplit(url).path
     filename = os.path.basename(path)
-    LOGGER.debug(f"Attempting to download {filename}")
+    LOGGER.info(f"Attempting to download {filename}")
 
     # If file already in output directory, do not download
     if output_path.is_file():
-        LOGGER.debug(f"File {filename} already downloaded. Skipping.")
+        LOGGER.info(f"File {filename} already downloaded. Skipping.")
         return
 
     # Try to download the file
@@ -174,7 +180,7 @@ def handle_add_subscription(subs, download_dir, client):
         return "No topic passed"
     else:
         if topic in subs:
-            LOGGER.debug(f"Topic {topic} already subscribed")
+            LOGGER.info(f"Topic {topic} already subscribed")
         else:
             client.subscribe(f"{topic}")
             subs[topic] = download_dir
@@ -263,7 +269,7 @@ def on_connect(client, userdata, flags, rc):
         rc (int): The result code returned when the client connects
         to the broker.
     """
-    LOGGER.debug("Connected")
+    LOGGER.info("Connected")
 
 
 def on_message(client, userdata, msg):
@@ -271,7 +277,8 @@ def on_message(client, userdata, msg):
     When the MQTT client receives a message, this function is called
     to inform the user of the message received and add the message
     to the queue.
-    Note: These three arguments are required even if two aren't explicitly used.
+    Note: These three arguments are required even if two aren't
+    explicitly used.
 
     Args:
         client (mqtt.client): The client that connects to the broker.
@@ -282,7 +289,7 @@ def on_message(client, userdata, msg):
     # Declare urlQ as global
     global urlQ
 
-    LOGGER.debug("Message received")
+    LOGGER.info("Message received")
 
     # Create new job and add to queue
     job = {
@@ -343,6 +350,27 @@ def initialise_client():
     return client
 
 
+def find_open_port():
+    """
+    To avoid port conflicts, this function finds an open port
+    dynamically for the Flask app to use.
+    """
+    # Create a socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    # Bind the socket to a random aviailable port
+    # (0 means the OS will choose a random port for us)
+    s.bind(('127.0.0.1', 0))
+
+    # Get the port number
+    port = s.getsockname()[1]
+
+    # Close the socket
+    s.close()
+
+    return port
+
+
 def main():
     """
     Main function to start the subscription backend. It loads the
@@ -371,7 +399,7 @@ def main():
     port = 443
 
     # Connect to the broker
-    LOGGER.debug("Connecting")
+    LOGGER.info("Connecting...")
     result = client.connect(host=broker, port=port)
     LOGGER.debug(result)
 
