@@ -17,13 +17,13 @@
                 </v-row>
 
                 <!-- Configuration naming dialog -->
-                <v-dialog v-model="showNameDialog" max-width="500px">
+                <v-dialog v-model="showNameDialog" max-width="500px" persistent>
                     <v-card>
                         <v-card-title>
                             Please enter the name of the subscription
                             <v-btn icon="mdi-close" variant="text" class="close-button" @click="showNameDialog = false" />
                         </v-card-title>
-                        <v-text-field v-model="configToAdd" placeholder="my-subscription-name" :rules="[rules.newConfig]"></v-text-field>
+                        <v-text-field v-model="configToAdd" placeholder="my-subscription-name" :rules="[rules.nameRequired, rules.nameIsNew]"></v-text-field>
                         <v-card-actions>
                             <v-btn @click="addConfiguration" color="#003DA5" variant="flat" block :disabled="configToAdd == ''">Confirm</v-btn>
                         </v-card-actions>
@@ -129,7 +129,7 @@
                     <v-card-item>
                             <v-row dense>
                                 <v-col cols="6">
-                                    <v-btn @click="saveConfiguration" color="#64BF40" variant="flat" block>Save</v-btn>
+                                    <v-btn @click="saveConfiguration" :disabled="isConfigEmpty" color="#64BF40" variant="flat" block>Save</v-btn>
                                 </v-col>
                                 <v-col cols="6">
                                     <v-btn @click="showSaveDialog = true" :disabled="!canSubscribe" color="#E09D00" variant="flat"
@@ -281,10 +281,8 @@ export default defineComponent({
 
         // Static variables
         const rules = {
-            newConfig: [
-                (name) => !!name || 'Name is required',
-                (name) => !configList.value.includes(name) || 'Name already exists'
-            ]
+            nameRequired: name => !!name || "Name is required",
+            nameIsNew: name => !configList.value.includes(name) || "Name already exists, please choose another"
         };
 
         // Reactive variables
@@ -319,6 +317,12 @@ export default defineComponent({
         // Checks if the global broker has been selected
         const isBrokerSelected = computed(() => {
             return selectedBroker.value !== ''
+        });
+
+        // Checks if the configuration is empty, if so the 'Save' 
+        // button is disabled
+        const isConfigEmpty = computed(() => {
+            return selectedBroker.value === '' && topicsList.value.length === 0 && downloadDirectory.value === '';
         });
 
         // Checks if the global broker has been selected and at
@@ -374,6 +378,8 @@ export default defineComponent({
                 // Put the new config name to the front of the list
                 configList.value.unshift(configToAdd.value);
                 selectedConfig.value = configToAdd.value;
+                // Save this configuration
+                saveConfiguration();
                 showNameDialog.value = false;
             }
         };
@@ -525,6 +531,14 @@ export default defineComponent({
 
         // Saves the configuration settings to a local JSON file
         const saveConfiguration = () => {
+            // First check the user has given a name
+            if (!selectedConfig.value) {
+                showNameDialog.value = true;
+                return;
+            }
+
+            console.log("Guard clause passed")
+
             try {
                 const metadata = {
                     'name': selectedConfig.value,
@@ -668,6 +682,15 @@ export default defineComponent({
             }
         });
 
+        // Watch for changes to the configuration list, so that
+        // if a configuration is deleted, the selection does not
+        // continue to show the deleted configuration as selected
+        watch(configList, () => {
+            if (!configList.value.includes(selectedConfig.value)) {
+                selectedConfig.value = null;
+            }
+        });
+
         // Watch for changes in any of the user inputs, so that if they
         // navigate to the Explore page and return, their configuration is not lost
         watch([selectedBroker, topicsList, downloadDirectory, subscribePressed], () => {
@@ -712,6 +735,7 @@ export default defineComponent({
             topicsList,
             downloadDirectory,
             isBrokerSelected,
+            isConfigEmpty,
             canSubscribe,
             truncatedDirectory,
             addTopic,

@@ -7,8 +7,8 @@
                 <v-card-item>
                     <v-row dense>
                         <v-col cols="4">
-                            <v-select v-model="selectedCatalogue" :items="catalogueList" item-title="title" item-value="url"
-                                label="Choose a catalogue"></v-select>
+                            <v-select v-model="selectedCatalogue" :items="catalogueList" item-title="title"
+                                item-value="url" label="Choose a catalogue"></v-select>
                         </v-col>
                         <v-col cols="4">
                             <v-text-field v-model="searchedTitle" label="Enter a title" hint="Optional" persistent-hint
@@ -27,21 +27,33 @@
 
                 <!-- Display catalogue datasets searched by user -->
                 <v-card-item>
+                    <v-switch label="Add All" v-model="addAllTopics" @click="addOrRemoveAllTopics(datasets, addAllTopics)" v-if="tableBoolean === true" color="#003DA5"/>
+                    {{ allAllTopics }}
+
                     <v-table v-if="tableBoolean === true" :hover="true">
                         <thead>
                             <tr>
                                 <th scope="row" class="text-left">
                                     Discovery Metadata Records Found
                                 </th>
+                                <th scope="row"></th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="item in datasets" :key="item.title" @click="openDialog(item)" class="clickable-row">
+                            <tr v-for="item in datasets" :key="item.title" @click="openDialog(item)"
+                                class="clickable-row">
                                 <td>
                                     {{ item.title }}
                                 </td>
-                                <td class="check-mark">
-                                    <v-icon v-if="selectedTopics.includes(item.topic_hierarchy)" icon="mdi-check-circle" />
+                                <td class="row-buttons">
+                                    <!-- If topic not added, allow them to add -->
+                                    <v-btn v-if="!selectedTopics.includes(item.topic_hierarchy)" color="#64BF40"
+                                        append-icon="mdi-plus" variant="flat" @click.stop="addToSubscription(item.topic_hierarchy)">
+                                        Add</v-btn>
+                                    <v-btn v-if="selectedTopics.includes(item.topic_hierarchy)" color="error"
+                                        append-icon="mdi-minus" variant="flat" 
+                                        @click.stop="removeFromSubscription(item.topic_hierarchy)">
+                                        Remove</v-btn>
                                 </td>
                             </tr>
                         </tbody>
@@ -65,21 +77,11 @@
                             </v-table>
                             <v-card-actions>
                                 <v-row>
-                                    <v-col cols="6">
-                                        <v-btn color="#E09D00" variant="flat" block
+                                    <v-col cols="12">
+                                        <v-btn color="#E09D00" append-icon="mdi-code-json" variant="flat" block
                                             @click="openJSON(selectedItem.identifier)" :loading="loadingJsonBoolean">
                                             View JSON
                                         </v-btn>
-                                    </v-col>
-                                    <v-col cols="6">
-                                        <!-- If topic not added, allow them to add -->
-                                        <v-btn v-if="!selectedTopics.includes(selectedItem.topic_hierarchy)" color="#64BF40"
-                                            variant="flat" block @click="addToSubscription(selectedItem.topic_hierarchy)">
-                                            Add Dataset to Subscription</v-btn>
-                                        <v-btn v-if="selectedTopics.includes(selectedItem.topic_hierarchy)" color="#D90429"
-                                            variant="flat" block
-                                            @click="removeFromSubscription(selectedItem.topic_hierarchy)">
-                                            Remove Dataset from Subscription</v-btn>
                                     </v-col>
                                 </v-row>
                             </v-card-actions>
@@ -89,7 +91,7 @@
                     <!-- Dialog to display the whole JSON object -->
                     <v-dialog v-model="jsonDialog" transition="dialog-bottom-transition" max-height="600px" scrollable>
                         <v-card>
-                            <v-toolbar :title="selectedItem.title" color="#003DA5">
+                            <v-toolbar :title="selectedItem.title" color="#E09D00">
                                 <v-btn icon="mdi-close" variant="text" @click="jsonDialog = false" />
                             </v-toolbar>
                             <v-card-text>
@@ -139,6 +141,7 @@ export default defineComponent({
         const datasets = ref([]);
         const loadingBoolean = ref(false);
         const tableBoolean = ref(false);
+        const addAllTopics = ref(false);
         const selectedItem = ref(null);
         const dialog = ref(false);
         const formattedJson = ref(null);
@@ -332,7 +335,20 @@ export default defineComponent({
             }
             // Close the dialog
             dialog.value = false;
-        }
+        };
+
+        const addOrRemoveAllTopics = async (topics, shouldSelectAll) => {
+            if (shouldSelectAll) {
+                for (const topic of topics) {
+                    await addToSubscription(topic);
+                }
+            }
+            else {
+                for (const topic of topics) {
+                    await removeFromSubscription(topic);
+                }
+            }
+        };
 
         // Watch for changes in the selected topics
         watch(selectedTopics, (newValue, oldValue) => {
@@ -360,6 +376,7 @@ export default defineComponent({
             datasets,
             loadingBoolean,
             tableBoolean,
+            addAllTopics,
             catalogueBoolean,
             selectedItem,
             dialog,
@@ -373,6 +390,7 @@ export default defineComponent({
             selectedTopics,
             addToSubscription,
             removeFromSubscription,
+            addOrRemoveAllTopics,
             subscribeStatus
         }
     }
@@ -385,7 +403,7 @@ export default defineComponent({
     cursor: pointer;
 }
 
-.check-mark {
+.row-buttons {
     text-align: right;
     vertical-align: middle;
 }
