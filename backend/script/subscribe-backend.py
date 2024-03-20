@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import sys
+import time
 import paho.mqtt.client as mqtt
 from pathlib import Path
 import queue
@@ -63,8 +64,9 @@ def create_app(subs, download_dir, client):
     if not (os.path.exists(download_dir) and os.access(download_dir, os.W_OK)):  # noqa
         raise FileNotFoundError("Specified download directory does not exist or is not writable.")  # noqa
 
-    # Set the number of worker threads
-    num_worker_threads = 10
+    # Set the number of worker threads to the number of CPU cores - 2
+    num_cores = os.cpu_count()
+    num_worker_threads = num_cores - 2
 
     # Start the download worker for each thread
     for _ in range(num_worker_threads):
@@ -449,6 +451,16 @@ def find_open_port():
     return port
 
 
+def log_queue_size_every_minute():
+    """
+    Every minute, log the size of the queue.
+    """
+    global urlQ
+    while True:
+        LOGGER.info(f"Current queue size: {urlQ.qsize()}")
+        time.sleep(60)
+
+
 def main():
     """
     Main function to start the subscription backend. It loads the
@@ -502,6 +514,11 @@ def main():
     # To prevent issues with reloading when the application is frozen
     # by Pyinstaller, we disable the reloader of the Flask app
     app.run(debug=True, use_reloader=False)
+
+    # Start the queue size logger thread
+    queue_logger_thread = threading.Thread(
+        target=log_queue_size_every_minute, daemon=True)
+    queue_logger_thread.start()
 
 
 if __name__ == '__main__':

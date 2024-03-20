@@ -27,8 +27,8 @@
 
                 <!-- Display catalogue datasets searched by user -->
                 <v-card-item>
-                    <v-switch label="Add All" v-model="addAllTopics" @click="addOrRemoveAllTopics(datasets, addAllTopics)" v-if="tableBoolean === true" color="#003DA5"/>
-                    {{ allAllTopics }}
+                    <v-switch label="Add All" v-model="addAllTopics" @change="addOrRemoveAllTopics(datasets, addAllTopics)" v-if="tableBoolean === true" color="#003DA5"/>
+                    addAllTopics: {{ addAllTopics }}
 
                     <v-table v-if="tableBoolean === true" :hover="true">
                         <thead>
@@ -303,7 +303,8 @@ export default defineComponent({
             console.log("Adding topic to subscription: " + topic)
             // Make sure there are no duplicates
             if (!selectedTopics.value.includes(topic)) {
-                selectedTopics.value.push(topic);
+                const updatedTopics = [...selectedTopics.value, topic];
+                selectedTopics.value = updatedTopics;
             }
             // If the user is currently subscribed, handle the Flask API call
             if (subscribeStatus.value) {
@@ -323,7 +324,8 @@ export default defineComponent({
             console.log("Removing topic from subscription: " + topic)
             // Remove it from the array
             if (selectedTopics.value.includes(topic)) {
-                selectedTopics.value.splice(selectedTopics.value.indexOf(topic), 1);
+                const updatedTopics = selectedTopics.value.filter(item => item !== topic);
+                selectedTopics.value = updatedTopics;
             }
             // If the user is currently subscribed, handle the Flask API call
             if (subscribeStatus.value) {
@@ -338,12 +340,12 @@ export default defineComponent({
         };
 
         const addOrRemoveAllTopics = async (topics, shouldSelectAll) => {
-            if (shouldSelectAll) {
+            if (shouldSelectAll === true) {
                 for (const topic of topics) {
                     await addToSubscription(topic);
                 }
             }
-            else {
+            else if (shouldSelectAll === false) {
                 for (const topic of topics) {
                     await removeFromSubscription(topic);
                 }
@@ -351,7 +353,7 @@ export default defineComponent({
         };
 
         // Watch for changes in the selected topics
-        watch(selectedTopics, (newValue, oldValue) => {
+        watch(selectedTopics, () => {
             const settings = {
                 broker: broker.value,
                 topics: Array.from(selectedTopics.value),
