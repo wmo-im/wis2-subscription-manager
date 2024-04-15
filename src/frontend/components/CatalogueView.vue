@@ -8,7 +8,7 @@
                     <v-row dense>
                         <v-col cols="4">
                             <v-select v-model="selectedCatalogue" :items="catalogueList" item-title="title"
-                                item-value="url" label="Choose a catalogue"></v-select>
+                                item-value="url" label="Choose a catalogue" ></v-select>
                         </v-col>
                         <v-col cols="4">
                             <v-text-field v-model="searchedTitle" label="Enter a title" hint="Optional" persistent-hint
