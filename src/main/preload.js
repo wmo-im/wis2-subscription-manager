@@ -18,6 +18,5 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('electronAPI', {
   getOS: () => ipcRenderer.invoke('get-os'),
   storeSettings: (settings) => ipcRenderer.send('store-settings', settings),
-  loadSettings: () => ipcRenderer.invoke('load-settings'),
-  manageTopics: (data) => ipcRenderer.send('manage-topics', data),
+  loadSettings: () => ipcRenderer.invoke('load-settings')
 });

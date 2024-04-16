@@ -85,4 +85,13 @@
     top: 0;
     right: 0;
     z-index: 1;
-  }
+}
+
+.clickable-row {
+    cursor: pointer;
+}
+
+.row-buttons {
+    text-align: right;
+    vertical-align: middle;
+}

@@ -127,6 +127,10 @@ export default defineComponent({
         VDataTable
     },
     setup() {
+        // Deep clone function to avoid reference issues between model and default model
+        function deepClone(obj) {
+            return JSON.parse(JSON.stringify(obj));
+        }
 
         // Static variables
         const catalogueList = [
@@ -147,9 +151,14 @@ export default defineComponent({
         const formattedJson = ref(null);
         const loadingJsonBoolean = ref(false);
         const jsonDialog = ref(false);
+
+        // The array of topics selected from the catalogue
         const selectedTopics = ref([]);
-        const broker = ref("");
-        const downloadDirectory = ref("");
+        
+        // Information from Subscribe page
+        const serverInfo = ref({});
+        const topics = ref({});
+
         const subscribeStatus = ref(false);
 
         // Computed properties
@@ -166,10 +175,8 @@ export default defineComponent({
             try {
                 const settings = await window.electronAPI.loadSettings();
                 if (settings) {
-                    broker.value = settings.broker;
-                    selectedTopics.value = settings.topics;
-                    downloadDirectory.value = settings.downloadDirectory;
-                    subscribeStatus.value = settings.subscribeStatus;
+                    serverInfo.value = settings.serverInfo;
+                    topics.value = settings.topics;
                 }
             }
             catch (error) {
@@ -355,15 +362,13 @@ export default defineComponent({
         // Watch for changes in the selected topics
         watch(selectedTopics, () => {
             const settings = {
-                broker: broker.value,
-                topics: Array.from(selectedTopics.value),
-                downloadDirectory: downloadDirectory.value,
-                subscribeStatus: subscribeStatus.value
+                serverInfo: serverInfo.value,
+                topics: selectedTopics.value
             };
             console.log("Storing settings:", settings);
             // Store the information in the electron API
             window.electronAPI.storeSettings(settings);
-        }, { deep: true }); // Use deep watch to track nested array
+        }, { deep: true });
 
         onMounted(() => {
             // Get settings from GDC or previous usage of configuration page
@@ -371,7 +376,10 @@ export default defineComponent({
         })
 
         return {
+            // Static variables
             catalogueList,
+
+            // Reactive variables
             selectedCatalogue,
             searchedTitle,
             query,
@@ -379,34 +387,30 @@ export default defineComponent({
             loadingBoolean,
             tableBoolean,
             addAllTopics,
-            catalogueBoolean,
             selectedItem,
             dialog,
-            searchCatalogue,
-            openDialog,
-            formatKey,
-            openJSON,
             formattedJson,
             loadingJsonBoolean,
             jsonDialog,
             selectedTopics,
+            serverInfo,
+            topics,
+            subscribeStatus,
+
+            // Computed variables
+            catalogueBoolean,
+
+            // Methods
+            loadSettings,
+            searchCatalogue,
+            openDialog,
+            formatKey,
+            openJSON,
             addToSubscription,
             removeFromSubscription,
-            addOrRemoveAllTopics,
-            subscribeStatus
+            addOrRemoveAllTopics
         }
     }
 })
 
 </script>
-
-<style scoped>
-.clickable-row {
-    cursor: pointer;
-}
-
-.row-buttons {
-    text-align: right;
-    vertical-align: middle;
-}
-</style>

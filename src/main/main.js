@@ -108,9 +108,6 @@ app.on("activate", () => {
 
 // Inter-process communication setup (IPC)
 
-// Boolean for subscription status (true = subscribed, false = unsubscribed)
-let subscriptionStatus = false;
-
 // Handler to return the OS platform, to enable OS specific functionality
 // We name this 'get-os' to be referenced elsewhere
 ipcMain.handle("get-os", async (event) => {
@@ -137,45 +134,5 @@ ipcMain.handle("load-settings", async (event) => {
   }
   catch (error) {
     console.error("Error in load-settings:", error.message);
-  }
-});
-
-// Handler for managing topics on a concurrent subscription
-// We name this 'manage-topics' to be referenced elsewhere
-ipcMain.on("manage-topics", async (event, data) => {
-  try {
-    // Replace special characters (e.g. #, +) by UTF-8 encoding
-    // except for the forward slash
-    const encodedTopic = encodeURIComponent(data.topic).replaceAll('%2F', '/');
-    // Build the server address, including the port if specified
-    const host = settings.serverInfo.host;
-    const port = settings.serverInfo.port;
-    const server = port != '' ? `${host}:${port}` : host;
-
-    if (data.action == 'add') {
-      // Make a HTTP GET request to the Flask app to add the topic
-      const response = await fetch(`http://${server}/add?topic=${encodedTopic}`, { method: 'GET' });
-      if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      // Send a message to the frontend
-      event.sender.send('subscription-response', { status: `Topic ${data.topic} added to subscription` });
-    }
-
-    else if (data.action == 'delete') {
-      // Make a HTTP GET request to the Flask app to add the topic
-      const response = await fetch(`http://${server}/delete?topic=${encodedTopic}`, { method: 'GET' });
-      if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      // Send a message to the frontend
-      event.sender.send('subscription-response', { status: `Topic ${data.topic} removed from subscription` });
-    }
-  }
-
-  catch (error) {
-    console.error("Error in manage-topics:", error);
-    // Send a message to the frontend
-    event.sender.send('subscription-response', { status: 'Error updating topics', errorMessage: error.message });
   }
 });
