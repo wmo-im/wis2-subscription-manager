@@ -25,10 +25,11 @@
                     </v-row>
                 </v-card-item>
 
+                {{ catalogueError }}
+
                 <!-- Display catalogue datasets searched by user -->
                 <v-card-item>
-                    <v-switch label="Add All" v-model="addAllTopics" @change="addOrRemoveAllTopics(datasets, addAllTopics)" v-if="tableBoolean === true" color="#003DA5"/>
-                    addAllTopics: {{ addAllTopics }}
+                    <v-switch label="Add All Topics to Pending" v-model="addAllTopics" @change="addOrRemoveAllTopics(datasets, addAllTopics)" v-if="tableBoolean === true" color="#003DA5"/>
 
                     <v-table v-if="tableBoolean === true" :hover="true">
                         <thead>
@@ -47,13 +48,16 @@
                                 </td>
                                 <td class="row-buttons">
                                     <!-- If topic not added, allow them to add -->
-                                    <v-btn v-if="!selectedTopics.includes(item.topic_hierarchy)" color="#64BF40"
-                                        append-icon="mdi-plus" variant="flat" @click.stop="addToSubscription(item.topic_hierarchy)">
+                                    <v-btn v-if="!topicFound(item.topic_hierarchy, selectedTopics)" color="#64BF40"
+                                        append-icon="mdi-plus" variant="flat" @click.stop="addTopicToPending(item.topic_hierarchy)">
                                         Add</v-btn>
-                                    <v-btn v-if="selectedTopics.includes(item.topic_hierarchy)" color="error"
+                                    <v-btn v-if="topicFound(item.topic_hierarchy, pendingTopics)" color="error"
                                         append-icon="mdi-minus" variant="flat" 
-                                        @click.stop="removeFromSubscription(item.topic_hierarchy)">
+                                        @click.stop="removeTopicFromPending(item.topic_hierarchy)">
                                         Remove</v-btn>
+                                        <v-btn v-if="topicFound(item.topic_hierarchy, activeTopics)"  disabled color="#003DA5"
+                                        append-icon="mdi-minus" variant="flat">
+                                        Active</v-btn>
                                 </td>
                             </tr>
                         </tbody>
@@ -138,6 +142,24 @@ export default defineComponent({
             { title: 'China Meteorological Administration', url: 'https://gdc.wis.cma.cn/collections/wis2-discovery-metadata/items' }
         ];
 
+        const HTTP_CODES = {
+            200: 'OK',
+            201: 'Created',
+            202: 'Accepted',
+            204: 'No Content',
+            400: 'Bad Request',
+            401: 'Unauthorized',
+            403: 'Forbidden',
+            404: 'Not Found',
+            405: 'Method Not Allowed',
+            406: 'Not Acceptable',
+            409: 'Conflict',
+            500: 'Internal Server Error',
+            501: 'Not Implemented',
+            503: 'Service Unavailable',
+            504: 'Gateway Timeout'
+        };
+
         // Reactive variables
         const selectedCatalogue = ref('');
         const searchedTitle = ref(null);
@@ -151,32 +173,58 @@ export default defineComponent({
         const formattedJson = ref(null);
         const loadingJsonBoolean = ref(false);
         const jsonDialog = ref(false);
-
-        // The array of topics selected from the catalogue
-        const selectedTopics = ref([]);
         
         // Information from Subscribe page
-        const serverInfo = ref({});
-        const topics = ref({});
+        const host = ref('');
+        const port = ref('');
+        const username = ref('');
+        const password = ref('');
+        const connectionStatus = ref(false);
+        const activeTopics = ref([]);
+        const pendingTopics = ref([]);
 
-        const subscribeStatus = ref(false);
+        // Error from the catalogue
+        const catalogueError = ref('');
 
         // Computed properties
+
+        // Stored settings from Subscribe page
+        const settings = computed(() => {
+            return {
+                host: host.value,
+                port: port.value,
+                username: username.value,
+                password: password.value,
+                connectionStatus: connectionStatus.value,
+                activeTopics: activeTopics.value,
+                pendingTopics: pendingTopics.value
+            }
+        });
 
         // Boolean to check if the catalogue is selected
         const catalogueBoolean = computed(() => {
             return selectedCatalogue.value !== ''
-        })
+        });
+
+        // Concatenation of active and pending topics selected
+        const selectedTopics = computed(() => {
+            return [...activeTopics.value, ...pendingTopics.value];
+        });
 
         // Methods
 
         // Load the saved information from the electron API
         const loadSettings = async () => {
             try {
-                const settings = await window.electronAPI.loadSettings();
-                if (settings) {
-                    serverInfo.value = settings.serverInfo;
-                    topics.value = settings.topics;
+                const storedSettings = await window.electronAPI.loadSettings();
+                if (storedSettings) {
+                    host.value = storedSettings?.host || '';
+                    port.value = storedSettings?.port || '';
+                    username.value = storedSettings?.username || '';
+                    password.value = storedSettings?.password || '';
+                    connectionStatus.value = storedSettings?.connectionStatus || false;
+                    activeTopics.value = storedSettings?.activeTopics || [];
+                    pendingTopics.value = storedSettings?.pendingTopics || [];
                 }
             }
             catch (error) {
@@ -203,7 +251,8 @@ export default defineComponent({
             // Query the catalogue
             const response = await fetch(`${selectedCatalogue.value}?${params}`);
             if (!response.ok) {
-                throw new Error('Failed to query catalogue')
+                const readableError = HTTP_CODES[response.status] || response.statusText;
+                catalogueError.value = `Error connecting to catalogue: ${readableError}`;
             }
             const items = await response.json();
             const features = items.features;
@@ -304,71 +353,82 @@ export default defineComponent({
             loadingJsonBoolean.value = false;
         }
 
+        // Check if the topic is found in the list of topic items
+        const topicFound = (topicToFind, topicList) => {
+            return topicList.some(item => item.topic === topicToFind);
+        }
+
         // When the user clicks 'Add dataset to subscription', add the
         // associated topic to an array which will be parsed to the Electron API
-        const addToSubscription = async (topic) => {
-            console.log("Adding topic to subscription: " + topic)
-            // Make sure there are no duplicates
-            if (!selectedTopics.value.includes(topic)) {
-                const updatedTopics = [...selectedTopics.value, topic];
-                selectedTopics.value = updatedTopics;
+        const addTopicToPending = (item) => {
+            const topicToAdd = item.topic_hierarchy;
+
+            console.log("Adding topic to subscription: " + topicToAdd)
+
+            const toAdd = {
+                topic: topicToAdd,
+                target: "$TOPIC"
+            };
+
+            // Make sure there are no duplicates before adding
+            const isDuplicate = topicFound(topicToAdd, selectedTopics.value);
+            if (isDuplicate) {
+                console.log("Topic already added to subscription");
+                return;
             }
-            // If the user is currently subscribed, handle the Flask API call
-            if (subscribeStatus.value) {
-                const data = {
-                    topic: topic,
-                    action: 'add'
-                }
-                await window.electronAPI.manageTopics(data);
-            }
+
+            const updatedTopics = [...pendingTopics.value, toAdd];
+            pendingTopics.value = updatedTopics;
+            
             // Close the dialog
             dialog.value = false;
         }
 
         // When the user clicks 'Remove dataset from subscription', remove
         // the associated topic from the array which will be parsed to the Electron API
-        const removeFromSubscription = async (topic) => {
-            console.log("Removing topic from subscription: " + topic)
-            // Remove it from the array
-            if (selectedTopics.value.includes(topic)) {
-                const updatedTopics = selectedTopics.value.filter(item => item !== topic);
-                selectedTopics.value = updatedTopics;
+        const removeTopicFromPending = (item) => {
+            const topicToRemove = item.topic_hierarchy;
+
+            console.log("Removing topic from subscription: " + topicToRemove)
+
+            // Remove it from the array if it can be found
+            const topicCanBeRemoved = topicFound(topicToRemove, pendingTopics.value);
+
+            if (!topicCanBeRemoved) {
+                catalogueError.value = "Topic not found in subscription";
+                return;
             }
-            // If the user is currently subscribed, handle the Flask API call
-            if (subscribeStatus.value) {
-                const data = {
-                    topic: topic,
-                    action: 'delete'
-                }
-                await window.electronAPI.manageTopics(data);
-            }
+
+            let updatedTopics = [...pendingTopics.value];
+            updatedTopics = updatedTopics.filter(item => item !== topicToRemove);
+            pendingTopics.value = updatedTopics;
+
             // Close the dialog
             dialog.value = false;
         };
 
-        const addOrRemoveAllTopics = async (topics, shouldSelectAll) => {
+        // Toggles the selection of all topics
+        const addOrRemoveAllTopics = async (items, shouldSelectAll) => {
             if (shouldSelectAll === true) {
-                for (const topic of topics) {
-                    await addToSubscription(topic);
+                for (const item of items) {
+                    addTopicToPending(item);
                 }
             }
             else if (shouldSelectAll === false) {
-                for (const topic of topics) {
-                    await removeFromSubscription(topic);
-                }
+                // Empty the pending topics array
+                pendingTopics.value = [];
             }
         };
 
-        // Watch for changes in the selected topics
-        watch(selectedTopics, () => {
-            const settings = {
-                serverInfo: serverInfo.value,
-                topics: selectedTopics.value
-            };
-            console.log("Storing settings:", settings);
+        // Watch for changes in any of the user inputs, so that if they
+        // navigate to the Subscribe page and return, their configuration is not lost
+        watch(settings, () => {
+            // As reactive objects aren't serialisable, we must deep copy it
+            const settingsToStore = deepClone(settings.value);
+            console.log("Storing settings:", settingsToStore);
             // Store the information in the electron API
-            window.electronAPI.storeSettings(settings);
-        }, { deep: true });
+            window.electronAPI.storeSettings(settingsToStore);
+        }, { deep: true }); // Use deep watch to track nested array
 
         onMounted(() => {
             // Get settings from GDC or previous usage of configuration page
@@ -392,22 +452,23 @@ export default defineComponent({
             formattedJson,
             loadingJsonBoolean,
             jsonDialog,
-            selectedTopics,
-            serverInfo,
-            topics,
-            subscribeStatus,
+            connectionStatus,
+            activeTopics,
+            pendingTopics,
+            catalogueError,
 
             // Computed variables
             catalogueBoolean,
+            selectedTopics,
 
             // Methods
-            loadSettings,
             searchCatalogue,
             openDialog,
             formatKey,
             openJSON,
-            addToSubscription,
-            removeFromSubscription,
+            topicFound,
+            addTopicToPending,
+            removeTopicFromPending,
             addOrRemoveAllTopics
         }
     }
