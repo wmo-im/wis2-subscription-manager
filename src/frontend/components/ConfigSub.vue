@@ -36,13 +36,13 @@
                 <v-row>
                     <v-col cols="12">
                         <v-card-title class="sub-title">Currently Subscribed Topics</v-card-title>
-
+                        <v-card-text>The topics actively subscribed to by the downloader.</v-card-text>
                         <v-card-item>
                             <v-table v-if="connectionStatus" :hover="true">
                                 <thead>
                                     <tr>
                                         <th scope="row">
-                                            <p v-if="topics.length > 0">Topic</p>
+                                            <p v-if="activeTopics.length > 0">Topic</p>
                                             <p v-else>No topics are currently subscribed to</p>
                                         </th>
                                         <th scope="row">Associated Sub-Directory</th>
@@ -50,7 +50,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="item in topics" :key="item.topic">
+                                    <tr v-for="item in activeTopics" :key="item.topic">
                                         <td>
                                             {{ item.topic }}
                                         </td>
@@ -65,7 +65,47 @@
                             </v-table>
                         </v-card-item>
                     </v-col>
+                </v-row>
 
+                <v-row>
+                    <v-col cols="12">
+                        <v-card-title class="sub-title">Topics To Add</v-card-title>
+                        <v-card-text>Pending topics that aren't currently subscribed to by the downloader.</v-card-text>
+
+                        <v-card-item>
+                            <v-table v-if="canShowPluginTable" :hover="true">
+                        <thead>
+                            <tr>
+                                <th scope="row">
+                                    <p v-if="pendingTopics.length > 0">Topic to Add</p>
+                                    <p v-else>No topics have been added</p>
+                                </th>
+                                <th scope="row">Associated Sub-Directory</th>
+                                <th scope="row" class="text-right"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="item in pendingTopics" :key="item.topic" @click="configureTopic(item)"
+                                class="clickable-row">
+                                <td class="medium-title">
+                                    {{ item.topic }}
+                                </td>
+                                <td class="medium-title">
+                                    {{ item.directory }}
+                                </td>
+                                <td class="text-right">
+                                    <v-btn class="mr-5" append-icon="mdi-update" color="#003DA5" variant="flat"
+                                        @click.stop="addToSubscription(item)">
+                                        Update
+                                    </v-btn>
+                                    <v-btn append-icon="mdi-delete" color="error" variant="flat"
+                                        @click.stop="removeTopicFromPending(item)">Delete</v-btn>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </v-table>
+                        </v-card-item>
+                    </v-col>
                 </v-row>
 
             </v-card>
@@ -131,7 +171,8 @@ export default defineComponent({
         const connectionStatus = ref(false);
 
         // The topics (as keys) and their associated sub-directorys (as values)
-        const topics = ref([]);
+        const activeTopics = ref([]);
+        const pendingTopics = ref([]);
 
         // The topic and associated directory to be added
         const topicToAdd = ref('')
@@ -154,7 +195,8 @@ export default defineComponent({
                 username: username.value,
                 password: password.value,
                 connectionStatus: connectionStatus.value,
-                topics: topics.value
+                activeTopics: activeTopics.value,
+                pendingTopics: pendingTopics.value
             }
         });
 
@@ -168,6 +210,7 @@ export default defineComponent({
 
         // Methods
 
+        // Processes the data from the /list endpoint to display in the table
         const processTopicData = (data) => {
             const processedData = [];
             for (const topic in data) {
@@ -181,6 +224,7 @@ export default defineComponent({
             return processedData;
         };
 
+        // Get the topics and their associated directories from the /list endpoint
         const getTopicList = async () => {
             // Build the full URL for listing subscriptions
             const url = `${serverLink.value}/list`;
@@ -235,7 +279,8 @@ export default defineComponent({
                     username.value = storedSettings?.username || '';
                     password.value = storedSettings?.password || '';
                     connectionStatus.value = storedSettings?.connectionStatus || false;
-                    topics.value = storedSettings?.topics || [];
+                    activeTopics.value = storedSettings?.activeTopics || [];
+                    pendingTopics.value = storedSettings?.pendingTopics || [];
                 }
             }
             catch (error) {
@@ -243,8 +288,9 @@ export default defineComponent({
             }
         }
 
-        const addTopicAndDirectory = () => {
-            const updatedTopics = [...topics.value];
+        // Add a topic and its associated directory to the list of pending topics
+        const addTopicToPending = () => {
+            const updatedTopics = [...pendingTopics.value];
 
             const toAdd = {
                 topic: topicToAdd.value,
@@ -253,12 +299,23 @@ export default defineComponent({
 
             updatedTopics.push(toAdd);
 
-            topics.value = updatedTopics;
+            pendingTopics.value = updatedTopics;
 
             // Clear the input fields
             topicToAdd.value = '';
             directoryToAdd.value = '';
         };
+
+        // Remove a topic and its associated directory from the list of pending topics
+        const removeTopicFromPending = (topic) => {
+            const updatedTopics = [... pendingTopics.value]
+
+            // Remove topic object
+            const index = updatedTopics.findIndex((item) => item.topic === topic);
+            updatedTopics.splice(index, 1);
+
+            pendingTopics.value = updatedTopics;
+        }
 
         onMounted(() => {
             // Get settings from GDC or previous usage of configuration page
@@ -285,7 +342,8 @@ export default defineComponent({
             username,
             password,
             connectionStatus,
-            topics,
+            activeTopics,
+            pendingTopics,
             topicToAdd,
             directoryToAdd,
             topicToDelete,
@@ -300,7 +358,8 @@ export default defineComponent({
             processTopicData,
             getTopicList,
             getServerData,
-            addTopicAndDirectory,
+            addTopicToPending,
+            removeTopicFromPending
         }
     }
 })
