@@ -83,14 +83,17 @@
                             <v-table :hover="true">
                                 <thead>
                                     <tr>
-                                        <th scope="row">
+                                        <th scope="row" class="topic-column">
                                             <p v-if="pendingTopics.length > 0">Topic to Add</p>
                                             <p v-else>No topics have been added</p>
                                         </th>
-                                        <th scope="row">
-                                            <p v-if="activeTopics.length > 0">Associated Sub-Directory</p>
+                                        <th scope="row" class="directory-column">
+                                            <p v-if="pendingTopics.length > 0">Sub-Directory</p>
                                         </th>
-                                        <th scope="row" class="text-right"></th>
+                                        <th scope="row" class="button-column">
+                                            <p v-if="pendingTopics.length > 0" class="text-center">Actions</p>
+                                            <v-btn v-else color="#003DA5" @click="configureTopic()">Add Topic</v-btn>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -103,12 +106,12 @@
                                             {{ item.target }}
                                         </td>
                                         <td class="text-right">
-                                            <v-btn class="mr-5" append-icon="mdi-update" color="#003DA5" variant="flat"
-                                                @click.stop="addToSubscription(item)">
-                                                Update
+                                            <v-btn class="mr-5" append-icon="mdi-cloud-upload" color="#003DA5"
+                                                variant="flat" @click.stop="addToSubscription(item)">
+                                                Add
                                             </v-btn>
                                             <v-btn append-icon="mdi-delete" color="error" variant="flat"
-                                                @click.stop="removeTopicFromPending(item)">Delete</v-btn>
+                                                @click.stop="removeTopicFromPending(item)">Remove</v-btn>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -116,10 +119,39 @@
                         </v-card-item>
                     </v-col>
                 </v-row>
-
             </v-card>
         </v-col>
     </v-row>
+
+    <!-- Dialogs -->
+    <v-dialog v-model="showTopicConfigDialog" max-width="800px">
+        <v-card>
+            <v-toolbar title="Topic Configuration" color="#003DA5">
+                <v-btn icon="mdi-close" variant="text" size="small" @click="openConfigTopicDialog = false" />
+            </v-toolbar>
+            <v-container>
+                <v-col cols="12">
+                    <v-row>
+                        <v-col cols="12">
+                            <v-text-field v-model="topicToAdd" label="Topic" />
+                        </v-col>
+                    </v-row>
+
+                    <v-row>
+                        <v-col cols="12">
+                            <v-text-field v-model="targetToAdd" label="Associated Sub-Directory" />
+                        </v-col>
+                    </v-row>
+
+                    <v-row>
+                        <v-col cols="12">
+                            <v-btn color="#003DA5" variant="flat" block @click="saveTopic">Save</v-btn>
+                        </v-col>
+                    </v-row>
+                </v-col>
+            </v-container>
+        </v-card>
+    </v-dialog>
 </template>
 
 <script>
@@ -194,6 +226,11 @@ export default defineComponent({
 
         // Last time the frontend was synced with the backend
         const lastSyncTime = ref(new Date().toLocaleTimeString());
+
+        // Dialog stuff
+        const previousTopic = ref('');
+        const previousTarget = ref('');
+        const showTopicConfigDialog = ref(false);
 
         // Errors
         const serverError = ref('');
@@ -309,6 +346,45 @@ export default defineComponent({
             setInterval(getServerData, 300000);
         };
 
+        const populateFields = (item) => {
+            // If item exists, show existing values
+            if (item) {
+                topicToAdd.value = item.topic;
+                targetToAdd.value = item.target;
+            }
+            // Otherwise show empty fields
+            else {
+                topicToAdd.value = '';
+                targetToAdd.value = '';
+            }
+        };
+
+        // Configure pending topic and target
+        const configureTopic = (item) => {
+            showTopicConfigDialog.value = true;
+
+            // Save the original plugin name and filetype
+            previousTopic.value = item?.topic;
+            previousTarget.value = item?.target;
+
+            populateFields(item);
+        };
+
+        // TODO: Adds or updates the plugin in the model
+        const saveTopic = () => {
+            // Find out if the topic is new or existing
+
+            
+            // if () {
+            // }
+            // // Otherwise, update the existing plugin
+            // else {
+
+            // }
+            // Close the dialog
+            openConfigurePluginDialog.value = false;
+        };
+
         // Add the topic and target to the downloader using the /add endpoint
         const addToSubscription = async (item) => {
             // The topic, in particular the wildcards (+,#), must be URI encoded
@@ -329,6 +405,9 @@ export default defineComponent({
                     const readableError = HTTP_CODES[response.status] || response.statusText;
                     serverError.value = `Error connecting to server: ${readableError}`;
                 }
+
+                // Remove from pending topics
+                removeTopicFromPending(item.topic);
 
                 // Update the active topics
                 await getTopicList();
@@ -424,6 +503,7 @@ export default defineComponent({
             topicToDelete,
             connectingToServer,
             lastSyncTime,
+            showTopicConfigDialog,
             serverError,
 
             // Computed variables
@@ -434,6 +514,7 @@ export default defineComponent({
             processTopicData,
             getTopicList,
             getServerData,
+            configureTopic,
             topicFound,
             addToSubscription,
             addTopicToPending,
@@ -445,11 +526,15 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.backend-output {
-    max-height: 200px;
-    /* Adjust as needed */
-    overflow-y: auto;
-    white-space: pre-wrap;
-    /* To respect line breaks and spaces */
+.topic-colum {
+    width: 50%;
+}
+
+.directory-column {
+    width: 22%;
+}
+
+.button-column {
+    width: 20%;
 }
 </style>

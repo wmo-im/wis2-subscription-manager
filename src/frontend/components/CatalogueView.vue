@@ -37,7 +37,7 @@
                                 <th scope="row" class="topic-column">
                                     Discovery Metadata Records Found
                                 </th>
-                                <th scope="row" class="add-column">
+                                <th scope="row" class="button-column">
                                     <v-switch inset label="Add All" v-model="addAllTopics"
                                         @change="addOrRemoveAllTopics(datasets, addAllTopics)"
                                         v-if="tableBoolean === true" color="#003DA5"/>
@@ -499,7 +499,7 @@ export default defineComponent({
     width: 83%;
 }
 
-.add-column {
+.button-column {
     width: 17%;
 }
 </style>
