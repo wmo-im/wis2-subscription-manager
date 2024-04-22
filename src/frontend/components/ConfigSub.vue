@@ -74,20 +74,22 @@
                     </v-col>
                 </v-row>
 
-                <v-row v-if="connectionStatus">
+                <v-row>
                     <v-col cols="12">
                         <v-card-title class="sub-title">Topics To Add</v-card-title>
                         <v-card-text>Pending topics that aren't currently subscribed to by the downloader.</v-card-text>
 
                         <v-card-item>
-                            <v-table v-if="connectionStatus" :hover="true">
+                            <v-table :hover="true">
                                 <thead>
                                     <tr>
                                         <th scope="row">
                                             <p v-if="pendingTopics.length > 0">Topic to Add</p>
                                             <p v-else>No topics have been added</p>
                                         </th>
-                                        <th scope="row">Associated Sub-Directory</th>
+                                        <th scope="row">
+                                            <p v-if="activeTopics.length > 0">Associated Sub-Directory</p>
+                                        </th>
                                         <th scope="row" class="text-right"></th>
                                     </tr>
                                 </thead>

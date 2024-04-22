@@ -8,7 +8,7 @@
                     <v-row dense>
                         <v-col cols="4">
                             <v-select v-model="selectedCatalogue" :items="catalogueList" item-title="title"
-                                item-value="url" label="Choose a catalogue" ></v-select>
+                                item-value="url" label="Choose a catalogue"></v-select>
                         </v-col>
                         <v-col cols="4">
                             <v-text-field v-model="searchedTitle" label="Enter a title" hint="Optional" persistent-hint
@@ -29,15 +29,19 @@
 
                 <!-- Display catalogue datasets searched by user -->
                 <v-card-item>
-                    <v-switch label="Add All Topics to Pending" v-model="addAllTopics" @change="addOrRemoveAllTopics(datasets, addAllTopics)" v-if="tableBoolean === true" color="#003DA5"/>
+
 
                     <v-table v-if="tableBoolean === true" :hover="true">
                         <thead>
                             <tr>
-                                <th scope="row" class="text-left">
+                                <th scope="row" class="topic-column">
                                     Discovery Metadata Records Found
                                 </th>
-                                <th scope="row"></th>
+                                <th scope="row" class="add-column">
+                                    <v-switch inset label="Add All" v-model="addAllTopics"
+                                        @change="addOrRemoveAllTopics(datasets, addAllTopics)"
+                                        v-if="tableBoolean === true" color="#003DA5"/>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -48,16 +52,20 @@
                                 </td>
                                 <td class="row-buttons">
                                     <!-- If topic not added, allow them to add -->
-                                    <v-btn v-if="!topicFound(item.topic_hierarchy, selectedTopics)" color="#64BF40"
-                                        append-icon="mdi-plus" variant="flat" @click.stop="addTopicToPending(item.topic_hierarchy)">
+                                    <v-btn block v-if="!topicFound(item.topic_hierarchy, selectedTopics) && item.topic_hierarchy" color="#64BF40"
+                                        append-icon="mdi-plus" variant="flat"
+                                        @click.stop="addTopicToPending(item.topic_hierarchy)">
                                         Add</v-btn>
-                                    <v-btn v-if="topicFound(item.topic_hierarchy, pendingTopics)" color="error"
-                                        append-icon="mdi-minus" variant="flat" 
+                                    <v-btn block v-if="topicFound(item.topic_hierarchy, pendingTopics)" color="error"
+                                        append-icon="mdi-minus" variant="flat"
                                         @click.stop="removeTopicFromPending(item.topic_hierarchy)">
                                         Remove</v-btn>
-                                        <v-btn v-if="topicFound(item.topic_hierarchy, activeTopics)"  disabled color="#003DA5"
-                                        append-icon="mdi-minus" variant="flat">
+                                    <v-btn block v-if="topicFound(item.topic_hierarchy, activeTopics)" disabled
+                                        color="#003DA5" append-icon="mdi-minus" variant="flat">
                                         Active</v-btn>
+                                    <v-btn block v-if="!item.topic_hierarchy" disabled
+                                        variant="flat">
+                                        No Topic</v-btn>
                                 </td>
                             </tr>
                         </tbody>
@@ -173,7 +181,7 @@ export default defineComponent({
         const formattedJson = ref(null);
         const loadingJsonBoolean = ref(false);
         const jsonDialog = ref(false);
-        
+
         // Information from Subscribe page
         const host = ref('');
         const port = ref('');
@@ -363,6 +371,11 @@ export default defineComponent({
         const addTopicToPending = (item) => {
             const topicToAdd = item.topic_hierarchy;
 
+            // Check if there is any topic hierarchy associated with the dataset
+            if (!topicToAdd) {
+                return;
+            }
+
             console.log("Adding topic to subscription: " + topicToAdd)
 
             const toAdd = {
@@ -379,7 +392,7 @@ export default defineComponent({
 
             const updatedTopics = [...pendingTopics.value, toAdd];
             pendingTopics.value = updatedTopics;
-            
+
             // Close the dialog
             dialog.value = false;
         }
@@ -388,6 +401,11 @@ export default defineComponent({
         // the associated topic from the array which will be parsed to the Electron API
         const removeTopicFromPending = (item) => {
             const topicToRemove = item.topic_hierarchy;
+
+            // Check if there is any topic hierarchy associated with the dataset
+            if (!topicToRemove) {
+                return;
+            }
 
             console.log("Removing topic from subscription: " + topicToRemove)
 
@@ -475,3 +493,13 @@ export default defineComponent({
 })
 
 </script>
+
+<style scoped>
+.topic-column {
+    width: 83%;
+}
+
+.add-column {
+    width: 17%;
+}
+</style>
