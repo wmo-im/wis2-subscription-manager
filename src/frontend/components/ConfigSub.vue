@@ -2,13 +2,14 @@
     <v-row class="justify-center">
         <v-col cols=12 class="max-form-width">
             <v-card>
-                <v-card-title class="big-title">WIS2 Subscription Dashboard</v-card-title>
-                <span v-if="connectionStatus" class="text-right">
-                    Last synchronized: {{ lastSyncTime }}
-                </span>
-                <v-card-subtitle>Connect to your WIS2 Downloader backend, configure topics, and monitor
-                    downloads.</v-card-subtitle>
-                <v-col cols="1" />
+                <v-toolbar>
+                    <v-toolbar-title class="big-title">WIS2 Subscription Dashboard</v-toolbar-title>
+                    <v-toolbar-items class="sync-time pa-5">
+                            <p>Last synchronized: <b>{{ lastSyncTime }}</b></p>
+                    </v-toolbar-items>
+                </v-toolbar>
+
+                <v-col cols="12" />
 
                 <v-row>
                     <v-col cols="12">
@@ -17,16 +18,20 @@
                         <v-card-text>
                             <v-row>
                                 <v-col cols="3">
-                                    <v-text-field v-model="host" label="Server Host" :disabled="connectionStatus"></v-text-field>
+                                    <v-text-field v-model="host" label="Server Host"
+                                        :disabled="connectionStatus"></v-text-field>
                                 </v-col>
                                 <v-col cols="2">
-                                    <v-text-field v-model="port" label="Server Port" :disabled="connectionStatus"></v-text-field>
+                                    <v-text-field v-model="port" label="Server Port"
+                                        :disabled="connectionStatus"></v-text-field>
                                 </v-col>
                                 <v-col cols="2">
-                                    <v-text-field v-model="username" label="Username" :disabled="connectionStatus"></v-text-field>
+                                    <v-text-field v-model="username" label="Username"
+                                        :disabled="connectionStatus"></v-text-field>
                                 </v-col>
                                 <v-col cols="2">
-                                    <v-text-field v-model="password" label="Password" :disabled="connectionStatus"></v-text-field>
+                                    <v-text-field v-model="password" label="Password"
+                                        :disabled="connectionStatus"></v-text-field>
                                 </v-col>
                                 <v-col cols="3">
                                     <v-btn v-if="!connectionStatus" color="#003DA5" size="x-large" block
@@ -43,14 +48,15 @@
                 <v-row>
                     <v-col cols="12">
                         <v-card-title>Currently Subscribed Topics</v-card-title>
-                        <v-card-subtitle>Topics actively subscribed to by the downloader.</v-card-subtitle>
+                        <v-card-subtitle>Topics actively subscribed to by the downloader</v-card-subtitle>
                         <v-card-item>
                             <v-table :hover="true">
                                 <thead>
                                     <tr v-if="connectionStatus">
                                         <th scope="row" class="topic-column">
                                             <p v-if="pendingTopics.length > 0" class="medium-title">Topic</p>
-                                            <p v-else class="medium-title">No topics are currently active</p>
+                                            <p v-else class="medium-title text-center">No topics are currently active
+                                            </p>
                                         </th>
                                         <th scope="row" class="directory-column">
                                             <p v-if="pendingTopics.length > 0" class="medium-title">Sub-Directory</p>
@@ -61,7 +67,7 @@
                                     </tr>
                                     <tr v-if="!connectionStatus">
                                         <th scope="row" class="topic-column">
-                                            <p class="medium-title">Connection to server not established</p>
+                                            <p class="medium-title text-center">Connection to server not established</p>
                                         </th>
                                     </tr>
                                 </thead>
@@ -87,7 +93,8 @@
                 <v-row>
                     <v-col cols="12">
                         <v-card-title>Topics To Add</v-card-title>
-                        <v-card-subtitle>Pending topics that aren't currently subscribed to by the downloader. These can be added manually or found by exploring a Global Discovery Catalogue.</v-card-subtitle>
+                        <v-card-subtitle>Pending topics that aren't currently subscribed to by the
+                            downloader</v-card-subtitle>
 
                         <v-card-item>
                             <v-table :hover="true">
@@ -98,11 +105,14 @@
                                             <p v-else class="medium-title text-center">No topics have been added</p>
                                         </th>
                                         <th scope="row" class="directory-column">
-                                            <p v-if="pendingTopics.length > 0" class="medium-title text-center">Sub-Directory</p>
+                                            <p v-if="pendingTopics.length > 0" class="medium-title text-center">
+                                                Sub-Directory</p>
                                         </th>
                                         <th scope="row" class="button-column">
-                                            <p v-if="pendingTopics.length > 0" class="medium-title text-center">Actions</p>
-                                            <v-btn v-else block color="#64BF40" @click="configureTopic()">Add A Topic</v-btn>
+                                            <p v-if="pendingTopics.length > 0" class="medium-title text-center">Actions
+                                            </p>
+                                            <v-btn v-else block color="#64BF40" @click="configureTopic()">Add A
+                                                Topic</v-btn>
                                         </th>
                                     </tr>
                                 </thead>
@@ -126,8 +136,9 @@
                                     </tr>
                                 </tbody>
                             </v-table>
-                            <v-col/>
-                            <v-btn v-if="pendingTopics.length > 0" block color="#64BF40" @click="configureTopic()">Add A New Topic</v-btn>
+                            <v-col />
+                            <v-btn v-if="pendingTopics.length > 0" block color="#64BF40" @click="configureTopic()">Add A
+                                New Topic</v-btn>
                         </v-card-item>
                     </v-col>
                 </v-row>
@@ -183,10 +194,10 @@
             <v-card-actions>
                 <v-col cols="6">
                     <v-btn color="error" variant="flat" block @click="removeTopicFromPending">Yes</v-btn>
-                </v-col>   
+                </v-col>
                 <v-col cols="6">
                     <v-btn color="black" variant="flat" block @click="showRemoveWarningDialog = false">No</v-btn>
-                </v-col>  
+                </v-col>
             </v-card-actions>
         </v-card>
     </v-dialog>
@@ -385,6 +396,12 @@ export default defineComponent({
             setInterval(getServerData, 300000);
         };
 
+        // Clear the server data and reset the connection status
+        const clearServerData = () => {
+            connectionStatus.value = false;
+            activeTopics.value = [];
+        };
+
         // Add the topic and target to the downloader using the /add endpoint
         const addToSubscription = async (item) => {
             // The topic, in particular the wildcards (+,#), must be URI encoded
@@ -541,7 +558,7 @@ export default defineComponent({
                 removalMessage.value = `This topic is not currently actively subscribed to. It can be easily added back later.`;
             }
             else if (list === 'active') {
-                removalMessage.value = `This topic is an active topic. Removing it will stop any real-time data being downloaded from it.`;            
+                removalMessage.value = `This topic is an active topic. Removing it will stop any real-time data being downloaded from it.`;
             }
         };
 
@@ -595,6 +612,7 @@ export default defineComponent({
             processTopicData,
             getTopicList,
             getServerData,
+            clearServerData,
             topicFound,
             configureTopic,
             saveTopic,
@@ -619,5 +637,11 @@ export default defineComponent({
 
 .button-column {
     width: 30%;
+}
+
+.sync-time {
+    color: #666;
+    opacity: 0.75;
+    font-size: 1.1em;
 }
 </style>

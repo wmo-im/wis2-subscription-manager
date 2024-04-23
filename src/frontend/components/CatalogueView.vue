@@ -2,8 +2,12 @@
     <v-row class="justify-center">
         <v-col cols=12 class="max-form-width">
             <v-card min-height="700px">
-                <v-card-title class="big-title">Search a WIS2 Global Discovery Catalogue</v-card-title>
+                <v-toolbar dense>
+                    <v-toolbar-title class="big-title">Search a WIS2 Global Discovery Catalogue</v-toolbar-title>
+                </v-toolbar>
                 <v-card-subtitle>Find datasets to add to your list of pending subscriptions</v-card-subtitle>
+
+                <v-col cols="12"/>
 
                 <v-card-item>
                     <v-row dense>
