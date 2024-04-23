@@ -1,11 +1,11 @@
 <template>
     <v-row class="justify-center">
         <v-col cols=12 class="max-form-width">
-            <v-card>
+            <v-card min-height="700px">
                 <v-toolbar>
                     <v-toolbar-title class="big-title">WIS2 Subscription Dashboard</v-toolbar-title>
                     <v-toolbar-items class="sync-time pa-5">
-                            <p>Last synchronized: <b>{{ lastSyncTime }}</b></p>
+                        <p v-if="connetionStatus">Last synchronized: <b>{{ lastSyncTime }}</b></p>
                     </v-toolbar-items>
                 </v-toolbar>
 
@@ -45,103 +45,115 @@
                 </v-row>
                 {{ serverError }}
 
-                <v-row>
-                    <v-col cols="12">
-                        <v-card-title>Currently Subscribed Topics</v-card-title>
-                        <v-card-subtitle>Topics actively subscribed to by the downloader</v-card-subtitle>
-                        <v-card-item>
-                            <v-table :hover="true">
-                                <thead>
-                                    <tr v-if="connectionStatus">
-                                        <th scope="row" class="topic-column">
-                                            <p v-if="pendingTopics.length > 0" class="medium-title">Topic</p>
-                                            <p v-else class="medium-title text-center">No topics are currently active
-                                            </p>
-                                        </th>
-                                        <th scope="row" class="directory-column">
-                                            <p v-if="pendingTopics.length > 0" class="medium-title">Sub-Directory</p>
-                                        </th>
-                                        <th scope="row" class="button-column">
-                                            <p v-if="pendingTopics.length > 0" class="medium-title">Actions</p>
-                                        </th>
-                                    </tr>
-                                    <tr v-if="!connectionStatus">
-                                        <th scope="row" class="topic-column">
-                                            <p class="medium-title text-center">Connection to server not established</p>
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="item in activeTopics" :key="item.topic" @click="configureTopic(item)"
-                                        class="clickable-row">
-                                        <td class="small-title">
-                                            {{ item.topic }}
-                                        </td>
-                                        <td class="small-title text-center">
-                                            {{ item.target }}
-                                        </td>
-                                        <td class="text-center">
-                                            <!-- TODO: Statistics, Remove -->
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </v-table>
-                        </v-card-item>
-                    </v-col>
-                </v-row>
+                <transition name="slide-y-transition">
+                    <v-card-item v-if="connectionStatus">
+                        <v-row>
+                            <v-col cols="12">
+                                <v-card-title>Currently Subscribed Topics</v-card-title>
+                                <v-card-subtitle>Topics actively subscribed to by the downloader</v-card-subtitle>
+                                <v-card-item>
+                                    <v-table :hover="true">
+                                        <thead>
+                                            <tr v-if="connectionStatus">
+                                                <th scope="row" class="topic-column">
+                                                    <p v-if="pendingTopics.length > 0" class="medium-title">Topic</p>
+                                                    <p v-else class="medium-title text-center">No topics are currently
+                                                        active
+                                                    </p>
+                                                </th>
+                                                <th scope="row" class="directory-column">
+                                                    <p v-if="pendingTopics.length > 0" class="medium-title">
+                                                        Sub-Directory
+                                                    </p>
+                                                </th>
+                                                <th scope="row" class="button-column">
+                                                    <p v-if="pendingTopics.length > 0" class="medium-title">Actions</p>
+                                                </th>
+                                            </tr>
+                                            <tr v-if="!connectionStatus">
+                                                <th scope="row" class="topic-column">
+                                                    <p class="medium-title text-center">Connection to server not
+                                                        established
+                                                    </p>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="item in activeTopics" :key="item.topic"
+                                                @click="configureTopic(item)" class="clickable-row">
+                                                <td class="small-title">
+                                                    {{ item.topic }}
+                                                </td>
+                                                <td class="small-title text-center">
+                                                    {{ item.target }}
+                                                </td>
+                                                <td class="text-center">
+                                                    <!-- TODO: Statistics, Remove -->
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </v-table>
+                                </v-card-item>
+                            </v-col>
+                        </v-row>
 
-                <v-row>
-                    <v-col cols="12">
-                        <v-card-title>Topics To Add</v-card-title>
-                        <v-card-subtitle>Pending topics that aren't currently subscribed to by the
-                            downloader</v-card-subtitle>
+                        <v-row>
+                            <v-col cols="12">
+                                <v-card-title>Topics To Add</v-card-title>
+                                <v-card-subtitle>Pending topics that aren't currently subscribed to by the
+                                    downloader</v-card-subtitle>
 
-                        <v-card-item>
-                            <v-table :hover="true">
-                                <thead>
-                                    <tr>
-                                        <th scope="row" class="topic-column">
-                                            <p v-if="pendingTopics.length > 0" class="medium-title">Topic</p>
-                                            <p v-else class="medium-title text-center">No topics have been added</p>
-                                        </th>
-                                        <th scope="row" class="directory-column">
-                                            <p v-if="pendingTopics.length > 0" class="medium-title text-center">
-                                                Sub-Directory</p>
-                                        </th>
-                                        <th scope="row" class="button-column">
-                                            <p v-if="pendingTopics.length > 0" class="medium-title text-center">Actions
-                                            </p>
-                                            <v-btn v-else block color="#64BF40" @click="configureTopic()">Add A
-                                                Topic</v-btn>
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="item in pendingTopics" :key="item.topic" @click="configureTopic(item)"
-                                        class="clickable-row">
-                                        <td class="small-title">
-                                            {{ item.topic }}
-                                        </td>
-                                        <td class="small-title text-center">
-                                            {{ item.target }}
-                                        </td>
-                                        <td class="text-center">
-                                            <v-btn class="mr-5" append-icon="mdi-cloud-upload" color="#003DA5"
-                                                variant="flat" @click.stop="addToSubscription(item)">
-                                                Activate
-                                            </v-btn>
-                                            <v-btn append-icon="mdi-delete" color="error" variant="flat"
-                                                @click.stop="confirmRemoval(item.topic, 'pending')">Remove</v-btn>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </v-table>
-                            <v-col />
-                            <v-btn v-if="pendingTopics.length > 0" block color="#64BF40" @click="configureTopic()">Add A
-                                New Topic</v-btn>
-                        </v-card-item>
-                    </v-col>
-                </v-row>
+                                <v-card-item>
+                                    <v-table :hover="true">
+                                        <thead>
+                                            <tr>
+                                                <th scope="row" class="topic-column">
+                                                    <p v-if="pendingTopics.length > 0" class="medium-title">Topic</p>
+                                                    <p v-else class="medium-title text-center">No topics have been added
+                                                    </p>
+                                                </th>
+                                                <th scope="row" class="directory-column">
+                                                    <p v-if="pendingTopics.length > 0" class="medium-title text-center">
+                                                        Sub-Directory</p>
+                                                </th>
+                                                <th scope="row" class="button-column">
+                                                    <p v-if="pendingTopics.length > 0" class="medium-title text-center">
+                                                        Actions
+                                                    </p>
+                                                    <v-btn v-else block color="#64BF40" @click="configureTopic()">Add A
+                                                        Topic</v-btn>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="item in pendingTopics" :key="item.topic"
+                                                @click="configureTopic(item)" class="clickable-row">
+                                                <td class="small-title">
+                                                    {{ item.topic }}
+                                                </td>
+                                                <td class="small-title text-center">
+                                                    {{ item.target }}
+                                                </td>
+                                                <td class="text-center">
+                                                    <v-btn class="mr-5" append-icon="mdi-cloud-upload" color="#003DA5"
+                                                        variant="flat" @click.stop="addToSubscription(item)">
+                                                        Activate
+                                                    </v-btn>
+                                                    <v-btn append-icon="mdi-delete" color="error" variant="flat"
+                                                        @click.stop="confirmRemoval(item.topic, 'pending')">Remove</v-btn>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </v-table>
+                                    <v-col />
+                                    <v-btn v-if="pendingTopics.length > 0" block color="#64BF40"
+                                        @click="configureTopic()">Add A
+                                        New Topic</v-btn>
+                                </v-card-item>
+                            </v-col>
+                        </v-row>
+                    </v-card-item>
+                </transition>
             </v-card>
         </v-col>
     </v-row>
