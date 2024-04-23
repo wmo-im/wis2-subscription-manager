@@ -61,11 +61,11 @@
                                         <v-btn block
                                             v-if="!topicFound(item.topic_hierarchy, selectedTopics) && item.topic_hierarchy"
                                             color="#64BF40" append-icon="mdi-plus" variant="flat"
-                                            @click.stop="addTopicToPending(item.topic_hierarchy)">
+                                            @click.stop="addTopicToPending(item)">
                                             Add</v-btn>
                                         <v-btn block v-if="topicFound(item.topic_hierarchy, pendingTopics)" color="error"
                                             append-icon="mdi-minus" variant="flat"
-                                            @click.stop="removeTopicFromPending(item.topic_hierarchy)">
+                                            @click.stop="removeTopicFromPending(item)">
                                             Remove</v-btn>
                                         <v-btn block v-if="topicFound(item.topic_hierarchy, activeTopics)" disabled
                                             color="#003DA5" append-icon="mdi-minus" variant="flat">

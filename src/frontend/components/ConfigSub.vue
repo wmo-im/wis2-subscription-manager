@@ -5,7 +5,7 @@
                 <v-toolbar>
                     <v-toolbar-title class="big-title">WIS2 Subscription Dashboard</v-toolbar-title>
                     <v-toolbar-items class="sync-time pa-5">
-                        <p v-if="connetionStatus">Last synchronized: <b>{{ lastSyncTime }}</b></p>
+                        <p v-if="connectionStatus">Last synchronized: <b>{{ lastSyncTime }}</b></p>
                     </v-toolbar-items>
                 </v-toolbar>
 
@@ -43,7 +43,6 @@
                         </v-card-text>
                     </v-col>
                 </v-row>
-                {{ serverError }}
 
                 <transition name="slide-y-transition">
                     <v-card-item v-if="connectionStatus">
@@ -54,27 +53,21 @@
                                 <v-card-item>
                                     <v-table :hover="true">
                                         <thead>
-                                            <tr v-if="connectionStatus">
+                                            <tr>
                                                 <th scope="row" class="topic-column">
-                                                    <p v-if="pendingTopics.length > 0" class="medium-title">Topic</p>
+                                                    <p v-if="activeTopics.length > 0" class="medium-title">Topic</p>
                                                     <p v-else class="medium-title text-center">No topics are currently
                                                         active
                                                     </p>
                                                 </th>
                                                 <th scope="row" class="directory-column">
-                                                    <p v-if="pendingTopics.length > 0" class="medium-title">
+                                                    <p v-if="activeTopics.length > 0" class="medium-title text-center">
                                                         Sub-Directory
                                                     </p>
                                                 </th>
                                                 <th scope="row" class="button-column">
-                                                    <p v-if="pendingTopics.length > 0" class="medium-title">Actions</p>
-                                                </th>
-                                            </tr>
-                                            <tr v-if="!connectionStatus">
-                                                <th scope="row" class="topic-column">
-                                                    <p class="medium-title text-center">Connection to server not
-                                                        established
-                                                    </p>
+                                                    <p v-if="activeTopics.length > 0" class="medium-title text-center">
+                                                        Actions</p>
                                                 </th>
                                             </tr>
                                         </thead>
@@ -88,7 +81,12 @@
                                                     {{ item.target }}
                                                 </td>
                                                 <td class="text-center">
-                                                    <!-- TODO: Statistics, Remove -->
+                                                    <v-btn class="mr-5" append-icon="" color="#003DA5"
+                                                        variant="flat" @click.stop="">
+                                                        Monitor
+                                                    </v-btn>
+                                                    <v-btn append-icon="mdi-delete" color="error" variant="flat"
+                                                        @click.stop="confirmRemoval(item.topic, 'active')">Remove</v-btn>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -136,7 +134,7 @@
                                                 </td>
                                                 <td class="text-center">
                                                     <v-btn class="mr-5" append-icon="mdi-cloud-upload" color="#003DA5"
-                                                        variant="flat" @click.stop="addToSubscription(item)">
+                                                        variant="flat" @click.stop="addToSubscription(item)" :loading="makingServerRequest">
                                                         Activate
                                                     </v-btn>
                                                     <v-btn append-icon="mdi-delete" color="error" variant="flat"
@@ -170,13 +168,29 @@
                 <v-col cols="12">
                     <v-row>
                         <v-col cols="12">
-                            <v-text-field v-model="topicToAdd" label="Topic" />
+                            <v-table v-if="topicFound(topicToAdd, activeTopics)" >
+                                <tbody>
+                                    <tr>
+                                        <td class="medium-title">Topic:</td>
+                                        <td class="medium-title">{{ topicToAdd }}</td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="medium-title">Target:</td>
+                                        <td class="medium-title">{{ targetToAdd }}</td>
+                                        <td>
+                                            <v-btn variant="flat" color="#E09D00" block>Edit</v-btn>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </v-table>
+                            <v-text-field v-if="!topicFound(topicToAdd, activeTopics)" v-model="topicToAdd" label="Topic"/>
                         </v-col>
                     </v-row>
 
                     <v-row>
                         <v-col cols="12">
-                            <v-text-field v-model="targetToAdd" label="Associated Sub-Directory" />
+                            <v-text-field v-if="!topicFound(topicToAdd, activeTopics)" v-model="targetToAdd" label="Associated Sub-Directory" />
                         </v-col>
                     </v-row>
 
@@ -205,7 +219,10 @@
             </v-card-text>
             <v-card-actions>
                 <v-col cols="6">
-                    <v-btn color="error" variant="flat" block @click="removeTopicFromPending">Yes</v-btn>
+                    <!-- Pending topic 'Yes' button -->
+                    <v-btn v-if="topicFound(topicToRemove, pendingTopics)" color="error" variant="flat" block @click="removeTopicFromPending">Yes</v-btn>
+                    <!-- Active topic 'Yes' button -->
+                    <v-btn v-if="topicFound(topicToRemove, activeTopics)" color="error" variant="flat" block @click="removeFromSubscription(topicToRemove)" :loading="makingServerRequest">Yes</v-btn>
                 </v-col>
                 <v-col cols="6">
                     <v-btn color="black" variant="flat" block @click="showRemoveWarningDialog = false">No</v-btn>
@@ -280,8 +297,9 @@ export default defineComponent({
         const targetToAdd = ref('')
         const topicToRemove = ref('');
 
-        // Loading animation when connecting to the server
+        // Loading animation when connecting to the server or making requests
         const connectingToServer = ref(false);
+        const makingServerRequest = ref(false);
 
         // Last time the frontend was synced with the backend
         const lastSyncTime = ref(new Date().toLocaleTimeString());
@@ -416,6 +434,9 @@ export default defineComponent({
 
         // Add the topic and target to the downloader using the /add endpoint
         const addToSubscription = async (item) => {
+            // Start the button loading animation
+            makingServerRequest.value = true;
+
             // The topic, in particular the wildcards (+,#), must be URI encoded
             const encodedTopic = encodeURIComponent(item.topic);
 
@@ -440,6 +461,46 @@ export default defineComponent({
 
                 // Update the active topics
                 await getTopicList();
+
+                // End the button loading animation
+                makingServerRequest.value = false;
+            }
+            catch (error) {
+                serverError.value = error;
+            }
+        };
+
+        const removeFromSubscription = async (topic) => {
+            // Start the button loading animation
+            makingServerRequest.value = true;
+
+            // The topic, in particular the wildcards (+,#), must be URI encoded
+            const encodedTopic = encodeURIComponent(topic);
+
+            // Build the full URL for deleting a subscription
+            const url = `${serverLink.value}/delete?topic=${encodedTopic}`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    const readableError = HTTP_CODES[response.status] || response.statusText;
+                    serverError.value = `Error connecting to server: ${readableError}`;
+                }
+
+                // Update the active topics
+                await getTopicList();
+
+                // Close the warning dialog
+                showRemoveWarningDialog.value = false;
+
+                // End the button loading animation
+                makingServerRequest.value = false;
             }
             catch (error) {
                 serverError.value = error;
@@ -609,6 +670,7 @@ export default defineComponent({
             targetToAdd,
             topicToRemove,
             connectingToServer,
+            makingServerRequest,
             lastSyncTime,
             showTopicConfigDialog,
             topicDialogTitle,
@@ -629,6 +691,7 @@ export default defineComponent({
             configureTopic,
             saveTopic,
             addToSubscription,
+            removeFromSubscription,
             addTopicToPending,
             removeTopicFromPending,
             confirmRemoval
