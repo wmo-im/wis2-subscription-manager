@@ -2,32 +2,33 @@
     <v-row class="justify-center">
         <v-col cols=12 class="max-form-width">
             <v-card>
-                <v-card-title class="big-title">WIS2 Subscription Configuration</v-card-title>
+                <v-card-title class="big-title">WIS2 Subscription Dashboard</v-card-title>
                 <span v-if="connectionStatus" class="text-right">
                     Last synchronized: {{ lastSyncTime }}
                 </span>
-                <v-card-text>Connect to your WIS2 Downloader backend, configure topics, and monitor
-                    downloads.</v-card-text>
+                <v-card-subtitle>Connect to your WIS2 Downloader backend, configure topics, and monitor
+                    downloads.</v-card-subtitle>
                 <v-col cols="1" />
 
                 <v-row>
                     <v-col cols="12">
-                        <v-card-title class="sub-title">Downloader Server Information</v-card-title>
+                        <v-card-title>Downloader Server Information</v-card-title>
+                        <v-card-subtitle>Enter your server information to get started</v-card-subtitle>
                         <v-card-text>
                             <v-row>
                                 <v-col cols="3">
-                                    <v-text-field v-model="host" label="Server Host"></v-text-field>
+                                    <v-text-field v-model="host" label="Server Host" :disabled="connectionStatus"></v-text-field>
                                 </v-col>
                                 <v-col cols="2">
-                                    <v-text-field v-model="port" label="Server Port"></v-text-field>
+                                    <v-text-field v-model="port" label="Server Port" :disabled="connectionStatus"></v-text-field>
                                 </v-col>
                                 <v-col cols="2">
-                                    <v-text-field v-model="username" label="Username"></v-text-field>
+                                    <v-text-field v-model="username" label="Username" :disabled="connectionStatus"></v-text-field>
                                 </v-col>
                                 <v-col cols="2">
-                                    <v-text-field v-model="password" label="Password"></v-text-field>
+                                    <v-text-field v-model="password" label="Password" :disabled="connectionStatus"></v-text-field>
                                 </v-col>
-                                <v-col cols="2">
+                                <v-col cols="3">
                                     <v-btn v-if="!connectionStatus" color="#003DA5" size="x-large" block
                                         @click="getServerData" :loading="connectingToServer">Connect</v-btn>
                                     <v-btn v-if="connectionStatus" color="#E09D00" size="x-large" block
@@ -41,31 +42,40 @@
 
                 <v-row>
                     <v-col cols="12">
-                        <v-card-title class="sub-title">Currently Subscribed Topics</v-card-title>
-                        <v-card-text>The topics actively subscribed to by the downloader.</v-card-text>
+                        <v-card-title>Currently Subscribed Topics</v-card-title>
+                        <v-card-subtitle>Topics actively subscribed to by the downloader.</v-card-subtitle>
                         <v-card-item>
-                            <v-table v-if="connectionStatus" :hover="true">
+                            <v-table :hover="true">
                                 <thead>
-                                    <tr>
-                                        <th scope="row">
-                                            <p v-if="activeTopics.length > 0">Topic</p>
-                                            <p v-else>No topics are currently subscribed to</p>
+                                    <tr v-if="connectionStatus">
+                                        <th scope="row" class="topic-column">
+                                            <p v-if="pendingTopics.length > 0" class="medium-title">Topic</p>
+                                            <p v-else class="medium-title">No topics are currently active</p>
                                         </th>
-                                        <th scope="row">Associated Sub-Directory</th>
-                                        <th scope="row" class="text-right"></th>
+                                        <th scope="row" class="directory-column">
+                                            <p v-if="pendingTopics.length > 0" class="medium-title">Sub-Directory</p>
+                                        </th>
+                                        <th scope="row" class="button-column">
+                                            <p v-if="pendingTopics.length > 0" class="medium-title">Actions</p>
+                                        </th>
+                                    </tr>
+                                    <tr v-if="!connectionStatus">
+                                        <th scope="row" class="topic-column">
+                                            <p class="medium-title">Connection to server not established</p>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr v-for="item in activeTopics" :key="item.topic" @click="configureTopic(item)"
                                         class="clickable-row">
-                                        <td>
+                                        <td class="small-title">
                                             {{ item.topic }}
                                         </td>
-                                        <td>
+                                        <td class="small-title text-center">
                                             {{ item.target }}
                                         </td>
-                                        <td class="row-buttons">
-
+                                        <td class="text-center">
+                                            <!-- TODO: Statistics, Remove -->
                                         </td>
                                     </tr>
                                 </tbody>
@@ -76,46 +86,48 @@
 
                 <v-row>
                     <v-col cols="12">
-                        <v-card-title class="sub-title">Topics To Add</v-card-title>
-                        <v-card-text>Pending topics that aren't currently subscribed to by the downloader.</v-card-text>
+                        <v-card-title>Topics To Add</v-card-title>
+                        <v-card-subtitle>Pending topics that aren't currently subscribed to by the downloader. These can be added manually or found by exploring a Global Discovery Catalogue.</v-card-subtitle>
 
                         <v-card-item>
                             <v-table :hover="true">
                                 <thead>
                                     <tr>
                                         <th scope="row" class="topic-column">
-                                            <p v-if="pendingTopics.length > 0">Topic to Add</p>
-                                            <p v-else>No topics have been added</p>
+                                            <p v-if="pendingTopics.length > 0" class="medium-title">Topic</p>
+                                            <p v-else class="medium-title text-center">No topics have been added</p>
                                         </th>
                                         <th scope="row" class="directory-column">
-                                            <p v-if="pendingTopics.length > 0">Sub-Directory</p>
+                                            <p v-if="pendingTopics.length > 0" class="medium-title text-center">Sub-Directory</p>
                                         </th>
                                         <th scope="row" class="button-column">
-                                            <p v-if="pendingTopics.length > 0" class="text-center">Actions</p>
-                                            <v-btn v-else color="#003DA5" @click="configureTopic()">Add Topic</v-btn>
+                                            <p v-if="pendingTopics.length > 0" class="medium-title text-center">Actions</p>
+                                            <v-btn v-else block color="#64BF40" @click="configureTopic()">Add A Topic</v-btn>
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr v-for="item in pendingTopics" :key="item.topic" @click="configureTopic(item)"
                                         class="clickable-row">
-                                        <td class="medium-title">
+                                        <td class="small-title">
                                             {{ item.topic }}
                                         </td>
-                                        <td class="medium-title">
+                                        <td class="small-title text-center">
                                             {{ item.target }}
                                         </td>
-                                        <td class="text-right">
+                                        <td class="text-center">
                                             <v-btn class="mr-5" append-icon="mdi-cloud-upload" color="#003DA5"
                                                 variant="flat" @click.stop="addToSubscription(item)">
-                                                Add
+                                                Activate
                                             </v-btn>
                                             <v-btn append-icon="mdi-delete" color="error" variant="flat"
-                                                @click.stop="removeTopicFromPending(item)">Remove</v-btn>
+                                                @click.stop="confirmRemoval(item.topic, 'pending')">Remove</v-btn>
                                         </td>
                                     </tr>
                                 </tbody>
                             </v-table>
+                            <v-col/>
+                            <v-btn v-if="pendingTopics.length > 0" block color="#64BF40" @click="configureTopic()">Add A New Topic</v-btn>
                         </v-card-item>
                     </v-col>
                 </v-row>
@@ -124,10 +136,12 @@
     </v-row>
 
     <!-- Dialogs -->
-    <v-dialog v-model="showTopicConfigDialog" class="max-dialog-width">
+
+    <!-- Shows the topic/target information to be edited -->
+    <v-dialog v-model="showTopicConfigDialog" class="max-dialog-width" transition="slide-y-transition">
         <v-card>
             <v-toolbar :title="topicDialogTitle" color="#003DA5">
-                <v-btn icon="mdi-close" variant="text" size="small" @click="openConfigTopicDialog = false" />
+                <v-btn icon="mdi-close" variant="text" size="small" @click="showTopicConfigDialog = false" />
             </v-toolbar>
             <v-container>
                 <v-col cols="12">
@@ -150,6 +164,30 @@
                     </v-row>
                 </v-col>
             </v-container>
+        </v-card>
+    </v-dialog>
+
+    <!-- Confirm removal of topic -->
+    <v-dialog v-model="showRemoveWarningDialog" class="max-dialog-width">
+        <v-card>
+            <v-toolbar title="Confirm Action" color="error">
+                <v-btn icon="mdi-close" variant="text" size="small" @click="showRemoveWarningDialog = false" />
+            </v-toolbar>
+            <v-card-text>
+                <p>Are you sure that you want to remove the topic:</p>
+                <br>
+                <p class="medium-title text-center">{{ topicToRemove }}</p>
+                <br>
+                <p>{{ removalMessage }}</p>
+            </v-card-text>
+            <v-card-actions>
+                <v-col cols="6">
+                    <v-btn color="error" variant="flat" block @click="removeTopicFromPending">Yes</v-btn>
+                </v-col>   
+                <v-col cols="6">
+                    <v-btn color="black" variant="flat" block @click="showRemoveWarningDialog = false">No</v-btn>
+                </v-col>  
+            </v-card-actions>
         </v-card>
     </v-dialog>
 </template>
@@ -214,12 +252,10 @@ export default defineComponent({
         const activeTopics = ref([]);
         const pendingTopics = ref([]);
 
-        // The topic and associated target to be added
+        // The topic and associated target to be added/deleted
         const topicToAdd = ref('')
         const targetToAdd = ref('')
-
-        // The topic to remove
-        const topicToDelete = ref('');
+        const topicToRemove = ref('');
 
         // Loading animation when connecting to the server
         const connectingToServer = ref(false);
@@ -228,10 +264,12 @@ export default defineComponent({
         const lastSyncTime = ref(new Date().toLocaleTimeString());
 
         // Dialog stuff
+        const showTopicConfigDialog = ref(false);
         const topicDialogTitle = ref('Create New Topic');
         const previousTopic = ref('');
         const previousTarget = ref('');
-        const showTopicConfigDialog = ref(false);
+        const showRemoveWarningDialog = ref(false);
+        const removalMessage = ref('');
 
         // Errors
         const serverError = ref('');
@@ -368,8 +406,8 @@ export default defineComponent({
                     serverError.value = `Error connecting to server: ${readableError}`;
                 }
 
-                // Remove from pending topics
-                removeTopicFromPending(item.topic);
+                topicToRemove.value = item.topic;
+                removeTopicFromPending();
 
                 // Update the active topics
                 await getTopicList();
@@ -420,7 +458,6 @@ export default defineComponent({
         // Adds or updates the topic
         const saveTopic = () => {
 
-            // If topic already exists, remove it first before adding the new one
             const exists = topicFound(previousTopic.value, pendingTopics.value);
 
             if (exists) {
@@ -457,7 +494,6 @@ export default defineComponent({
                 target: targetToAdd.value
             };
 
-            // Check if the topic is already in the list of active topics
             const topicIsDuplicate = topicFound(toAdd.topic, activeTopics.value);
 
             if (topicIsDuplicate) {
@@ -475,21 +511,38 @@ export default defineComponent({
         };
 
         // Remove a topic and its associated target from the list of pending topics
-        const removeTopicFromPending = (topicToRemove) => {
+        const removeTopicFromPending = () => {
 
-            // Remove it from the array if it can be found
-            const topicCanBeRemoved = topicFound(topicToRemove, pendingTopics.value);
+            const topicCanBeRemoved = topicFound(topicToRemove.value, pendingTopics.value);
 
             if (!topicCanBeRemoved) {
-                catalogueError.value = "Topic not found in subscription";
+                console.log(`Topic ${topicToRemove.value} not found in subscription, nothing to remove`);
                 return;
             }
 
             let updatedTopics = [...pendingTopics.value];
 
-            updatedTopics = updatedTopics.filter(item => item !== topicToRemove);
+            updatedTopics = updatedTopics.filter(item => item.topic !== topicToRemove.value);
 
             pendingTopics.value = updatedTopics;
+
+            // Close the warning dialog
+            showRemoveWarningDialog.value = false;
+        };
+
+        // Dialog to confirm deletion of a topic, with associated message depending on
+        // whether the topic is pending or active
+        const confirmRemoval = (topic, list) => {
+            showRemoveWarningDialog.value = true;
+
+            topicToRemove.value = topic;
+
+            if (list === 'pending') {
+                removalMessage.value = `This topic is not currently actively subscribed to. It can be easily added back later.`;
+            }
+            else if (list === 'active') {
+                removalMessage.value = `This topic is an active topic. Removing it will stop any real-time data being downloaded from it.`;            
+            }
         };
 
         onMounted(() => {
@@ -525,11 +578,13 @@ export default defineComponent({
             pendingTopics,
             topicToAdd,
             targetToAdd,
-            topicToDelete,
+            topicToRemove,
             connectingToServer,
             lastSyncTime,
             showTopicConfigDialog,
             topicDialogTitle,
+            showRemoveWarningDialog,
+            removalMessage,
             serverError,
 
             // Computed variables
@@ -545,7 +600,8 @@ export default defineComponent({
             saveTopic,
             addToSubscription,
             addTopicToPending,
-            removeTopicFromPending
+            removeTopicFromPending,
+            confirmRemoval
         }
     }
 })
@@ -553,15 +609,15 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.topic-colum {
-    width: 50%;
+.topic-column {
+    width: 40%;
 }
 
 .directory-column {
-    width: 22%;
+    width: 20%;
 }
 
 .button-column {
-    width: 20%;
+    width: 30%;
 }
 </style>

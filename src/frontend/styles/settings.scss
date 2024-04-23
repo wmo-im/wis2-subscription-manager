@@ -21,6 +21,15 @@
     font-weight: 700;
 }
 
+.medium-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.small-title {
+    font-weight: 500;
+}
+
 .hint-text {
     font-size: 0.75rem;
     margin-top: 0.25rem;
@@ -94,4 +103,8 @@
 .row-buttons {
     text-align: right;
     vertical-align: middle;
+}
+
+.wrap-text {
+    white-space: pre-wrap;
 }

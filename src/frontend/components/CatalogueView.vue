@@ -3,6 +3,7 @@
         <v-col cols=12 class="max-form-width">
             <v-card min-height="700px">
                 <v-card-title class="big-title">Search a WIS2 Global Discovery Catalogue</v-card-title>
+                <v-card-subtitle>Find datasets to add to your list of pending subscriptions</v-card-subtitle>
 
                 <v-card-item>
                     <v-row dense>
@@ -29,44 +30,48 @@
 
                 <!-- Display catalogue datasets searched by user -->
                 <v-card-item>
-                    <v-table v-show="tableBoolean === true" :hover="true">
+                    <v-table :hover="true">
                         <thead>
                             <tr>
                                 <th scope="row" class="topic-column">
-                                    Discovery Metadata Records Found
+                                    <p class="medium-title">Discovery Metadata Records Found</p>
                                 </th>
                                 <th scope="row" class="button-column">
-                                    <v-switch inset label="Add All" v-model="addAllTopics"
-                                        @change="addOrRemoveAllTopics(datasets, addAllTopics)"
-                                        v-if="tableBoolean === true" color="#003DA5" />
+                                    <v-row justify="center" class="pa-2" v-if="tableBoolean === true">
+                                        <v-switch inset label="Add All" v-model="addAllTopics"
+                                            @change="addOrRemoveAllTopics(datasets, addAllTopics)"
+                                            :disabled="tableBoolean === false" color="#003DA5" />
+                                    </v-row>
                                 </th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr v-for="item in datasets" :key="item.title" @click="openDialog(item)"
-                                class="clickable-row">
-                                <td>
-                                    {{ item.title }}
-                                </td>
-                                <td class="row-buttons">
-                                    <!-- If topic not added, allow them to add -->
-                                    <v-btn block
-                                        v-if="!topicFound(item.topic_hierarchy, selectedTopics) && item.topic_hierarchy"
-                                        color="#64BF40" append-icon="mdi-plus" variant="flat"
-                                        @click.stop="addTopicToPending(item.topic_hierarchy)">
-                                        Add</v-btn>
-                                    <v-btn block v-if="topicFound(item.topic_hierarchy, pendingTopics)" color="error"
-                                        append-icon="mdi-minus" variant="flat"
-                                        @click.stop="removeTopicFromPending(item.topic_hierarchy)">
-                                        Remove</v-btn>
-                                    <v-btn block v-if="topicFound(item.topic_hierarchy, activeTopics)" disabled
-                                        color="#003DA5" append-icon="mdi-minus" variant="flat">
-                                        Active</v-btn>
-                                    <v-btn block v-if="!item.topic_hierarchy" disabled variant="flat">
-                                        No Topic</v-btn>
-                                </td>
-                            </tr>
-                        </tbody>
+                        <transition name="slide-y-transition">
+                            <tbody v-show="tableBoolean === true">
+                                <tr v-for="item in datasets" :key="item.title" @click="openDialog(item)"
+                                    class="clickable-row">
+                                    <td class="small-title">
+                                        {{ item.title }}
+                                    </td>
+                                    <td>
+                                        <!-- If topic not added, allow them to add -->
+                                        <v-btn block
+                                            v-if="!topicFound(item.topic_hierarchy, selectedTopics) && item.topic_hierarchy"
+                                            color="#64BF40" append-icon="mdi-plus" variant="flat"
+                                            @click.stop="addTopicToPending(item.topic_hierarchy)">
+                                            Add</v-btn>
+                                        <v-btn block v-if="topicFound(item.topic_hierarchy, pendingTopics)" color="error"
+                                            append-icon="mdi-minus" variant="flat"
+                                            @click.stop="removeTopicFromPending(item.topic_hierarchy)">
+                                            Remove</v-btn>
+                                        <v-btn block v-if="topicFound(item.topic_hierarchy, activeTopics)" disabled
+                                            color="#003DA5" append-icon="mdi-minus" variant="flat">
+                                            Active</v-btn>
+                                        <v-btn block v-if="!item.topic_hierarchy" disabled variant="flat">
+                                            No Topic</v-btn>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </transition>
                     </v-table>
 
                     <!-- Dialog to display dataset metadata -->
@@ -99,13 +104,13 @@
                     </v-dialog>
 
                     <!-- Dialog to display the whole JSON object -->
-                        <v-dialog v-model="jsonDialog" max-height="600px" scrollable>
+                        <v-dialog v-model="jsonDialog" max-height="600px" max-width="1200px" scrollable transition="scale-transition">
                             <v-card>
                                 <v-toolbar :title="selectedItem.title" color="#E09D00">
                                     <v-btn icon="mdi-close" variant="text" @click="jsonDialog = false" />
                                 </v-toolbar>
                                 <v-card-text>
-                                    <pre>{{ formattedJson }}</pre>
+                                    <pre class="wrap-text">{{ formattedJson }}</pre>
                                 </v-card-text>
                             </v-card>
                         </v-dialog>
@@ -348,7 +353,7 @@ export default defineComponent({
             // Format the JSON content
             const response = await fetch(url);
             const data = await response.json();
-            formattedJson.value = JSON.stringify(data, null, 1);
+            formattedJson.value = JSON.stringify(data, null, 2);
 
             // Open the dialog screen
             jsonDialog.value = true;
