@@ -29,9 +29,7 @@
 
                 <!-- Display catalogue datasets searched by user -->
                 <v-card-item>
-
-
-                    <v-table v-if="tableBoolean === true" :hover="true">
+                    <v-table v-show="tableBoolean === true" :hover="true">
                         <thead>
                             <tr>
                                 <th scope="row" class="topic-column">
@@ -40,7 +38,7 @@
                                 <th scope="row" class="button-column">
                                     <v-switch inset label="Add All" v-model="addAllTopics"
                                         @change="addOrRemoveAllTopics(datasets, addAllTopics)"
-                                        v-if="tableBoolean === true" color="#003DA5"/>
+                                        v-if="tableBoolean === true" color="#003DA5" />
                                 </th>
                             </tr>
                         </thead>
@@ -52,8 +50,9 @@
                                 </td>
                                 <td class="row-buttons">
                                     <!-- If topic not added, allow them to add -->
-                                    <v-btn block v-if="!topicFound(item.topic_hierarchy, selectedTopics) && item.topic_hierarchy" color="#64BF40"
-                                        append-icon="mdi-plus" variant="flat"
+                                    <v-btn block
+                                        v-if="!topicFound(item.topic_hierarchy, selectedTopics) && item.topic_hierarchy"
+                                        color="#64BF40" append-icon="mdi-plus" variant="flat"
                                         @click.stop="addTopicToPending(item.topic_hierarchy)">
                                         Add</v-btn>
                                     <v-btn block v-if="topicFound(item.topic_hierarchy, pendingTopics)" color="error"
@@ -63,8 +62,7 @@
                                     <v-btn block v-if="topicFound(item.topic_hierarchy, activeTopics)" disabled
                                         color="#003DA5" append-icon="mdi-minus" variant="flat">
                                         Active</v-btn>
-                                    <v-btn block v-if="!item.topic_hierarchy" disabled
-                                        variant="flat">
+                                    <v-btn block v-if="!item.topic_hierarchy" disabled variant="flat">
                                         No Topic</v-btn>
                                 </td>
                             </tr>
@@ -72,7 +70,7 @@
                     </v-table>
 
                     <!-- Dialog to display dataset metadata -->
-                    <v-dialog v-model="dialog" transition="dialog-bottom-transition">
+                    <v-dialog v-model="dialog" transition="scroll-y-transition" class="max-dialog-width">
                         <v-card class="overflow-hidden">
                             <v-toolbar :title="selectedItem.title" color="#003DA5">
                                 <v-btn icon="mdi-close" variant="text" @click="dialog = false" />
@@ -101,16 +99,16 @@
                     </v-dialog>
 
                     <!-- Dialog to display the whole JSON object -->
-                    <v-dialog v-model="jsonDialog" transition="dialog-bottom-transition" max-height="600px" scrollable>
-                        <v-card>
-                            <v-toolbar :title="selectedItem.title" color="#E09D00">
-                                <v-btn icon="mdi-close" variant="text" @click="jsonDialog = false" />
-                            </v-toolbar>
-                            <v-card-text>
-                                <pre>{{ formattedJson }}</pre>
-                            </v-card-text>
-                        </v-card>
-                    </v-dialog>
+                        <v-dialog v-model="jsonDialog" max-height="600px" scrollable>
+                            <v-card>
+                                <v-toolbar :title="selectedItem.title" color="#E09D00">
+                                    <v-btn icon="mdi-close" variant="text" @click="jsonDialog = false" />
+                                </v-toolbar>
+                                <v-card-text>
+                                    <pre>{{ formattedJson }}</pre>
+                                </v-card-text>
+                            </v-card>
+                        </v-dialog>
                 </v-card-item>
             </v-card>
         </v-col>
@@ -120,7 +118,6 @@
 <script>
 import { defineComponent, ref, computed, watch, onMounted } from 'vue';
 import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VTable } from 'vuetify/lib/components/index.mjs';
-import { VDataTable } from 'vuetify/lib/labs/VDataTable/index.mjs';
 
 
 export default defineComponent({
@@ -135,8 +132,7 @@ export default defineComponent({
         VListGroup,
         VSelect,
         VTextField,
-        VTable,
-        VDataTable
+        VTable
     },
     setup() {
         // Deep clone function to avoid reference issues between model and default model

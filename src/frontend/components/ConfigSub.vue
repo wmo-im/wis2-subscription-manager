@@ -124,9 +124,9 @@
     </v-row>
 
     <!-- Dialogs -->
-    <v-dialog v-model="showTopicConfigDialog" max-width="800px">
+    <v-dialog v-model="showTopicConfigDialog" class="max-dialog-width">
         <v-card>
-            <v-toolbar title="Topic Configuration" color="#003DA5">
+            <v-toolbar :title="topicDialogTitle" color="#003DA5">
                 <v-btn icon="mdi-close" variant="text" size="small" @click="openConfigTopicDialog = false" />
             </v-toolbar>
             <v-container>
@@ -228,6 +228,7 @@ export default defineComponent({
         const lastSyncTime = ref(new Date().toLocaleTimeString());
 
         // Dialog stuff
+        const topicDialogTitle = ref('Create New Topic');
         const previousTopic = ref('');
         const previousTarget = ref('');
         const showTopicConfigDialog = ref(false);
@@ -346,45 +347,6 @@ export default defineComponent({
             setInterval(getServerData, 300000);
         };
 
-        const populateFields = (item) => {
-            // If item exists, show existing values
-            if (item) {
-                topicToAdd.value = item.topic;
-                targetToAdd.value = item.target;
-            }
-            // Otherwise show empty fields
-            else {
-                topicToAdd.value = '';
-                targetToAdd.value = '';
-            }
-        };
-
-        // Configure pending topic and target
-        const configureTopic = (item) => {
-            showTopicConfigDialog.value = true;
-
-            // Save the original plugin name and filetype
-            previousTopic.value = item?.topic;
-            previousTarget.value = item?.target;
-
-            populateFields(item);
-        };
-
-        // TODO: Adds or updates the plugin in the model
-        const saveTopic = () => {
-            // Find out if the topic is new or existing
-
-            
-            // if () {
-            // }
-            // // Otherwise, update the existing plugin
-            // else {
-
-            // }
-            // Close the dialog
-            openConfigurePluginDialog.value = false;
-        };
-
         // Add the topic and target to the downloader using the /add endpoint
         const addToSubscription = async (item) => {
             // The topic, in particular the wildcards (+,#), must be URI encoded
@@ -422,7 +384,70 @@ export default defineComponent({
         // Check if the topic is found in the list of topic items
         const topicFound = (topicToFind, topicList) => {
             return topicList.some(item => item.topic === topicToFind);
-        }
+        };
+
+        const populateFields = (item) => {
+            // If item exists, show existing values
+            if (item) {
+                topicToAdd.value = item.topic;
+                targetToAdd.value = item.target;
+            }
+            // Otherwise show empty fields
+            else {
+                topicToAdd.value = '';
+                targetToAdd.value = '';
+            }
+        };
+
+        // Configure pending topic and target
+        const configureTopic = (item) => {
+            showTopicConfigDialog.value = true;
+
+            if (!item) {
+                topicDialogTitle.value = 'Create New Topic';
+            }
+            else {
+                topicDialogTitle.value = 'Edit Topic';
+            }
+
+            // Save the original plugin name and filetype
+            previousTopic.value = item?.topic;
+            previousTarget.value = item?.target;
+
+            populateFields(item);
+        };
+
+        // Adds or updates the topic
+        const saveTopic = () => {
+
+            // If topic already exists, remove it first before adding the new one
+            const exists = topicFound(previousTopic.value, pendingTopics.value);
+
+            if (exists) {
+                updateTopicInPending();
+            }
+            else {
+                addTopicToPending();
+            }
+
+            // Close the dialog
+            showTopicConfigDialog.value = false;
+        };
+
+        // Update topic and target in the list of pending topics
+        const updateTopicInPending = () => {
+            const updatedPendingTopics = pendingTopics.value.map(item => {
+                if (item.topic === previousTopic.value && item.target === previousTarget.value) {
+                    return {
+                        topic: topicToAdd.value,
+                        target: targetToAdd.value
+                    };
+                }
+                return item;
+            });
+
+            pendingTopics.value = updatedPendingTopics;
+        };
 
         // Add a topic and its associated target to the list of pending topics
         const addTopicToPending = () => {
@@ -450,7 +475,7 @@ export default defineComponent({
         };
 
         // Remove a topic and its associated target from the list of pending topics
-        const removeTopicFromPending = (topic) => {
+        const removeTopicFromPending = (topicToRemove) => {
 
             // Remove it from the array if it can be found
             const topicCanBeRemoved = topicFound(topicToRemove, pendingTopics.value);
@@ -460,12 +485,12 @@ export default defineComponent({
                 return;
             }
 
-            let updatedTopics = [...pendingTopics.value]
+            let updatedTopics = [...pendingTopics.value];
 
             updatedTopics = updatedTopics.filter(item => item !== topicToRemove);
 
             pendingTopics.value = updatedTopics;
-        }
+        };
 
         onMounted(() => {
             // Get settings from GDC or previous usage of configuration page
@@ -504,6 +529,7 @@ export default defineComponent({
             connectingToServer,
             lastSyncTime,
             showTopicConfigDialog,
+            topicDialogTitle,
             serverError,
 
             // Computed variables
@@ -514,8 +540,9 @@ export default defineComponent({
             processTopicData,
             getTopicList,
             getServerData,
-            configureTopic,
             topicFound,
+            configureTopic,
+            saveTopic,
             addToSubscription,
             addTopicToPending,
             removeTopicFromPending
