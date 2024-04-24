@@ -1,11 +1,13 @@
 <template>
     <v-row class="justify-center">
         <v-col cols=12 class="max-form-width">
-            <v-card min-height="700px">
+            <v-card min-height="88vh">
                 <v-toolbar>
                     <v-toolbar-title class="big-title">WIS2 Subscription Dashboard</v-toolbar-title>
                     <v-toolbar-items class="sync-time pa-5">
-                        <p v-if="connectionStatus">Last synchronized: <b>{{ lastSyncTime }}</b></p>
+                        <transition name="fade-transition">
+                            <p v-if="connectionStatus">Last synchronized: <b>{{ lastSyncTime }}</b></p>
+                        </transition>
                     </v-toolbar-items>
                 </v-toolbar>
 
@@ -34,18 +36,35 @@
                                         :disabled="connectionStatus"></v-text-field>
                                 </v-col>
                                 <v-col cols="3">
+                                    <!-- Before connecting -->
                                     <v-btn v-if="!connectionStatus" color="#003DA5" size="x-large" block
-                                        @click="getServerData" :loading="connectingToServer">Connect</v-btn>
-                                    <v-btn v-if="connectionStatus" color="#E09D00" size="x-large" block
-                                        @click="clearServerData" :loading="connectingToServer">Disconnect</v-btn>
+                                        append-icon="mdi-link" @click="getServerData"
+                                        :loading="connectingToServer">Connect</v-btn>
+
+                                    <!-- After connecting -->
+                                    <v-row v-if="connectionStatus">
+                                        <v-col cols="5">
+                                            <v-btn color="#00ABC9" size="x-large" block append-icon="mdi-sync"
+                                                @click="getServerData" :loading="connectingToServer">Sync</v-btn>
+                                        </v-col>
+                                        <v-col cols="7">
+                                            <v-btn color="#E09D00" size="x-large" block append-icon="mdi-link-off"
+                                                @click="clearServerData"
+                                                :loading="connectingToServer">Disconnect</v-btn>
+                                        </v-col>
+                                    </v-row>
                                 </v-col>
                             </v-row>
                         </v-card-text>
                     </v-col>
                 </v-row>
 
+                <v-col cols="12" />
+
                 <transition name="slide-y-transition">
                     <v-card-item v-if="connectionStatus">
+                        <v-divider class="pa-3" />
+
                         <v-row>
                             <v-col cols="12">
                                 <v-card-title>Currently Subscribed Topics</v-card-title>
@@ -81,7 +100,7 @@
                                                     {{ item.target }}
                                                 </td>
                                                 <td class="text-center">
-                                                    <v-btn class="mr-5" append-icon="" color="#003DA5"
+                                                    <v-btn class="mr-5" append-icon="mdi-chart-box" color="#00ABC9"
                                                         variant="flat" @click.stop="">
                                                         Monitor
                                                     </v-btn>
@@ -94,6 +113,9 @@
                                 </v-card-item>
                             </v-col>
                         </v-row>
+
+                        <v-col cols="12" />
+                        <v-divider class="py-3" />
 
                         <v-row>
                             <v-col cols="12">
@@ -118,7 +140,8 @@
                                                     <p v-if="pendingTopics.length > 0" class="medium-title text-center">
                                                         Actions
                                                     </p>
-                                                    <v-btn v-else block color="#64BF40" @click="configureTopic()">Add A
+                                                    <v-btn v-else block color="#64BF40" append-icon="mdi-plus"
+                                                        @click="configureTopic()">Add A
                                                         Topic</v-btn>
                                                 </th>
                                             </tr>
@@ -134,7 +157,8 @@
                                                 </td>
                                                 <td class="text-center">
                                                     <v-btn class="mr-5" append-icon="mdi-cloud-upload" color="#003DA5"
-                                                        variant="flat" @click.stop="addToSubscription(item)" :loading="makingServerRequest">
+                                                        variant="flat" @click.stop="addToSubscription(item)"
+                                                        :loading="makingServerRequest[item.topic]">
                                                         Activate
                                                     </v-btn>
                                                     <v-btn append-icon="mdi-delete" color="error" variant="flat"
@@ -144,7 +168,7 @@
                                         </tbody>
                                     </v-table>
                                     <v-col />
-                                    <v-btn v-if="pendingTopics.length > 0" block color="#64BF40"
+                                    <v-btn v-if="pendingTopics.length > 0" block color="#64BF40" append-icon="mdi-plus"
                                         @click="configureTopic()">Add A
                                         New Topic</v-btn>
                                 </v-card-item>
@@ -168,35 +192,55 @@
                 <v-col cols="12">
                     <v-row>
                         <v-col cols="12">
-                            <v-table v-if="topicFound(topicToAdd, activeTopics)" >
-                                <tbody>
-                                    <tr>
-                                        <td class="medium-title">Topic:</td>
-                                        <td class="medium-title">{{ topicToAdd }}</td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="medium-title">Target:</td>
-                                        <td class="medium-title">{{ targetToAdd }}</td>
-                                        <td>
-                                            <v-btn variant="flat" color="#E09D00" block>Edit</v-btn>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </v-table>
-                            <v-text-field v-if="!topicFound(topicToAdd, activeTopics)" v-model="topicToAdd" label="Topic"/>
+
+                            <!-- If active topic -->
+                            <v-row v-if="topicFound(topicToAdd, activeTopics)" class="pb-5">
+                                <v-col cols="2">
+                                    <p class="medium-title"><b>Topic:</b></p>
+                                </v-col>
+                                <v-col cols="10">
+                                    <p class="medium-title">{{ topicToAdd }}</p>
+                                </v-col>
+                            </v-row>
+
+                            <v-divider />
+
+                            <v-row v-if="topicFound(topicToAdd, activeTopics)" class="pt-5">
+                                <v-col cols="2">
+                                    <p class="medium-title"><b>Target:</b></p>
+                                </v-col>
+                                <v-col cols="8">
+                                    <!-- Target switches between read-only and editable -->
+                                    <p v-if="!editActiveTarget" class="medium-title">{{ targetToAdd }}</p>
+                                    <v-text-field v-else v-model="targetToAdd" density="comfortable" variant="outlined"
+                                        clearable :rules="[rules.required, rules.target]" />
+                                </v-col>
+                                <v-col cols="2">
+                                    <v-btn v-if="!editActiveTarget" variant="flat" color="#E09D00" block size="large"
+                                        @click.stop="editActiveTarget = true">Edit</v-btn>
+                                    <v-btn v-if="editActiveTarget" variant="flat" color="#00ABC9" block size="large"
+                                        @click.stop="editActiveTarget = false">Confirm</v-btn>
+                                </v-col>
+                            </v-row>
+
+                            <!-- If pending topic -->
+                            <v-text-field v-if="!topicFound(topicToAdd, activeTopics)" v-model="topicToAdd"
+                                label="Topic" :rules="[rules.required, rules.topic]" />
                         </v-col>
                     </v-row>
 
                     <v-row>
                         <v-col cols="12">
-                            <v-text-field v-if="!topicFound(topicToAdd, activeTopics)" v-model="targetToAdd" label="Associated Sub-Directory" />
+                            <v-text-field v-if="!topicFound(topicToAdd, activeTopics)" v-model="targetToAdd"
+                                label="Associated Sub-Directory" :rules="[rules.required, rules.target]" />
                         </v-col>
                     </v-row>
 
                     <v-row>
                         <v-col cols="12">
-                            <v-btn color="#003DA5" variant="flat" block @click="saveTopic">Save</v-btn>
+                            <!-- If an active target is being edited, you can't save -->
+                            <v-btn :disabled="editActiveTarget" color="#003DA5" variant="flat" block
+                                @click="saveTopic" :loading="makingServerRequest[topicToAdd]">Save</v-btn>
                         </v-col>
                     </v-row>
                 </v-col>
@@ -220,12 +264,32 @@
             <v-card-actions>
                 <v-col cols="6">
                     <!-- Pending topic 'Yes' button -->
-                    <v-btn v-if="topicFound(topicToRemove, pendingTopics)" color="error" variant="flat" block @click="removeTopicFromPending">Yes</v-btn>
+                    <v-btn v-if="topicFound(topicToRemove, pendingTopics)" color="error" variant="flat" block
+                        @click="removeTopicFromPending">Yes</v-btn>
                     <!-- Active topic 'Yes' button -->
-                    <v-btn v-if="topicFound(topicToRemove, activeTopics)" color="error" variant="flat" block @click="removeFromSubscription(topicToRemove)" :loading="makingServerRequest">Yes</v-btn>
+                    <v-btn v-if="topicFound(topicToRemove, activeTopics)" color="error" variant="flat" block
+                        @click="removeFromSubscription(topicToRemove)"
+                        :loading="makingServerRequest[topicToRemove]">Yes</v-btn>
                 </v-col>
                 <v-col cols="6">
                     <v-btn color="black" variant="flat" block @click="showRemoveWarningDialog = false">No</v-btn>
+                </v-col>
+            </v-card-actions>
+        </v-card>
+    </v-dialog>
+
+    <!-- Error dialogs when something goes wrong connecting to the server, etc. -->
+    <v-dialog v-model="showErrorDialog" class="max-error-width">
+        <v-card>
+            <v-toolbar :title="errorTitle" color="error">
+                <v-btn icon="mdi-close" variant="text" size="small" @click="showErrorDialog = false" />
+            </v-toolbar>
+            <v-card-text>
+                <p>{{ errorMessage }}</p>
+            </v-card-text>
+            <v-card-actions>
+                <v-col cols="12">
+                    <v-btn color="black" variant="flat" block @click="showErrorDialog = false">OK</v-btn>
                 </v-col>
             </v-card-actions>
         </v-card>
@@ -259,7 +323,23 @@ export default defineComponent({
         }
 
         // Static variables
-        const rules = {};
+        const rules = {
+            required: value => !!value || 'Field is required.',
+            topic: value => {
+                if (topicFound(value, activeTopics.value)) {
+                    return 'Topic is already subscribed to';
+                }
+            },
+            target: value => {
+                // Check if the target is exactly "$TOPIC"
+                if (value === "$TOPIC") {
+                    return true;
+                }
+                // Regular expression for whitelisted characters
+                const validPattern = /^[A-Za-z0-9/_-]+$/;
+                return validPattern.test(value) || 'Invalid target';
+            }
+        };
 
         const HTTP_CODES = {
             200: 'OK',
@@ -299,21 +379,26 @@ export default defineComponent({
 
         // Loading animation when connecting to the server or making requests
         const connectingToServer = ref(false);
-        const makingServerRequest = ref(false);
+        const makingServerRequest = ref({});
 
         // Last time the frontend was synced with the backend
         const lastSyncTime = ref(new Date().toLocaleTimeString());
 
-        // Dialog stuff
+        // Topic configuration dialog
         const showTopicConfigDialog = ref(false);
         const topicDialogTitle = ref('Create New Topic');
         const previousTopic = ref('');
         const previousTarget = ref('');
+        const editActiveTarget = ref(false);
+
+        // Warning dialog for removing a topic
         const showRemoveWarningDialog = ref(false);
         const removalMessage = ref('');
 
-        // Errors
-        const serverError = ref('');
+        // Error dialog
+        const showErrorDialog = ref(false);
+        const errorMessage = ref('');
+        const errorTitle = ref('');
 
         // Computed
         const settings = computed(() => {
@@ -387,8 +472,13 @@ export default defineComponent({
                 });
 
                 if (!response.ok) {
+                    // Show a readable error and disconnect
                     const readableError = HTTP_CODES[response.status] || response.statusText;
-                    serverError.value = `Error connecting to server: ${readableError}`;
+                    errorMessage.value = `There was a problem getting the subscribed topics: ${readableError}`;
+                    errorTitle.value = "Error Listing Topics";
+                    showErrorDialog.value = true;
+                    connectionStatus.value = false;
+                    return;
                 }
 
                 const data = await response.json();
@@ -396,9 +486,15 @@ export default defineComponent({
 
                 // Process the data before displaying the table
                 activeTopics.value = processTopicData(data);
+
+                // Display the table of active/pending topics
+                connectionStatus.value = true;
             }
             catch (error) {
-                serverError.value = error;
+                errorMessage.value = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
+                errorTitle.value = "Server Error";
+                showErrorDialog.value = true;
+                connectionStatus.value = false;
             }
         };
 
@@ -411,19 +507,14 @@ export default defineComponent({
             // Use various endpoints to get the data
             await getTopicList();
 
-            // Display the table of active/pending topics
-            connectionStatus.value = true;
 
-            // Update the last sync time
-            lastSyncTime.value = new Date().toLocaleTimeString();
+            // If the connection is successful, update the last sync time
+            if (connectionStatus.value) {
+                lastSyncTime.value = new Date().toLocaleTimeString();
+            }
 
             // Stop the button loading animation
             connectingToServer.value = false;
-        };
-
-        // Interval to refresh data every 5 minutes
-        if (connectionStatus.value) {
-            setInterval(getServerData, 300000);
         };
 
         // Clear the server data and reset the connection status
@@ -434,8 +525,8 @@ export default defineComponent({
 
         // Add the topic and target to the downloader using the /add endpoint
         const addToSubscription = async (item) => {
-            // Start the button loading animation
-            makingServerRequest.value = true;
+            // Start the button loading animation for this topic
+            makingServerRequest.value[item.topic] = true;
 
             // The topic, in particular the wildcards (+,#), must be URI encoded
             const encodedTopic = encodeURIComponent(item.topic);
@@ -452,8 +543,15 @@ export default defineComponent({
                 });
 
                 if (!response.ok) {
+                    const errorData = await response.json();
                     const readableError = HTTP_CODES[response.status] || response.statusText;
-                    serverError.value = `Error connecting to server: ${readableError}`;
+                    // Display the error message from server response, if available
+                    errorMessage.value = errorData.error ? errorData.error : readableError;
+                    errorTitle.value = "Error Adding Topic";
+                    showErrorDialog.value = true;
+                    // End the button loading animation for this topic
+                    makingServerRequest.value[item.topic] = false;
+                    return;
                 }
 
                 topicToRemove.value = item.topic;
@@ -462,17 +560,19 @@ export default defineComponent({
                 // Update the active topics
                 await getTopicList();
 
-                // End the button loading animation
-                makingServerRequest.value = false;
+                // End the button loading animation for this topic
+                makingServerRequest.value[item.topic] = false;
             }
             catch (error) {
-                serverError.value = error;
+                errorMessage.value = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
+                errorTitle.value = "Server Error";
+                showErrorDialog.value = true;
             }
         };
 
         const removeFromSubscription = async (topic) => {
-            // Start the button loading animation
-            makingServerRequest.value = true;
+            // Start the button loading animation for this topic
+            makingServerRequest.value[topic] = true;
 
             // The topic, in particular the wildcards (+,#), must be URI encoded
             const encodedTopic = encodeURIComponent(topic);
@@ -489,8 +589,15 @@ export default defineComponent({
                 });
 
                 if (!response.ok) {
+                    const errorData = await response.json();
                     const readableError = HTTP_CODES[response.status] || response.statusText;
-                    serverError.value = `Error connecting to server: ${readableError}`;
+                    // Display the error message from server response, if available
+                    errorMessage.value = errorData.error ? errorData.error : readableError;
+                    errorTitle.value = "Error Removing Topic";
+                    showErrorDialog.value = true;
+                    // End the button loading animation for this topic
+                    makingServerRequest.value[topic] = false;
+                    return;
                 }
 
                 // Update the active topics
@@ -499,19 +606,60 @@ export default defineComponent({
                 // Close the warning dialog
                 showRemoveWarningDialog.value = false;
 
-                // End the button loading animation
-                makingServerRequest.value = false;
+                // End the button loading animation for this topic
+                makingServerRequest.value[topic] = false;
             }
             catch (error) {
-                serverError.value = error;
+                errorMessage.value = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
+                errorTitle.value = "Server Error";
+                showErrorDialog.value = true;
             }
         };
 
         // Local interaction
 
+        // Check if any two topics intersect
+        const topicIntersection = (topic1, topic2) => {
+            const topic1Levels = topic1.split('/');
+            const topic2Levels = topic2.split('/');
+
+            const maxLength = Math.max(topic1Levels.length, topic2Levels.length);
+
+            for (let i = 0; i < maxLength; i++) {
+                const topic1Level = topic1Levels[i];
+                const topic2Level = topic2Levels[i];
+
+                // Four possible cases:
+                // 1. Both topics have ended, but one ends with a # wildcard -> True
+                // 2. Both levels have + or # wildcards -> Continue
+                // 3. One level is a + wildcard and the other isn't -> Continue
+                // 4. Neither level is a wildcard and they don't match -> False
+
+                if (topic1Level === undefined || topic2Level === undefined) {
+                    return topic1Level[i - 1] === '#' || topic2Level[i - 1] === '#';
+                }
+
+                if ((topic1Level === '+' || topic1Level === '#') &&
+                    (topic2Level === '+' || topic2Level === '#')) {
+                    continue;
+                }
+
+                if ((topic1Level === '+' || topic2Level === '+') && (topic1Level !== topic2Level)) {
+                    continue;
+                }
+
+                if (topic1Level !== topic2Level) {
+                    return false;
+                }
+            }
+
+            // If all levels pass, the topics intersect
+            return true;
+        };
+
         // Check if the topic is found in the list of topic items
         const topicFound = (topicToFind, topicList) => {
-            return topicList.some(item => item.topic === topicToFind);
+            return topicList.some(item => topicIntersection(item.topic, topicToFind));
         };
 
         const populateFields = (item) => {
@@ -545,15 +693,30 @@ export default defineComponent({
             populateFields(item);
         };
 
-        // Adds or updates the topic
-        const saveTopic = () => {
+        // Adds or updates the topic, both in the list of active topics and pending topics
+        const saveTopic = async () => {
+            const isActive = topicFound(topicToAdd.value, activeTopics.value);
 
-            const exists = topicFound(previousTopic.value, pendingTopics.value);
+            if (isActive) {
+                // To update the topic's target, we must first remove it and then add it back
+                await removeFromSubscription(topicToAdd.value);
+                
+                const updatedItem = {
+                    topic: topicToAdd.value,
+                    target: targetToAdd.value
+                };
 
-            if (exists) {
-                updateTopicInPending();
+                await addToSubscription(updatedItem);
+                // Close the dialog
+                showTopicConfigDialog.value = false;
+                return;
             }
-            else {
+
+            const isPending = topicFound(previousTopic.value, pendingTopics.value);
+
+            if (isPending) {
+                updateTopicInPending();
+            } else {
                 addTopicToPending();
             }
 
@@ -587,7 +750,7 @@ export default defineComponent({
             const topicIsDuplicate = topicFound(toAdd.topic, activeTopics.value);
 
             if (topicIsDuplicate) {
-                serverError.value = 'Topic is already subscribed to';
+                errorMessage.value = 'Topic is already subscribed to';
                 return;
             }
 
@@ -638,9 +801,9 @@ export default defineComponent({
         onMounted(() => {
             // Get settings from GDC or previous usage of configuration page
             loadSettings();
-            // If the connection is already established, get the topic list
+            // If the connection is already established, get the topic list every 5 minutes
             if (connectionStatus.value) {
-                getServerData();
+                setInterval(getServerData, 5 * 60 * 1000);
             }
         });
 
@@ -653,6 +816,7 @@ export default defineComponent({
             // Store the information in the electron API
             window.electronAPI.storeSettings(settingsToStore);
         }, { deep: true }); // Use deep watch to track nested array
+
 
         return {
             // Static variables
@@ -674,9 +838,12 @@ export default defineComponent({
             lastSyncTime,
             showTopicConfigDialog,
             topicDialogTitle,
+            editActiveTarget,
             showRemoveWarningDialog,
             removalMessage,
-            serverError,
+            showErrorDialog,
+            errorMessage,
+            errorTitle,
 
             // Computed variables
             settings,
@@ -712,6 +879,10 @@ export default defineComponent({
 
 .button-column {
     width: 30%;
+}
+
+.small-button-column {
+    width: 20%;
 }
 
 .sync-time {

@@ -1,13 +1,13 @@
 <template>
     <v-row class="justify-center">
         <v-col cols=12 class="max-form-width">
-            <v-card min-height="700px">
+            <v-card min-height="88vh">
                 <v-toolbar dense>
                     <v-toolbar-title class="big-title">Search a WIS2 Global Discovery Catalogue</v-toolbar-title>
                 </v-toolbar>
                 <v-card-subtitle>Find datasets to add to your list of pending subscriptions</v-card-subtitle>
 
-                <v-col cols="12"/>
+                <v-col cols="12" />
 
                 <v-card-item>
                     <v-row dense>
@@ -63,12 +63,12 @@
                                             color="#64BF40" append-icon="mdi-plus" variant="flat"
                                             @click.stop="addTopicToPending(item)">
                                             Add</v-btn>
-                                        <v-btn block v-if="topicFound(item.topic_hierarchy, pendingTopics)" color="error"
-                                            append-icon="mdi-minus" variant="flat"
+                                        <v-btn block v-if="topicFound(item.topic_hierarchy, pendingTopics)"
+                                            color="error" append-icon="mdi-minus" variant="flat"
                                             @click.stop="removeTopicFromPending(item)">
                                             Remove</v-btn>
                                         <v-btn block v-if="topicFound(item.topic_hierarchy, activeTopics)" disabled
-                                            color="#003DA5" append-icon="mdi-minus" variant="flat">
+                                            color="#003DA5" append-icon="mdi-download-multiple" variant="flat">
                                             Active</v-btn>
                                         <v-btn block v-if="!item.topic_hierarchy" disabled variant="flat">
                                             No Topic</v-btn>
@@ -108,16 +108,17 @@
                     </v-dialog>
 
                     <!-- Dialog to display the whole JSON object -->
-                        <v-dialog v-model="jsonDialog" max-height="600px" max-width="1200px" scrollable transition="scale-transition">
-                            <v-card>
-                                <v-toolbar :title="selectedItem.title" color="#E09D00">
-                                    <v-btn icon="mdi-close" variant="text" @click="jsonDialog = false" />
-                                </v-toolbar>
-                                <v-card-text>
-                                    <pre class="wrap-text">{{ formattedJson }}</pre>
-                                </v-card-text>
-                            </v-card>
-                        </v-dialog>
+                    <v-dialog v-model="jsonDialog" max-height="600px" max-width="1200px" scrollable
+                        transition="scale-transition">
+                        <v-card>
+                            <v-toolbar :title="selectedItem.title" color="#E09D00">
+                                <v-btn icon="mdi-close" variant="text" @click="jsonDialog = false" />
+                            </v-toolbar>
+                            <v-card-text>
+                                <pre class="wrap-text">{{ formattedJson }}</pre>
+                            </v-card-text>
+                        </v-card>
+                    </v-dialog>
                 </v-card-item>
             </v-card>
         </v-col>
@@ -364,12 +365,26 @@ export default defineComponent({
 
             // Disable loading animation of button
             loadingJsonBoolean.value = false;
-        }
+        };
 
-        // Check if the topic is found in the list of topic items
+        // Converts wildcards (+, #) to regex, if present
+        const wildcardToRegex = (topic) => {
+            return new RegExp("^" + topic.split("/")
+                .map(part => {
+                    if (part === "+") return "[^/]+";   // Matches one level
+                    if (part === "#") return ".*";      // Matches multiple levels
+                    return part;                        // Regular topic level
+                }).join("\\/") + "$");
+        };
+
+        // Check if the topic is found in the list of topic items, or falls under a category
+        // of topics in the list (if a topic in the list uses wildcards)
         const topicFound = (topicToFind, topicList) => {
-            return topicList.some(item => item.topic === topicToFind);
-        }
+            return topicList.some(item => {
+                const regex = wildcardToRegex(item.topic);
+                return regex.test(topicToFind);
+            });
+        };
 
         // When the user clicks 'Add dataset to subscription', add the
         // associated topic to an array which will be parsed to the Electron API
