@@ -168,9 +168,20 @@
                                         </tbody>
                                     </v-table>
                                     <v-col />
-                                    <v-btn v-if="pendingTopics.length > 0" block color="#64BF40" append-icon="mdi-plus"
-                                        @click="configureTopic()">Add A
-                                        New Topic</v-btn>
+
+                                    <v-col cols="12">
+                                        <v-row>
+                                            <v-col cols="6">
+                                                <v-btn v-if="pendingTopics.length > 0" block color="#64BF40"
+                                                append-icon="mdi-plus" @click="configureTopic()">Add A
+                                                New Topic</v-btn>
+                                            </v-col>
+                                            <v-col cols="6">
+                                                <v-btn v-if="pendingTopics.length > 0" block color="#003DA5"
+                                                append-icon="mdi-expand-all" @click="addAllToSubscription()">Activate All</v-btn>
+                                            </v-col>
+                                        </v-row>
+                                    </v-col>
                                 </v-card-item>
                             </v-col>
                         </v-row>
@@ -239,8 +250,8 @@
                     <v-row>
                         <v-col cols="12">
                             <!-- If an active target is being edited, you can't save -->
-                            <v-btn :disabled="editActiveTarget" color="#003DA5" variant="flat" block
-                                @click="saveTopic" :loading="makingServerRequest[topicToAdd]">Save</v-btn>
+                            <v-btn :disabled="editActiveTarget" color="#003DA5" variant="flat" block @click="saveTopic"
+                                :loading="makingServerRequest[topicToAdd]">Save</v-btn>
                         </v-col>
                     </v-row>
                 </v-col>
@@ -570,6 +581,12 @@ export default defineComponent({
             }
         };
 
+        const addAllToSubscription = async () => {
+            for (const item of pendingTopics.value) {
+                await addToSubscription(item);
+            }
+        };
+
         const removeFromSubscription = async (topic) => {
             // Start the button loading animation for this topic
             makingServerRequest.value[topic] = true;
@@ -700,7 +717,7 @@ export default defineComponent({
             if (isActive) {
                 // To update the topic's target, we must first remove it and then add it back
                 await removeFromSubscription(topicToAdd.value);
-                
+
                 const updatedItem = {
                     topic: topicToAdd.value,
                     target: targetToAdd.value
@@ -858,6 +875,7 @@ export default defineComponent({
             configureTopic,
             saveTopic,
             addToSubscription,
+            addAllToSubscription,
             removeFromSubscription,
             addTopicToPending,
             removeTopicFromPending,
