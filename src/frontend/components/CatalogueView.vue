@@ -129,6 +129,9 @@
 import { defineComponent, ref, computed, watch, onMounted } from 'vue';
 import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VTable } from 'vuetify/lib/components/index.mjs';
 
+// Utilities
+import { HTTP_CODES } from '@/utils/constants.js';
+
 
 export default defineComponent({
     name: 'ConfigSub',
@@ -155,24 +158,6 @@ export default defineComponent({
             { title: 'Meteorological Service of Canada', url: 'https://api.weather.gc.ca/collections/wis2-discovery-metadata/items' },
             { title: 'China Meteorological Administration', url: 'https://gdc.wis.cma.cn/collections/wis2-discovery-metadata/items' }
         ];
-
-        const HTTP_CODES = {
-            200: 'OK',
-            201: 'Created',
-            202: 'Accepted',
-            204: 'No Content',
-            400: 'Bad Request',
-            401: 'Unauthorized',
-            403: 'Forbidden',
-            404: 'Not Found',
-            405: 'Method Not Allowed',
-            406: 'Not Acceptable',
-            409: 'Conflict',
-            500: 'Internal Server Error',
-            501: 'Not Implemented',
-            503: 'Service Unavailable',
-            504: 'Gateway Timeout'
-        };
 
         // Reactive variables
         const selectedCatalogue = ref('');

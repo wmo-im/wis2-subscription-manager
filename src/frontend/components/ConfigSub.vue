@@ -101,7 +101,7 @@
                                                 </td>
                                                 <td class="text-center">
                                                     <v-btn class="mr-5" append-icon="mdi-chart-box" color="#00ABC9"
-                                                        variant="flat" @click.stop="">
+                                                        variant="flat" @click.stop="monitorTopic(item.topic)">
                                                         Monitor
                                                     </v-btn>
                                                     <v-btn append-icon="mdi-delete" color="error" variant="flat"
@@ -311,6 +311,12 @@
 import { defineComponent, ref, computed, onMounted, watch } from 'vue';
 import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VChipGroup, VChip, VCheckboxBtn } from 'vuetify/lib/components/index.mjs';
 
+// Utilities
+import { HTTP_CODES } from '@/utils/constants.js';
+import { topicsIntersect } from '@/utils/topicTools.js';
+import { parsePrometheusText } from '@/utils/prometheusTools.js';
+
+
 export default defineComponent({
     name: 'ConfigSub',
     components: {
@@ -331,7 +337,7 @@ export default defineComponent({
         // Deep clone function to avoid reference issues between model and default model
         function deepClone(obj) {
             return JSON.parse(JSON.stringify(obj));
-        }
+        };
 
         // Static variables
         const rules = {
@@ -350,24 +356,6 @@ export default defineComponent({
                 const validPattern = /^[A-Za-z0-9/_-]+$/;
                 return validPattern.test(value) || 'Invalid target';
             }
-        };
-
-        const HTTP_CODES = {
-            200: 'OK',
-            201: 'Created',
-            202: 'Accepted',
-            204: 'No Content',
-            400: 'Bad Request',
-            401: 'Unauthorized',
-            403: 'Forbidden',
-            404: 'Not Found',
-            405: 'Method Not Allowed',
-            406: 'Not Acceptable',
-            409: 'Conflict',
-            500: 'Internal Server Error',
-            501: 'Not Implemented',
-            503: 'Service Unavailable',
-            504: 'Gateway Timeout'
         };
 
         // Reactive variables
@@ -534,6 +522,50 @@ export default defineComponent({
             activeTopics.value = [];
         };
 
+        // Monitor the topic by querying Prometheus /metrics endpoint
+        const monitorTopic = async (topic) => {
+            // Start the button loading animation for this topic
+            makingServerRequest.value[item.topic] = true;
+
+            // Build the full URL for Prometheus metrics
+            const url = `${serverLink.value}/metrics`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    const readableError = HTTP_CODES[response.status] || response.statusText;
+                    // Display the error message from server response, if available
+                    errorMessage.value = readableError;
+                    errorTitle.value = "Error Fetching Metrics";
+                    showErrorDialog.value = true;
+                    // End the button loading animation for this topic
+                    makingServerRequest.value[item.topic] = false;
+                    return;
+                }
+
+                const data = await response.text();
+
+                // Parse the Prometheus text data into an object
+                const metrics = parsePrometheusText(data);
+
+                // Find the metrics for the topic by checking the intersection of the topic and the metrics
+
+                // End the button loading animation for this topic
+                makingServerRequest.value[item.topic] = false;
+            }
+            catch (error) {
+                errorMessage.value = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
+                errorTitle.value = "Server Error";
+                showErrorDialog.value = true;
+            }
+        }
+
         // Add the topic and target to the downloader using the /add endpoint
         const addToSubscription = async (item) => {
             // Start the button loading animation for this topic
@@ -635,48 +667,9 @@ export default defineComponent({
 
         // Local interaction
 
-        // Check if any two topics intersect
-        const topicIntersection = (topic1, topic2) => {
-            const topic1Levels = topic1.split('/');
-            const topic2Levels = topic2.split('/');
-
-            const maxLength = Math.max(topic1Levels.length, topic2Levels.length);
-
-            for (let i = 0; i < maxLength; i++) {
-                const topic1Level = topic1Levels[i];
-                const topic2Level = topic2Levels[i];
-
-                // Four possible cases:
-                // 1. Both topics have ended, but one ends with a # wildcard -> True
-                // 2. Both levels have + or # wildcards -> Continue
-                // 3. One level is a + wildcard and the other isn't -> Continue
-                // 4. Neither level is a wildcard and they don't match -> False
-
-                if (topic1Level === undefined || topic2Level === undefined) {
-                    return topic1Level[i - 1] === '#' || topic2Level[i - 1] === '#';
-                }
-
-                if ((topic1Level === '+' || topic1Level === '#') &&
-                    (topic2Level === '+' || topic2Level === '#')) {
-                    continue;
-                }
-
-                if ((topic1Level === '+' || topic2Level === '+') && (topic1Level !== topic2Level)) {
-                    continue;
-                }
-
-                if (topic1Level !== topic2Level) {
-                    return false;
-                }
-            }
-
-            // If all levels pass, the topics intersect
-            return true;
-        };
-
         // Check if the topic is found in the list of topic items
         const topicFound = (topicToFind, topicList) => {
-            return topicList.some(item => topicIntersection(item.topic, topicToFind));
+            return topicList.some(item => topicsIntersect(item.topic, topicToFind));
         };
 
         const populateFields = (item) => {
@@ -871,6 +864,7 @@ export default defineComponent({
             getTopicList,
             getServerData,
             clearServerData,
+            monitorTopic,
             topicFound,
             configureTopic,
             saveTopic,
