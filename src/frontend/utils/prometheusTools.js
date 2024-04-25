@@ -16,7 +16,7 @@ export function parsePrometheusText(data) {
         const [metricNameWithLabels, valueString] = line.split(' ');
         const value = parseFloat(valueString);
 
-        // Non-labelled result have no curly braces
+        // Non-labelled metrics are assigned directly to result {metricName: value}
         if (!metricNameWithLabels.includes('{')) {
             result[metricNameWithLabels] = value;
             return;
@@ -29,20 +29,50 @@ export function parsePrometheusText(data) {
         const labelContent = labelPart.slice(0, -1);
 
         // Get associated labels
-        const labels = {};
-
-        labelContent.split(',').forEach(label => {
-            const [key, value] = label.split('=');
-            labels[key] = value;
-        });
+        const labels = parseLabels(labelContent);
 
         // Add the metric to the object if it doesn't exist
         if (!result[metricName]) {
-            result[metricName] = [];
+            result[metricName] = {};
         }
 
-        result[metricName].push({ ...labels, value });
+        const topic = labels.topic;
+        const fileType = labels['file_type'];
+
+        // Labelled metrics without file type are assigned to topic: 
+        // {metricName: {topic: value}}
+        if (!fileType) {
+            result[metricName][topic] = value;
+            return;
+        }
+
+        // Labelled metrics with file type are nested:
+        // {metricName: {topic: {fileType: value}}}
+        if (!result[metricName][fileType]) {
+            result[metricName][fileType] = {};
+        }
+
+        result[metricName][fileType][topic] = value;
     })
 
     return result;
+};
+
+function parseLabels(labelPart) {
+    const labels = {};
+
+    // Get each key value label pair
+    const labelPairs = labelPart.split(',');
+
+    // Split each pair into key and value
+    // e.g. centre_id="in-imd" -> [centre_id, in-imd]
+    labelPairs.forEach(labelPair => {
+        const [key, value] = labelPair.split('=');
+
+        // Remove quotes from the value
+        labels[key] = value.replace(/"/g, '');
+    });
+
+    return labels;
+
 }

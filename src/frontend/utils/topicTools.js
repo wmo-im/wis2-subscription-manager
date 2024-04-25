@@ -1,5 +1,10 @@
 export function topicsIntersect(topic1, topic2) {
 
+    // Quick check for exact match
+    if (topic1 === topic2) {
+        return true;
+    }
+
     const topic1Levels = topic1.split('/');
     const topic2Levels = topic2.split('/');
 

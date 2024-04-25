@@ -173,12 +173,13 @@
                                         <v-row>
                                             <v-col cols="6">
                                                 <v-btn v-if="pendingTopics.length > 0" block color="#64BF40"
-                                                append-icon="mdi-plus" @click="configureTopic()">Add A
-                                                New Topic</v-btn>
+                                                    append-icon="mdi-plus" @click="configureTopic()">Add A
+                                                    New Topic</v-btn>
                                             </v-col>
                                             <v-col cols="6">
                                                 <v-btn v-if="pendingTopics.length > 0" block color="#003DA5"
-                                                append-icon="mdi-expand-all" @click="addAllToSubscription()">Activate All</v-btn>
+                                                    append-icon="mdi-expand-all"
+                                                    @click="addAllToSubscription()">Activate All</v-btn>
                                             </v-col>
                                         </v-row>
                                     </v-col>
@@ -371,6 +372,9 @@ export default defineComponent({
         const activeTopics = ref([]);
         const pendingTopics = ref([]);
 
+        // Download metrics of all topics, file types, etc.
+        const metrics = ref({});
+
         // The topic and associated target to be added/deleted
         const topicToAdd = ref('')
         const targetToAdd = ref('')
@@ -389,6 +393,10 @@ export default defineComponent({
         const previousTopic = ref('');
         const previousTarget = ref('');
         const editActiveTarget = ref(false);
+
+        // Topic metric monitoring dialog
+        const showTopicMonitorDialog = ref(false);
+        const topicMetrics = ref({});
 
         // Warning dialog for removing a topic
         const showRemoveWarningDialog = ref(false);
@@ -497,35 +505,8 @@ export default defineComponent({
             }
         };
 
-        // Get the data from the server, such as topics, their associated
-        // targets, and the current status of the server
-        const getServerData = async () => {
-            // Start the button loading animation
-            connectingToServer.value = true;
-
-            // Use various endpoints to get the data
-            await getTopicList();
-
-
-            // If the connection is successful, update the last sync time
-            if (connectionStatus.value) {
-                lastSyncTime.value = new Date().toLocaleTimeString();
-            }
-
-            // Stop the button loading animation
-            connectingToServer.value = false;
-        };
-
-        // Clear the server data and reset the connection status
-        const clearServerData = () => {
-            connectionStatus.value = false;
-            activeTopics.value = [];
-        };
-
-        // Monitor the topic by querying Prometheus /metrics endpoint
-        const monitorTopic = async (topic) => {
-            // Start the button loading animation for this topic
-            makingServerRequest.value[item.topic] = true;
+        // Get download metrics by querying Prometheus /metrics endpoint
+        const getMetrics = async () => {
 
             // Build the full URL for Prometheus metrics
             const url = `${serverLink.value}/metrics`;
@@ -544,27 +525,45 @@ export default defineComponent({
                     errorMessage.value = readableError;
                     errorTitle.value = "Error Fetching Metrics";
                     showErrorDialog.value = true;
-                    // End the button loading animation for this topic
-                    makingServerRequest.value[item.topic] = false;
                     return;
                 }
 
                 const data = await response.text();
 
                 // Parse the Prometheus text data into an object
-                const metrics = parsePrometheusText(data);
-
-                // Find the metrics for the topic by checking the intersection of the topic and the metrics
-
-                // End the button loading animation for this topic
-                makingServerRequest.value[item.topic] = false;
+                metrics.value = parsePrometheusText(data);
             }
             catch (error) {
                 errorMessage.value = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
                 errorTitle.value = "Server Error";
                 showErrorDialog.value = true;
             }
-        }
+        };
+
+        // Get the data from the server, such as topics, their associated
+        // targets, and the current status of the server
+        const getServerData = async () => {
+            // Start the button loading animation
+            connectingToServer.value = true;
+
+            // Use various endpoints to get the data
+            await getTopicList();
+            await getMetrics();
+
+            // If the connection is successful, update the last sync time
+            if (connectionStatus.value) {
+                lastSyncTime.value = new Date().toLocaleTimeString();
+            }
+
+            // Stop the button loading animation
+            connectingToServer.value = false;
+        };
+
+        // Clear the server data and reset the connection status
+        const clearServerData = () => {
+            connectionStatus.value = false;
+            activeTopics.value = [];
+        };
 
         // Add the topic and target to the downloader using the /add endpoint
         const addToSubscription = async (item) => {
@@ -734,6 +733,42 @@ export default defineComponent({
             showTopicConfigDialog.value = false;
         };
 
+        // Monitor the topic's metrics
+        const monitorTopic = (topic) => {
+            // Wipe the metrics clean for this topic
+            topicMetrics.value = {};
+            
+            // Iterate over each metric
+            Object.keys(metrics.value).forEach(metricName => {
+                const metricData = metrics.value[metricName];
+
+                // Only metric data that's a non-empty object will contain the topic
+                if (typeof metricData !== 'object' || !metricData) {
+                    return;
+                }
+
+                // Initialise the metric data for the topic if not present
+                if (!topicMetrics.value[metricName]) {
+                    topicMetrics.value[metricName] = {};
+                }
+
+                // The topic may have wildcards, so we must aggregate the metric data
+                Object.keys(metricData).forEach(topicKey => {
+
+                    // Check if the topic is a subset of the metric's topic before proceeding
+                    if (!topicsIntersect(topic, topicKey)) {
+                        return;
+                    }
+
+                    // TO DO: THE REST OF THE LOGIC TO AGGREGATE THE METRIC DATA
+                })
+
+            })
+
+            // Display the metrics to the user
+            showTopicMonitorDialog.value = true;
+        };
+
         // Update topic and target in the list of pending topics
         const updateTopicInPending = () => {
             const updatedPendingTopics = pendingTopics.value.map(item => {
@@ -840,6 +875,7 @@ export default defineComponent({
             connectionStatus,
             activeTopics,
             pendingTopics,
+            metrics,
             topicToAdd,
             targetToAdd,
             topicToRemove,
@@ -849,6 +885,8 @@ export default defineComponent({
             showTopicConfigDialog,
             topicDialogTitle,
             editActiveTarget,
+            showTopicMonitorDialog,
+            topicMetrics,
             showRemoveWarningDialog,
             removalMessage,
             showErrorDialog,
@@ -862,6 +900,7 @@ export default defineComponent({
             // Methods
             processTopicData,
             getTopicList,
+            getMetrics,
             getServerData,
             clearServerData,
             monitorTopic,
