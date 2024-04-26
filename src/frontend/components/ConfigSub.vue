@@ -203,61 +203,63 @@
                 <v-btn icon="mdi-close" variant="text" size="small" @click="showTopicConfigDialog = false" />
             </v-toolbar>
             <v-container>
-                <v-col cols="12">
-                    <v-row>
-                        <v-col cols="12">
+                <v-form @submit.prevent="saveTopic">
+                    <v-col cols="12">
+                        <v-row>
+                            <v-col cols="12">
 
-                            <!-- If active topic -->
-                            <v-row v-if="topicFound(topicToAdd, activeTopics)" class="pb-5">
-                                <v-col cols="2">
-                                    <p class="medium-title"><b>Topic:</b></p>
-                                </v-col>
-                                <v-col cols="10">
-                                    <p class="medium-title">{{ topicToAdd }}</p>
-                                </v-col>
-                            </v-row>
+                                <!-- If active topic -->
+                                <v-row v-if="topicFound(topicToAdd, activeTopics)" class="pb-5">
+                                    <v-col cols="2">
+                                        <p class="medium-title"><b>Topic:</b></p>
+                                    </v-col>
+                                    <v-col cols="10">
+                                        <p class="medium-title">{{ topicToAdd }}</p>
+                                    </v-col>
+                                </v-row>
 
-                            <v-divider />
+                                <v-divider />
 
-                            <v-row v-if="topicFound(topicToAdd, activeTopics)" class="pt-5">
-                                <v-col cols="2">
-                                    <p class="medium-title"><b>Target:</b></p>
-                                </v-col>
-                                <v-col cols="8">
-                                    <!-- Target switches between read-only and editable -->
-                                    <p v-if="!editActiveTarget" class="medium-title">{{ targetToAdd }}</p>
-                                    <v-text-field v-else v-model="targetToAdd" density="comfortable" variant="outlined"
-                                        clearable :rules="[rules.required, rules.target]" />
-                                </v-col>
-                                <v-col cols="2">
-                                    <v-btn v-if="!editActiveTarget" variant="flat" color="#E09D00" block size="large"
-                                        @click.stop="editActiveTarget = true">Edit</v-btn>
-                                    <v-btn v-if="editActiveTarget" variant="flat" color="#00ABC9" block size="large"
-                                        @click.stop="editActiveTarget = false">Confirm</v-btn>
-                                </v-col>
-                            </v-row>
+                                <v-row v-if="topicFound(topicToAdd, activeTopics)" class="pt-5">
+                                    <v-col cols="2">
+                                        <p class="medium-title"><b>Target:</b></p>
+                                    </v-col>
+                                    <v-col cols="8">
+                                        <!-- Target switches between read-only and editable -->
+                                        <p v-if="!editActiveTarget" class="medium-title">{{ targetToAdd }}</p>
+                                        <v-text-field v-else v-model="targetToAdd" density="comfortable"
+                                            variant="outlined" clearable :rules="[rules.required, rules.target]" />
+                                    </v-col>
+                                    <v-col cols="2">
+                                        <v-btn v-if="!editActiveTarget" variant="flat" color="#E09D00" block
+                                            size="large" @click.stop="editActiveTarget = true">Edit</v-btn>
+                                        <v-btn v-if="editActiveTarget" variant="flat" color="#00ABC9" block size="large"
+                                            @click.stop="editActiveTarget = false">Confirm</v-btn>
+                                    </v-col>
+                                </v-row>
 
-                            <!-- If pending topic -->
-                            <v-text-field v-if="!topicFound(topicToAdd, activeTopics)" v-model="topicToAdd"
-                                label="Topic" :rules="[rules.required, rules.topic]" />
-                        </v-col>
-                    </v-row>
+                                <!-- If pending topic -->
+                                <v-text-field v-if="!topicFound(topicToAdd, activeTopics)" v-model="topicToAdd"
+                                    label="Topic" :rules="[rules.required, rules.topic]" />
+                            </v-col>
+                        </v-row>
 
-                    <v-row>
-                        <v-col cols="12">
-                            <v-text-field v-if="!topicFound(topicToAdd, activeTopics)" v-model="targetToAdd"
-                                label="Associated Sub-Directory" :rules="[rules.required, rules.target]" />
-                        </v-col>
-                    </v-row>
+                        <v-row>
+                            <v-col cols="12">
+                                <v-text-field v-if="!topicFound(topicToAdd, activeTopics)" v-model="targetToAdd"
+                                    label="Associated Sub-Directory" :rules="[rules.required, rules.target]" />
+                            </v-col>
+                        </v-row>
 
-                    <v-row>
-                        <v-col cols="12">
-                            <!-- If an active target is being edited, you can't save -->
-                            <v-btn :disabled="editActiveTarget" color="#003DA5" variant="flat" block @click="saveTopic"
-                                :loading="makingServerRequest[topicToAdd]">Save</v-btn>
-                        </v-col>
-                    </v-row>
-                </v-col>
+                        <v-row>
+                            <v-col cols="12">
+                                <!-- If an active target is being edited, you can't save -->
+                                <v-btn :disabled="editActiveTarget" type="submit" color="#003DA5" variant="flat" block
+                                    @click="saveTopic" :loading="makingServerRequest[topicToAdd]">Save</v-btn>
+                            </v-col>
+                        </v-row>
+                    </v-col>
+                </v-form>
             </v-container>
         </v-card>
     </v-dialog>
@@ -347,8 +349,8 @@ export default defineComponent({
         const rules = {
             required: value => !!value || 'Field is required.',
             topic: value => {
-                if (topicFound(value, activeTopics.value)) {
-                    return 'Topic is already subscribed to';
+                if (topicFound(value, activeTopics.value) || topicFound(value, pendingTopics.value)) {
+                    return 'This topic is already added to or overlaps with an existing topic';
                 }
             },
             target: value => {
@@ -781,7 +783,7 @@ export default defineComponent({
                     // If the data has no other labels, then it will be a number, not an object
                     // e.g. number of failed downloads
                     if (typeof data === 'number' && data) {
-                        acc = (acc || 0)  + data;
+                        acc = (acc || 0) + data;
                     }
 
                     // If the data has other labels, then it will be an object
