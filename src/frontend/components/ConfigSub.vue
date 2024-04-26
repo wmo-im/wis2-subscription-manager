@@ -42,14 +42,15 @@
                                         :loading="connectingToServer">Connect</v-btn>
 
                                     <!-- After connecting -->
-                                    <v-row v-if="connectionStatus">
+                                    <v-row v-if="connectionStatus" dense>
                                         <v-col cols="5">
-                                            <v-btn color="#00ABC9" size="x-large" block append-icon="mdi-sync"
-                                                @click="getServerData" :loading="connectingToServer">Sync</v-btn>
+                                            <v-btn color="#00ABC9" :size="lgAndUp ? 'x-large' : 'large'" block
+                                                append-icon="mdi-sync" @click="getServerData"
+                                                :loading="connectingToServer">Sync</v-btn>
                                         </v-col>
                                         <v-col cols="7">
-                                            <v-btn color="#E09D00" size="x-large" block append-icon="mdi-link-off"
-                                                @click="clearServerData"
+                                            <v-btn color="#E09D00" :size="lgAndUp ? 'x-large' : 'large'" block
+                                                append-icon="mdi-link-off" @click="clearServerData"
                                                 :loading="connectingToServer">Disconnect</v-btn>
                                         </v-col>
                                     </v-row>
@@ -104,6 +105,7 @@
                                                         variant="flat" @click.stop="monitorTopic(item.topic)">
                                                         Monitor
                                                     </v-btn>
+                                                    {{ topicMetrics }}
                                                     <v-btn append-icon="mdi-delete" color="error" variant="flat"
                                                         @click.stop="confirmRemoval(item.topic, 'active')">Remove</v-btn>
                                                 </td>
@@ -311,6 +313,7 @@
 <script>
 import { defineComponent, ref, computed, onMounted, watch } from 'vue';
 import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VChipGroup, VChip, VCheckboxBtn } from 'vuetify/lib/components/index.mjs';
+import { useDisplay } from 'vuetify';
 
 // Utilities
 import { HTTP_CODES } from '@/utils/constants.js';
@@ -358,6 +361,8 @@ export default defineComponent({
                 return validPattern.test(value) || 'Invalid target';
             }
         };
+
+        const { mdAndUp, lgAndUp } = useDisplay();
 
         // Reactive variables
 
@@ -733,11 +738,27 @@ export default defineComponent({
             showTopicConfigDialog.value = false;
         };
 
+        // Add metric totals (e.g. total downloaded files) to topic metric data
+        const getTotal = (data) => {
+            Object.keys(data).forEach(metricName => {
+
+                if (typeof data[metricName] !== 'object' || !data[metricName]) {
+                    return;
+                }
+
+                // Calculate the total for each object-based metric (e.g. downloaded files by type)
+                data[metricName]['total'] = Object.values(data[metricName]).reduce(
+                    (acc, val) => acc + val, 0);
+            })
+
+            return data;
+        }
+
         // Monitor the topic's metrics
         const monitorTopic = (topic) => {
             // Wipe the metrics clean for this topic
             topicMetrics.value = {};
-            
+
             // Iterate over each metric
             Object.keys(metrics.value).forEach(metricName => {
                 const metricData = metrics.value[metricName];
@@ -747,23 +768,37 @@ export default defineComponent({
                     return;
                 }
 
-                // Initialise the metric data for the topic if not present
-                if (!topicMetrics.value[metricName]) {
-                    topicMetrics.value[metricName] = {};
-                }
-
                 // The topic may have wildcards, so we must aggregate the metric data
-                Object.keys(metricData).forEach(topicKey => {
+                // We do this using 'reduce'
+                topicMetrics.value[metricName] = Object.keys(metricData).reduce((acc, topicKey) => {
 
-                    // Check if the topic is a subset of the metric's topic before proceeding
                     if (!topicsIntersect(topic, topicKey)) {
-                        return;
+                        return acc;
                     }
 
-                    // TO DO: THE REST OF THE LOGIC TO AGGREGATE THE METRIC DATA
-                })
+                    const data = metricData[topicKey];
 
+                    // If the data has no other labels, then it will be a number, not an object
+                    // e.g. number of failed downloads
+                    if (typeof data === 'number' && data) {
+                        acc = (acc || 0)  + data;
+                    }
+
+                    // If the data has other labels, then it will be an object
+                    // e.g. number of downloads for each file type
+                    else if (typeof data === 'object' && data) {
+                        for (const key in data) {
+                            acc[key] = (acc[key] || 0) + data[key];
+                        }
+                    }
+
+                    return acc;
+                }, {});
             })
+
+            // Now finally totals to the metrics with additional labels
+            // e.g. downloaded files by file type
+            topicMetrics.value = getTotal(topicMetrics.value);
 
             // Display the metrics to the user
             showTopicMonitorDialog.value = true;
@@ -866,6 +901,8 @@ export default defineComponent({
         return {
             // Static variables
             rules,
+            mdAndUp,
+            lgAndUp,
 
             // Reactive variables
             host,
