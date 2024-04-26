@@ -105,7 +105,6 @@
                                                         variant="flat" @click.stop="monitorTopic(item.topic)">
                                                         Monitor
                                                     </v-btn>
-                                                    {{ topicMetrics }}
                                                     <v-btn append-icon="mdi-delete" color="error" variant="flat"
                                                         @click.stop="confirmRemoval(item.topic, 'active')">Remove</v-btn>
                                                 </td>
@@ -264,6 +263,19 @@
         </v-card>
     </v-dialog>
 
+    <!-- Shows Prometheus metrics of topic -->
+    <v-dialog v-model="showTopicMonitorDialog" class="max-table-width" transition="slide-y-transition">
+        <v-card>
+            <v-toolbar :title="monitorDialogTitle" color="#003DA5">
+                <v-btn icon="mdi-close" variant="text" size="small" @click="showTopicMonitorDialog = false" />
+            </v-toolbar>
+            <v-container>
+                {{ topicMetrics }}
+
+            </v-container>
+        </v-card>
+    </v-dialog>
+
     <!-- Confirm removal of topic -->
     <v-dialog v-model="showRemoveWarningDialog" class="max-dialog-width">
         <v-card>
@@ -403,6 +415,7 @@ export default defineComponent({
 
         // Topic metric monitoring dialog
         const showTopicMonitorDialog = ref(false);
+        const monitorDialogTitle = ref('');
         const topicMetrics = ref({});
 
         // Warning dialog for removing a topic
@@ -757,7 +770,10 @@ export default defineComponent({
         }
 
         // Monitor the topic's metrics
-        const monitorTopic = (topic) => {
+        const monitorTopic = async (topic) => {
+            // Update to latest server data
+            await getServerData();
+
             // Wipe the metrics clean for this topic
             topicMetrics.value = {};
 
@@ -803,6 +819,7 @@ export default defineComponent({
             topicMetrics.value = getTotal(topicMetrics.value);
 
             // Display the metrics to the user
+            monitorDialogTitle.value = `Download Metrics of ${topic}`;
             showTopicMonitorDialog.value = true;
         };
 
@@ -925,6 +942,7 @@ export default defineComponent({
             topicDialogTitle,
             editActiveTarget,
             showTopicMonitorDialog,
+            monitorDialogTitle,
             topicMetrics,
             showRemoveWarningDialog,
             removalMessage,
