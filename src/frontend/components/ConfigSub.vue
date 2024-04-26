@@ -68,8 +68,19 @@
 
                         <v-row>
                             <v-col cols="12">
-                                <v-card-title>Currently Subscribed Topics</v-card-title>
-                                <v-card-subtitle>Topics actively subscribed to by the downloader</v-card-subtitle>
+                                <v-row justify="space-between" align="center">
+                                    <v-col cols="8">
+                                        <v-card-title>Currently Subscribed Topics</v-card-title>
+                                        <v-card-subtitle>Topics actively subscribed to by the
+                                            downloader</v-card-subtitle>
+                                    </v-col>
+                                    <v-col cols="4" class="text-right">
+                                        <v-card-title>Queue Size:
+                                            <v-chip size="large" class="number">{{ metrics['queue_size'] || 0
+                                                }}</v-chip>
+                                        </v-card-title>
+                                    </v-col>
+                                </v-row>
                                 <v-card-item>
                                     <v-table :hover="true">
                                         <thead>
@@ -270,8 +281,39 @@
                 <v-btn icon="mdi-close" variant="text" size="small" @click="showTopicMonitorDialog = false" />
             </v-toolbar>
             <v-container>
-                {{ topicMetrics }}
+                <v-row class="py-5">
+                    <v-col cols="6">
+                        <v-card-title class="text-center">Downloaded Files
+                            <!-- <v-chip size="large" class="number">Total: {{
+                                topicMetrics['downloaded_files_total']['total'] }}</v-chip> -->
+                        </v-card-title>
+                        <vue-apex-charts ref="chart" type="bar" height="300" :options="chartOptions"
+                            :series="buildSeries('downloaded_files_total')">
+                        </vue-apex-charts>
+                    </v-col>
+                    <v-col cols="6">
+                        <v-card-title class="text-center">Downloaded Bytes
+                            <!-- <v-chip size="large" class="number">Total: {{
+                                topicMetrics['downloaded_bytes_total']['total'] }}</v-chip> -->
+                        </v-card-title>
+                        <vue-apex-charts ref="chart" type="bar" height="300" :options="chartOptions"
+                            :series="buildSeries('downloaded_bytes_total')">
+                        </vue-apex-charts>
+                    </v-col>
+                </v-row>
 
+                <v-divider />
+
+                <v-row class="py-5">
+                    <v-col cols="3"/>
+                    <v-col cols="6">
+                        <v-card-title class="text-center">Failed Downloads:
+                            <v-chip size="large" class="number">{{ topicMetrics['failed_downloads_total'] || 0
+                                }}</v-chip>
+                        </v-card-title>
+                    </v-col>
+                    <v-col cols="3"/>
+                </v-row>
             </v-container>
         </v-card>
     </v-dialog>
@@ -328,6 +370,7 @@
 import { defineComponent, ref, computed, onMounted, watch } from 'vue';
 import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VChipGroup, VChip, VCheckboxBtn } from 'vuetify/lib/components/index.mjs';
 import { useDisplay } from 'vuetify';
+import VueApexCharts from 'vue3-apexcharts'
 
 // Utilities
 import { HTTP_CODES } from '@/utils/constants.js';
@@ -349,7 +392,8 @@ export default defineComponent({
         VTextField,
         VChipGroup,
         VChip,
-        VCheckboxBtn
+        VCheckboxBtn,
+        VueApexCharts
     },
     setup() {
         // Deep clone function to avoid reference issues between model and default model
@@ -377,6 +421,56 @@ export default defineComponent({
         };
 
         const { mdAndUp, lgAndUp } = useDisplay();
+
+        // Bar chart options
+        const chartOptions = {
+            chart: {
+                id: 'chart-by-filetype',
+                animations: {
+                    enable: true,
+                    easy: 'linear'
+                },
+                toolbar: {
+                    show: false
+                }
+            },
+            plotOptions: {
+                bar: {
+                    borderRadius: 2,
+                    columnWidth: '50%',
+                    dataLabels: {
+                        position: 'top',
+                    },
+                }
+            },
+            colors: ['#00ABC9'],
+            dataLabels: {
+                enabled: true,
+                offsetY: -20,
+                style: {
+                    fontSize: '12px',
+                    colors: ["#304758"]
+                }
+            },
+            stroke: {
+                curve: 'straight'
+            },
+            xaxis: {
+                categories: ['bufr', 'grib', 'json', 'xml', 'png', 'other'],
+            },
+            yaxis: {
+                min: 0,
+                labels: {
+                    show: false
+                },
+                axisBorder: {
+                    show: false
+                },
+                axisTicks: {
+                    show: false
+                }
+            }
+        };
 
         // Reactive variables
 
@@ -753,8 +847,29 @@ export default defineComponent({
             showTopicConfigDialog.value = false;
         };
 
+        // Make the names of metrics human readable
+        const makeReadable = (metricName) => {
+            return metricName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        };
+
+        // Build an array suitable for the bar charts
+        const buildSeries = (metricName) => {
+            const data = [];
+
+            // We must ensure the array is populated in the same
+            // order as the x-axis categories
+            for (const key of chartOptions.xaxis.categories) {
+                data.push(topicMetrics.value[metricName]?.[key] || 0);
+            }
+
+            return [{
+                name: makeReadable(metricName),
+                data: data
+            }];
+        };
+
         // Add metric totals (e.g. total downloaded files) to topic metric data
-        const getTotal = (data) => {
+        const appendTotals = (data) => {
             Object.keys(data).forEach(metricName => {
 
                 if (typeof data[metricName] !== 'object' || !data[metricName]) {
@@ -770,56 +885,50 @@ export default defineComponent({
         }
 
         // Monitor the topic's metrics
-        const monitorTopic = async (topic) => {
+        const monitorTopic = async (selectedTopic) => {
             // Update to latest server data
             await getServerData();
 
             // Wipe the metrics clean for this topic
             topicMetrics.value = {};
 
-            // Iterate over each metric
-            Object.keys(metrics.value).forEach(metricName => {
-                const metricData = metrics.value[metricName];
+            // Aggregate all data from topics that intersect with the selected one
+            Object.keys(metrics.value).forEach(topic => {
 
-                // Only metric data that's a non-empty object will contain the topic
-                if (typeof metricData !== 'object' || !metricData) {
+                if (!topicsIntersect(selectedTopic, topic)) {
                     return;
                 }
 
-                // The topic may have wildcards, so we must aggregate the metric data
-                // We do this using 'reduce'
-                topicMetrics.value[metricName] = Object.keys(metricData).reduce((acc, topicKey) => {
+                const topicData = metrics.value[topic];
 
-                    if (!topicsIntersect(topic, topicKey)) {
-                        return acc;
+                // Iterate over each metric within the topic data
+                Object.keys(topicData).forEach(metricName => {
+                    const metricValue = topicData[metricName];
+
+                    // Directly aggregate numbers if no further labels are present
+                    if (typeof metricValue === 'number') {
+                        topicMetrics.value[metricName] = (topicMetrics.value[metricName] || 0) + metricValue;
                     }
 
-                    const data = metricData[topicKey];
+                    // If file type labels present, the data will be an object 
+                    else if (typeof metricValue === 'object' && metricValue) {
+                        // Initialize metric container if not present
+                        topicMetrics.value[metricName] = topicMetrics.value[metricName] || {};
 
-                    // If the data has no other labels, then it will be a number, not an object
-                    // e.g. number of failed downloads
-                    if (typeof data === 'number' && data) {
-                        acc = (acc || 0) + data;
+                        // Aggregate data for each file type or label within the metric
+                        Object.keys(metricValue).forEach(label => {
+                            topicMetrics.value[metricName][label] = (topicMetrics.value[metricName][label] || 0) + metricValue[label];
+                        });
                     }
-
-                    // If the data has other labels, then it will be an object
-                    // e.g. number of downloads for each file type
-                    else if (typeof data === 'object' && data) {
-                        for (const key in data) {
-                            acc[key] = (acc[key] || 0) + data[key];
-                        }
-                    }
-
-                    return acc;
-                }, {});
-            })
+                });
+            });
 
             // Now finally totals to the metrics with additional labels
             // e.g. downloaded files by file type
-            topicMetrics.value = getTotal(topicMetrics.value);
+            topicMetrics.value = appendTotals(topicMetrics.value);
 
             // Display the metrics to the user
-            monitorDialogTitle.value = `Download Metrics of ${topic}`;
+            monitorDialogTitle.value = `Download Metrics of ${selectedTopic}`;
             showTopicMonitorDialog.value = true;
         };
 
@@ -922,6 +1031,7 @@ export default defineComponent({
             rules,
             mdAndUp,
             lgAndUp,
+            chartOptions,
 
             // Reactive variables
             host,
@@ -960,6 +1070,7 @@ export default defineComponent({
             getMetrics,
             getServerData,
             clearServerData,
+            buildSeries,
             monitorTopic,
             topicFound,
             configureTopic,

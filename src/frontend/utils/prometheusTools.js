@@ -16,7 +16,8 @@ export function parsePrometheusText(data) {
         const [metricNameWithLabels, valueString] = line.split(' ');
         const value = parseFloat(valueString);
 
-        // Non-labelled metrics are assigned directly to result {metricName: value}
+        // Non-labelled metrics are assigned directly to result {metric: value}
+        // e.g. queue size
         if (!metricNameWithLabels.includes('{')) {
             result[metricNameWithLabels] = value;
             return;
@@ -30,29 +31,30 @@ export function parsePrometheusText(data) {
 
         // Get associated labels
         const labels = parseLabels(labelContent);
-
-        // Add the metric to the object if it doesn't exist
-        if (!result[metricName]) {
-            result[metricName] = {};
-        }
-
+        
         const topic = labels.topic;
         const fileType = labels['file_type'];
 
-        // Labelled metrics without file type are assigned to topic: 
-        // {metricName: {topic: value}}
+        // Add the topic to the object if it doesn't exist
+        if (!result[topic]) {
+            result[topic] = {};
+        }
+
+
+        // Labelled metrics without file type are assigned to metric: 
+        // {topic: {metric: value}}
         if (!fileType) {
-            result[metricName][topic] = value;
+            result[topic][metricName] = value;
             return;
         }
 
         // Labelled metrics with file type are nested:
-        // {metricName: {topic: {fileType: value}}}
-        if (!result[metricName][fileType]) {
-            result[metricName][fileType] = {};
+        // {topic: {metric: {fileType: value}}}
+        if (!result[topic][metricName]) {
+            result[topic][metricName] = {};
         }
 
-        result[metricName][fileType][topic] = value;
+        result[topic][metricName][fileType] = value;
     })
 
     return result;
