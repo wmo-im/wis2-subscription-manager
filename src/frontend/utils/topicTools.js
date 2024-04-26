@@ -14,14 +14,24 @@ export function topicsIntersect(topic1, topic2) {
         const topic1Level = topic1Levels[i];
         const topic2Level = topic2Levels[i];
 
-        // Four possible cases:
-        // 1. Both topics have ended, but one ends with a # wildcard -> True
-        // 2. Both levels have + or # wildcards -> Continue
-        // 3. One level is a + wildcard and the other isn't -> Continue
-        // 4. Neither level is a wildcard and they don't match -> False
-
+        // Six possible cases:
+        // 1. One of the topics has ended (undefined level), and the previous level is a # wildcard -> True
+        // 2. One of the levels is a # wildcard -> True
+        // 3. Both levels are identical -> Continue
+        // 4. Both levels have + or # wildcards -> Continue
+        // 5. One level is a + wildcard and the other isn't -> Continue
+        // 6. Neither level is a wildcard and they don't match -> False
+        
         if (topic1Level === undefined || topic2Level === undefined) {
-            return topic1Level[i - 1] === '#' || topic2Level[i - 1] === '#';
+            return topic1Levels[i - 1] === '#' || topic2Levels[i - 1] === '#';
+        }
+
+        if (topic1Level === '#' || topic2Level === '#') {
+            return true;
+        }
+
+        if (topic1Level === topic2Level) {
+            continue;
         }
 
         if ((topic1Level === '+' || topic1Level === '#') &&
