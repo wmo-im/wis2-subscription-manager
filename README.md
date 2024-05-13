@@ -1,13 +1,31 @@
-# WIS2 Downloader
+# The WIS2 Downloader GUI
+### The desktop application for managing your backend WIS2 Downloader
 
-This is a standalone application created using Electron, Vite, Vue3, and Vuetify3 that allows a user to:
+<a href="https://github.com/wmo-im/wis2-downloader-gui/blob/main/LICENSE" alt="License" ><img src="https://img.shields.io/badge/License-Apache_2.0-blue"></img></a>
 
-- Connect to a WIS2 Global Broker
-- Explore the Global Discovery Catalogue (GDC)
-- Subscribe to topics
-- Download the latest data from these topics
+The WIS2 Downloader GUI is an Electron application that allows you to easily maintain your on-going subscriptions, as well as explore new topics of interest on a Global Discovery Catalogue.
 
-## How to Run the Application
+**Note**: This repository does *not* contain the backend which actually enables the subscription process. <a href="https://github.com/wmo-im/wis2-downloader">The WIS2 Downloader backend can be found here.</a>
+
+## Features
+
+- **Configure Your Subscriptions**: Easily view and configure topics through a user-friendly interface, built with <a href="https://vuetifyjs.com/en/">Vuetify 3</a>.
+- **Explore the Global Discovery Catalogue (GDC)**: Browse a GDC of your choice and seamlessly add new topics to your subscription.
+- **Visualize Download Metrics**: Just click on a subscribed topic to see the number of files/bytes downloaded, file types, and failed downloads.
+
+## Demo
+
+## Getting Started
+
+### 1. Download the install file
+In the <a href="https://github.com/wmo-im/wis2-downloader-gui/releases">releases section</a>, expand the 'Assets' drop-down and download the zip file for your operating system.
+
+### 2. Extract and install
+Extract this folder and double click on the install file. This should open the GUI and you're ready to go.
+
+## Development
+
+### How to run the application
 
 Firstly, clone this repository to your local directory
 
@@ -27,9 +45,9 @@ Lastly, to start the application
 npm run start
 ```
 
-## How to Package the Application
+### How to package the application
 
-### Windows
+#### Windows
 
 Firstly, the Vue 3 frontend should be built using
 
@@ -45,7 +63,7 @@ npm run make
 
 This will create the application installer (`.exe`) in the `out/make/squirrel.windows/x64` folder.
 
-### Linux
+#### Linux
 
 To package this application for Linux on a Windows computer, you will need to use a WSL (Windows Subsystem for Linux) environment, which can be downloaded from the [Microsoft Store](https://apps.microsoft.com/detail/9pn20msr04dw?hl=en-US&gl=US).
 
@@ -55,7 +73,7 @@ Inside this environment, you can run the same commands as you would when making 
 
 This will create the application installer (`.deb`) in the `out/make/deb/x64` folder in your project root.
 
-### MacOS
+#### MacOS
 
 There is no virtual machine can be trusted to package this application compatibly for a real MacOS system. The best approach is to run the commands on a genuine Macbook.
 
@@ -66,31 +84,29 @@ npm run make -- --arch=universal --platform=darwin
 
 This will create the application installer (`.dmg`) in the `out/make` folder.
 
-## Understanding the Structure of This Repository
-Since this application requires an intersection of Python, Vue/Vuetify 3, and ElectronJS, it's important to organise their usage in order to prevent confusion. For this reason, they exist primarily in separate folders:
-- **`backend`**: This folder contains the Python script, subscription configuration files, and the frozen backend files for each OS.
+### Understanding the structure of this repository
+Since this application requires an intersection of Vue/Vuetify 3 and ElectronJS, it's important to organise their usage in order to prevent confusion. For this reason, they exist primarily in separate folders:
 - **`src/frontend`**: This folder contains the folders and files you'd typically see in a Vite project, with the exception of the `main.js` file (see below).
 - **`src/main`**: This folder contains the core ElectronJS files, one of which is `renderer.js` which replaces the `main.js` you normally find in a Vite project. To repeat, the `main.js` file in this folder is that of Electron, **not** Vue 3.
 
 Let's explain this in more detail:
 
-### Backend Files
-This is where every file for the MQTT subscription and Flask app (adding, removing, listing susbcriptions), as well as additional configurations, are stored. In particular:
-
-- `broker.json`: An updated list of global brokers on the WIS2 network.
-- `config.json`: An object with the subscription configuration data chosen by the user in the application which is used by the backend to subscribe accordingly.
-- `subscribe-backend-{OS}`: The frozen backend subscriber for each operating system.
-- `configs`: A folder containing zero or more named configurations in the form of `config.json` saved by the user for later use.
-- `script`: A folder containing the Python script which is used to create the frozen backends mentioned above.
-
-### Frontend Files
+#### Frontend files
 This is where the Vue 3 files are stored, structured in a way very similar to that of the wis2box-webapp. This section is pretty intuitive, with the exception of the following:
 
 - `main.js` is not found here, but is rather stored in `src/main` named as `renderer.js` instead.
 - `vite.config.js` is not found here, but is rather stored in the root folder and is partitioned into three separate files: `vite.main.config.mjs`, `vite.preload.config.mjs`, and `vite.renderer.config.mjs`. This is required in order to integrate the frontend into the packaged application. *(Note: For this reason, `npm run build` is actually running three simultaneous build processes.)*
 
-### Main Files
+#### Main Files
 This is where the two key Electron files are stored: `main.js` and `preload.js`. The third file is the `renderer.js` file mentioned above. This two files serve the following roles:
 
 - `main.js`: The entry point of the appliation. It controls the behaviour of the browser window and can access the computer it's running on. This means *handlers* can be written to perform important system events, such as opening the 'Choose a folder' window and reading/writing local files.
 - `preload.js`: This script runs before the web page is loaded into the renderer process. It serves as the bridge between the Electron application and the Vue 3 frontend. Most notably, it allows you to safely expose the handlers written in `main.js` to the frontend, without exposing the entire Node.js API, so that they can be called in Vue components using `window.electronAPI.{handlerName}`.
+
+## Bugs and Issues
+
+All bugs, enhancements and issues are managed on [GitHub](https://github.com/wmo-im/wis2-downloader-gui/issues).
+
+## Contact
+
+* [Rory Burke](https://github.com/RoryPTB)
