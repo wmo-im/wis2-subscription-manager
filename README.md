@@ -17,6 +17,7 @@ The WIS2 Downloader GUI is an Electron application that allows you to easily mai
       <a href="#features">Features</a>
       <ul>
         <li><a href="#built-with">Built With</a></li>
+        <li><a href="#examples">Examples</a></li>
       </ul>
     </li>
     <li><a href="#demo">Demo</a></li>
@@ -50,6 +51,20 @@ The WIS2 Downloader GUI is an Electron application that allows you to easily mai
   * [![Vue][Vue.js]][Vue-url]
   * [![Vuetify][Vuetify3]][Vuetify-url]
   * [![Electron][Electron]][Electron-url]
+
+### Examples
+<div align="center">
+    <img src="https://github.com/wmo-im/wis2-downloader-gui/assets/47696929/7a1e5164-d49a-4ec3-9e8c-ba5822970e9d" style="width:400px"/>
+    <img src="https://github.com/wmo-im/wis2-downloader-gui/assets/47696929/81cc2def-0fce-4224-a961-290c2cbff31d" style="width:400px"/>
+</div>
+
+<br/>
+
+<div align="center">
+    <img src="https://github.com/wmo-im/wis2-downloader-gui/assets/47696929/85ffd7ae-cf50-4bd0-87bd-450bd3e38247" style="width:400px"/>
+    <img src="https://github.com/wmo-im/wis2-downloader-gui/assets/47696929/f7972cb0-a2e1-4e3d-8c65-7ec5cb56f8e2" style="width:400px"/>
+</div>
+
 
 ## Demo
 
