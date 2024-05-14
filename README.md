@@ -1,7 +1,7 @@
+<a name="readme-top"></a>
+
 # The WIS2 Downloader GUI
 ### The desktop application for managing your backend WIS2 Downloader
-
-<a name="readme-top"></a>
 
 <a href="https://github.com/wmo-im/wis2-downloader-gui/blob/main/LICENSE" alt="License" ><img src="https://img.shields.io/badge/License-Apache_2.0-blue"></img></a>
 
