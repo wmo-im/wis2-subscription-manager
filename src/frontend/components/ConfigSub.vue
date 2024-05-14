@@ -43,17 +43,32 @@
 
                                     <!-- After connecting -->
                                     <v-row v-if="connectionStatus" dense>
-                                        <v-col cols="5">
-                                            <v-btn color="#00ABC9" :size="lgAndUp ? 'x-large' : 'large'" block
-                                                append-icon="mdi-sync" @click="getServerData"
-                                                :loading="connectingToServer">Sync</v-btn>
-                                        </v-col>
-                                        <v-col cols="7">
-                                            <v-btn color="#E09D00" :size="lgAndUp ? 'x-large' : 'large'" block
-                                                append-icon="mdi-link-off" @click="clearServerData"
-                                                :loading="connectingToServer">Disconnect</v-btn>
-                                        </v-col>
+                                        <template v-if="lgAndUp">
+                                            <v-col cols="5">
+                                                <v-btn color="#00ABC9" size="x-large" block
+                                                    append-icon="mdi-sync" @click="getServerData"
+                                                    :loading="connectingToServer">Sync</v-btn>
+                                            </v-col>
+                                            <v-col cols="7">
+                                                <v-btn color="#E09D00" size="x-large" block
+                                                    append-icon="mdi-link-off" @click="clearServerData"
+                                                    :loading="connectingToServer">Disconnect</v-btn>
+                                            </v-col>
+                                        </template>
+                                        <template v-else>
+                                            <v-col cols="12">
+                                                <v-btn color="#00ABC9" block
+                                                    append-icon="mdi-sync" @click="getServerData"
+                                                    :loading="connectingToServer">Sync</v-btn>
+                                            </v-col>
+                                            <v-col cols="12">
+                                                <v-btn color="#E09D00" block
+                                                    append-icon="mdi-link-off" @click="clearServerData"
+                                                    :loading="connectingToServer">Disconnect</v-btn>
+                                            </v-col>
+                                        </template>
                                     </v-row>
+
                                 </v-col>
                             </v-row>
                         </v-card-text>
@@ -305,14 +320,14 @@
                 <v-divider />
 
                 <v-row class="py-5">
-                    <v-col cols="3"/>
+                    <v-col cols="3" />
                     <v-col cols="6">
                         <v-card-title class="text-center">Failed Downloads:
                             <v-chip size="large" class="number">{{ topicMetrics['failed_downloads_total'] || 0
                                 }}</v-chip>
                         </v-card-title>
                     </v-col>
-                    <v-col cols="3"/>
+                    <v-col cols="3" />
                 </v-row>
             </v-container>
         </v-card>
@@ -1089,7 +1104,7 @@ export default defineComponent({
 
 <style scoped>
 .topic-column {
-    width: 40%;
+    width: 30%;
 }
 
 .directory-column {
@@ -1097,11 +1112,7 @@ export default defineComponent({
 }
 
 .button-column {
-    width: 30%;
-}
-
-.small-button-column {
-    width: 20%;
+    width: 50%;
 }
 
 .sync-time {

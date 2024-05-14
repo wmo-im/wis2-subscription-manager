@@ -30,7 +30,21 @@
                     </v-row>
                 </v-card-item>
 
-                {{ catalogueError }}
+                <!-- Dialog to display typical error messages -->
+                <v-dialog v-model="openErrorMessageDialog" max-width="600px" persistent>
+                    <v-card>
+                        <v-toolbar title="Error" color="#003DA5">
+                        </v-toolbar>
+                        <v-card-text>
+                            {{ errorMessage }}
+                        </v-card-text>
+                        <v-card-actions>
+                            <v-btn color="#003DA5" block @click="openErrorMessageDialog = false">
+                                OK
+                            </v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
 
                 <!-- Display catalogue datasets searched by user -->
                 <v-card-item>
@@ -183,7 +197,8 @@ export default defineComponent({
         const pendingTopics = ref([]);
 
         // Error from the catalogue
-        const catalogueError = ref('');
+        const errorMessage = ref('');
+        const openErrorMessageDialog = ref(false);
 
         // Computed properties
 
@@ -251,7 +266,12 @@ export default defineComponent({
             const response = await fetch(`${selectedCatalogue.value}?${params}`);
             if (!response.ok) {
                 const readableError = HTTP_CODES[response.status] || response.statusText;
-                catalogueError.value = `Error connecting to catalogue: ${readableError}`;
+                errorMessage.value = `Error connecting to catalogue: ${readableError}`;
+                // Disable loading animation of button
+                loadingBoolean.value = false;
+                // Open the error message dialog
+                openErrorMessageDialog.value = true;
+                return;
             }
             const items = await response.json();
             const features = items.features;
@@ -418,7 +438,7 @@ export default defineComponent({
             const topicCanBeRemoved = topicFound(topicToRemove, pendingTopics.value);
 
             if (!topicCanBeRemoved) {
-                catalogueError.value = "Topic not found in subscription";
+                errorMessage.value = "Topic not found in subscription";
                 return;
             }
 
@@ -478,7 +498,8 @@ export default defineComponent({
             connectionStatus,
             activeTopics,
             pendingTopics,
-            catalogueError,
+            errorMessage,
+            openErrorMessageDialog,
 
             // Computed variables
             catalogueBoolean,
