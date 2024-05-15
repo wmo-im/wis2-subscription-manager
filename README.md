@@ -20,7 +20,12 @@ The WIS2 Downloader GUI is an Electron application that allows you to easily mai
         <li><a href="#examples">Examples</a></li>
       </ul>
     </li>
-    <li><a href="#demo">Demo</a></li>
+    <li><a href="#demos">Demos</a>
+      <ul>
+        <li><a href="#browsing-a-gdc">Browsing a GDC</a></li>
+        <li><a href="#adding-and-configuring-topics">Adding and Configuring Topics</a></li>
+      </ul>
+    </li>
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
@@ -66,7 +71,17 @@ The WIS2 Downloader GUI is an Electron application that allows you to easily mai
 </div>
 
 
-## Demo
+## Demos
+### Browsing a GDC
+<div align="center">
+    <img src="https://github.com/wmo-im/wis2-downloader-gui/assets/47696929/293f3baf-efca-4de9-b635-f13f97259f62" style="width:700px"/>
+</div>
+
+### Adding and Configuring Topics
+<div align="center">
+   <img src="https://github.com/wmo-im/wis2-downloader-gui/assets/47696929/81d18cde-9014-482c-b8b1-5a82108b4e5e" style="width:700px"/>
+</div>
+
 
 ## Getting Started
 
