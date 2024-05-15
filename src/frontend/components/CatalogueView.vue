@@ -1,14 +1,19 @@
 <template>
     <v-row class="justify-center">
         <v-col cols=12 class="max-form-width">
-            <v-card min-height="700px">
-                <v-card-title class="big-title">Search a WIS2 Global Discovery Catalogue</v-card-title>
+            <v-card min-height="88vh">
+                <v-toolbar dense>
+                    <v-toolbar-title class="big-title">Search a WIS2 Global Discovery Catalogue</v-toolbar-title>
+                </v-toolbar>
+                <v-card-subtitle>Find datasets to add to your list of pending subscriptions</v-card-subtitle>
+
+                <v-col cols="12" />
 
                 <v-card-item>
                     <v-row dense>
                         <v-col cols="4">
-                            <v-select v-model="selectedCatalogue" :items="catalogueList" item-title="title" item-value="url"
-                                label="Choose a catalogue"></v-select>
+                            <v-select v-model="selectedCatalogue" :items="catalogueList" item-title="title"
+                                item-value="url" label="Choose a catalogue"></v-select>
                         </v-col>
                         <v-col cols="4">
                             <v-text-field v-model="searchedTitle" label="Enter a title" hint="Optional" persistent-hint
@@ -25,30 +30,70 @@
                     </v-row>
                 </v-card-item>
 
+                <!-- Dialog to display typical error messages -->
+                <v-dialog v-model="openErrorMessageDialog" max-width="600px" persistent>
+                    <v-card>
+                        <v-toolbar title="Error" color="#003DA5">
+                        </v-toolbar>
+                        <v-card-text>
+                            {{ errorMessage }}
+                        </v-card-text>
+                        <v-card-actions>
+                            <v-btn color="#003DA5" block @click="openErrorMessageDialog = false">
+                                OK
+                            </v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
+
                 <!-- Display catalogue datasets searched by user -->
                 <v-card-item>
-                    <v-table v-if="tableBoolean === true" :hover="true">
+                    <v-table :hover="true">
                         <thead>
                             <tr>
-                                <th scope="row" class="text-left">
-                                    Discovery Metadata Records Found
+                                <th scope="row" class="topic-column">
+                                    <p class="medium-title">Discovery Metadata Records Found</p>
+                                </th>
+                                <th scope="row" class="button-column">
+                                    <v-row justify="center" class="pa-2" v-if="tableBoolean === true">
+                                        <v-switch inset label="Add All" v-model="addAllTopics"
+                                            @change="addOrRemoveAllTopics(datasets, addAllTopics)"
+                                            :disabled="tableBoolean === false" color="#003DA5" />
+                                    </v-row>
                                 </th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr v-for="item in datasets" :key="item.title" @click="openDialog(item)" class="clickable-row">
-                                <td>
-                                    {{ item.title }}
-                                </td>
-                                <td class="check-mark">
-                                    <v-icon v-if="selectedTopics.includes(item.topic_hierarchy)" icon="mdi-check-circle" />
-                                </td>
-                            </tr>
-                        </tbody>
+                        <transition name="slide-y-transition">
+                            <tbody v-show="tableBoolean === true">
+                                <tr v-for="item in datasets" :key="item.title" @click="openDialog(item)"
+                                    class="clickable-row">
+                                    <td class="small-title">
+                                        {{ item.title }}
+                                    </td>
+                                    <td>
+                                        <!-- If topic not added, allow them to add -->
+                                        <v-btn block
+                                            v-if="!topicFound(item.topic_hierarchy, selectedTopics) && item.topic_hierarchy"
+                                            color="#64BF40" append-icon="mdi-plus" variant="flat"
+                                            @click.stop="addTopicToPending(item)">
+                                            Add</v-btn>
+                                        <v-btn block v-if="topicFound(item.topic_hierarchy, pendingTopics)"
+                                            color="error" append-icon="mdi-minus" variant="flat"
+                                            @click.stop="removeTopicFromPending(item)">
+                                            Remove</v-btn>
+                                        <v-btn block v-if="topicFound(item.topic_hierarchy, activeTopics)" disabled
+                                            color="#003DA5" append-icon="mdi-download-multiple" variant="flat">
+                                            Active</v-btn>
+                                        <v-btn block v-if="!item.topic_hierarchy" disabled variant="flat">
+                                            No Topic</v-btn>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </transition>
                     </v-table>
 
                     <!-- Dialog to display dataset metadata -->
-                    <v-dialog v-model="dialog" transition="dialog-bottom-transition">
+                    <v-dialog v-model="dialog" transition="scroll-y-transition" class="max-dialog-width">
                         <v-card class="overflow-hidden">
                             <v-toolbar :title="selectedItem.title" color="#003DA5">
                                 <v-btn icon="mdi-close" variant="text" @click="dialog = false" />
@@ -65,21 +110,11 @@
                             </v-table>
                             <v-card-actions>
                                 <v-row>
-                                    <v-col cols="6">
-                                        <v-btn color="#E09D00" variant="flat" block
+                                    <v-col cols="12">
+                                        <v-btn color="#E09D00" append-icon="mdi-code-json" variant="flat" block
                                             @click="openJSON(selectedItem.identifier)" :loading="loadingJsonBoolean">
                                             View JSON
                                         </v-btn>
-                                    </v-col>
-                                    <v-col cols="6">
-                                        <!-- If topic not added, allow them to add -->
-                                        <v-btn v-if="!selectedTopics.includes(selectedItem.topic_hierarchy)" color="#64BF40"
-                                            variant="flat" block @click="addToSubscription(selectedItem.topic_hierarchy)">
-                                            Add Dataset to Subscription</v-btn>
-                                        <v-btn v-if="selectedTopics.includes(selectedItem.topic_hierarchy)" color="#D90429"
-                                            variant="flat" block
-                                            @click="removeFromSubscription(selectedItem.topic_hierarchy)">
-                                            Remove Dataset from Subscription</v-btn>
                                     </v-col>
                                 </v-row>
                             </v-card-actions>
@@ -87,13 +122,14 @@
                     </v-dialog>
 
                     <!-- Dialog to display the whole JSON object -->
-                    <v-dialog v-model="jsonDialog" transition="dialog-bottom-transition" max-height="600px" scrollable>
+                    <v-dialog v-model="jsonDialog" max-height="600px" max-width="1200px" scrollable
+                        transition="scale-transition">
                         <v-card>
-                            <v-toolbar :title="selectedItem.title" color="#003DA5">
+                            <v-toolbar :title="selectedItem.title" color="#E09D00">
                                 <v-btn icon="mdi-close" variant="text" @click="jsonDialog = false" />
                             </v-toolbar>
                             <v-card-text>
-                                <pre>{{ formattedJson }}</pre>
+                                <pre class="wrap-text">{{ formattedJson }}</pre>
                             </v-card-text>
                         </v-card>
                     </v-dialog>
@@ -106,7 +142,9 @@
 <script>
 import { defineComponent, ref, computed, watch, onMounted } from 'vue';
 import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VTable } from 'vuetify/lib/components/index.mjs';
-import { VDataTable } from 'vuetify/lib/labs/VDataTable/index.mjs';
+
+// Utilities
+import { HTTP_CODES } from '@/utils/constants.js';
 
 
 export default defineComponent({
@@ -121,10 +159,13 @@ export default defineComponent({
         VListGroup,
         VSelect,
         VTextField,
-        VTable,
-        VDataTable
+        VTable
     },
     setup() {
+        // Deep clone function to avoid reference issues between model and default model
+        function deepClone(obj) {
+            return JSON.parse(JSON.stringify(obj));
+        }
 
         // Static variables
         const catalogueList = [
@@ -139,34 +180,65 @@ export default defineComponent({
         const datasets = ref([]);
         const loadingBoolean = ref(false);
         const tableBoolean = ref(false);
+        const addAllTopics = ref(false);
         const selectedItem = ref(null);
         const dialog = ref(false);
         const formattedJson = ref(null);
         const loadingJsonBoolean = ref(false);
         const jsonDialog = ref(false);
-        const selectedTopics = ref([]);
-        const broker = ref("");
-        const downloadDirectory = ref("");
-        const subscribeStatus = ref(false);
+
+        // Information from Subscribe page
+        const host = ref('');
+        const port = ref('');
+        const username = ref('');
+        const password = ref('');
+        const connectionStatus = ref(false);
+        const activeTopics = ref([]);
+        const pendingTopics = ref([]);
+
+        // Error from the catalogue
+        const errorMessage = ref('');
+        const openErrorMessageDialog = ref(false);
 
         // Computed properties
+
+        // Stored settings from Subscribe page
+        const settings = computed(() => {
+            return {
+                host: host.value,
+                port: port.value,
+                username: username.value,
+                password: password.value,
+                connectionStatus: connectionStatus.value,
+                activeTopics: activeTopics.value,
+                pendingTopics: pendingTopics.value
+            }
+        });
 
         // Boolean to check if the catalogue is selected
         const catalogueBoolean = computed(() => {
             return selectedCatalogue.value !== ''
-        })
+        });
+
+        // Concatenation of active and pending topics selected
+        const selectedTopics = computed(() => {
+            return [...activeTopics.value, ...pendingTopics.value];
+        });
 
         // Methods
 
         // Load the saved information from the electron API
         const loadSettings = async () => {
             try {
-                const settings = await window.electronAPI.loadSettings();
-                if (settings) {
-                    broker.value = settings.broker;
-                    selectedTopics.value = settings.topics;
-                    downloadDirectory.value = settings.downloadDirectory;
-                    subscribeStatus.value = settings.subscribeStatus;
+                const storedSettings = await window.electronAPI.loadSettings();
+                if (storedSettings) {
+                    host.value = storedSettings?.host || '';
+                    port.value = storedSettings?.port || '';
+                    username.value = storedSettings?.username || '';
+                    password.value = storedSettings?.password || '';
+                    connectionStatus.value = storedSettings?.connectionStatus || false;
+                    activeTopics.value = storedSettings?.activeTopics || [];
+                    pendingTopics.value = storedSettings?.pendingTopics || [];
                 }
             }
             catch (error) {
@@ -193,7 +265,13 @@ export default defineComponent({
             // Query the catalogue
             const response = await fetch(`${selectedCatalogue.value}?${params}`);
             if (!response.ok) {
-                throw new Error('Failed to query catalogue')
+                const readableError = HTTP_CODES[response.status] || response.statusText;
+                errorMessage.value = `Error connecting to catalogue: ${readableError}`;
+                // Disable loading animation of button
+                loadingBoolean.value = false;
+                // Open the error message dialog
+                openErrorMessageDialog.value = true;
+                return;
             }
             const items = await response.json();
             const features = items.features;
@@ -285,66 +363,114 @@ export default defineComponent({
             // Format the JSON content
             const response = await fetch(url);
             const data = await response.json();
-            formattedJson.value = JSON.stringify(data, null, 1);
+            formattedJson.value = JSON.stringify(data, null, 2);
 
             // Open the dialog screen
             jsonDialog.value = true;
 
             // Disable loading animation of button
             loadingJsonBoolean.value = false;
-        }
+        };
+
+        // Converts wildcards (+, #) to regex, if present
+        const wildcardToRegex = (topic) => {
+            return new RegExp("^" + topic.split("/")
+                .map(part => {
+                    if (part === "+") return "[^/]+";   // Matches one level
+                    if (part === "#") return ".*";      // Matches multiple levels
+                    return part;                        // Regular topic level
+                }).join("\\/") + "$");
+        };
+
+        // Check if the topic is found in the list of topic items, or falls under a category
+        // of topics in the list (if a topic in the list uses wildcards)
+        const topicFound = (topicToFind, topicList) => {
+            return topicList.some(item => {
+                const regex = wildcardToRegex(item.topic);
+                return regex.test(topicToFind);
+            });
+        };
 
         // When the user clicks 'Add dataset to subscription', add the
         // associated topic to an array which will be parsed to the Electron API
-        const addToSubscription = async (topic) => {
-            console.log("Adding topic to subscription: " + topic)
-            // Make sure there are no duplicates
-            if (!selectedTopics.value.includes(topic)) {
-                selectedTopics.value.push(topic);
+        const addTopicToPending = (item) => {
+            const topicToAdd = item.topic_hierarchy;
+
+            // Check if there is any topic hierarchy associated with the dataset
+            if (!topicToAdd) {
+                return;
             }
-            // If the user is currently subscribed, handle the Flask API call
-            if (subscribeStatus.value) {
-                const data = {
-                    topic: topic,
-                    action: 'add'
-                }
-                await window.electronAPI.manageTopics(data);
+
+            console.log("Adding topic to subscription: " + topicToAdd)
+
+            const toAdd = {
+                topic: topicToAdd,
+                target: "$TOPIC"
+            };
+
+            // Make sure there are no duplicates before adding
+            const isDuplicate = topicFound(topicToAdd, selectedTopics.value);
+            if (isDuplicate) {
+                console.log("Topic already added to subscription");
+                return;
             }
+
+            const updatedTopics = [...pendingTopics.value, toAdd];
+            pendingTopics.value = updatedTopics;
+
             // Close the dialog
             dialog.value = false;
         }
 
         // When the user clicks 'Remove dataset from subscription', remove
         // the associated topic from the array which will be parsed to the Electron API
-        const removeFromSubscription = async (topic) => {
-            console.log("Removing topic from subscription: " + topic)
-            // Remove it from the array
-            if (selectedTopics.value.includes(topic)) {
-                selectedTopics.value.splice(selectedTopics.value.indexOf(topic), 1);
+        const removeTopicFromPending = (item) => {
+            const topicToRemove = item.topic_hierarchy;
+
+            // Check if there is any topic hierarchy associated with the dataset
+            if (!topicToRemove) {
+                return;
             }
-            // If the user is currently subscribed, handle the Flask API call
-            if (subscribeStatus.value) {
-                const data = {
-                    topic: topic,
-                    action: 'delete'
-                }
-                await window.electronAPI.manageTopics(data);
+
+            console.log("Removing topic from subscription: " + topicToRemove)
+
+            // Remove it from the array if it can be found
+            const topicCanBeRemoved = topicFound(topicToRemove, pendingTopics.value);
+
+            if (!topicCanBeRemoved) {
+                errorMessage.value = "Topic not found in subscription";
+                return;
             }
+
+            let updatedTopics = [...pendingTopics.value];
+            updatedTopics = updatedTopics.filter(item => item !== topicToRemove);
+            pendingTopics.value = updatedTopics;
+
             // Close the dialog
             dialog.value = false;
-        }
+        };
 
-        // Watch for changes in the selected topics
-        watch(selectedTopics, (newValue, oldValue) => {
-            const settings = {
-                broker: broker.value,
-                topics: Array.from(selectedTopics.value),
-                downloadDirectory: downloadDirectory.value,
-                subscribeStatus: subscribeStatus.value
-            };
-            console.log("Storing settings:", settings);
+        // Toggles the selection of all topics
+        const addOrRemoveAllTopics = async (items, shouldSelectAll) => {
+            if (shouldSelectAll === true) {
+                for (const item of items) {
+                    addTopicToPending(item);
+                }
+            }
+            else if (shouldSelectAll === false) {
+                // Empty the pending topics array
+                pendingTopics.value = [];
+            }
+        };
+
+        // Watch for changes in any of the user inputs, so that if they
+        // navigate to the Subscribe page and return, their configuration is not lost
+        watch(settings, () => {
+            // As reactive objects aren't serialisable, we must deep copy it
+            const settingsToStore = deepClone(settings.value);
+            console.log("Storing settings:", settingsToStore);
             // Store the information in the electron API
-            window.electronAPI.storeSettings(settings);
+            window.electronAPI.storeSettings(settingsToStore);
         }, { deep: true }); // Use deep watch to track nested array
 
         onMounted(() => {
@@ -353,27 +479,41 @@ export default defineComponent({
         })
 
         return {
+            // Static variables
             catalogueList,
+
+            // Reactive variables
             selectedCatalogue,
             searchedTitle,
             query,
             datasets,
             loadingBoolean,
             tableBoolean,
-            catalogueBoolean,
+            addAllTopics,
             selectedItem,
             dialog,
+            formattedJson,
+            loadingJsonBoolean,
+            jsonDialog,
+            connectionStatus,
+            activeTopics,
+            pendingTopics,
+            errorMessage,
+            openErrorMessageDialog,
+
+            // Computed variables
+            catalogueBoolean,
+            selectedTopics,
+
+            // Methods
             searchCatalogue,
             openDialog,
             formatKey,
             openJSON,
-            formattedJson,
-            loadingJsonBoolean,
-            jsonDialog,
-            selectedTopics,
-            addToSubscription,
-            removeFromSubscription,
-            subscribeStatus
+            topicFound,
+            addTopicToPending,
+            removeTopicFromPending,
+            addOrRemoveAllTopics
         }
     }
 })
@@ -381,12 +521,11 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.clickable-row {
-    cursor: pointer;
+.topic-column {
+    width: 83%;
 }
 
-.check-mark {
-    text-align: right;
-    vertical-align: middle;
+.button-column {
+    width: 17%;
 }
 </style>

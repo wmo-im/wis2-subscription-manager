@@ -9,16 +9,33 @@
 //   $color-pack: false
 // );
 .max-form-width {
+    max-width: 1400px;
+}
+
+.max-table-width {
     max-width: 1200px;
 }
 
-.max-dashboard-width {
-    max-width: 1400px;
+.max-dialog-width {
+    max-width: 1000px;
+}
+
+.max-error-width {
+    max-width: 800px;
 }
 
 .big-title {
     font-size: 1.5rem;
     font-weight: 700;
+}
+
+.medium-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.small-title {
+    font-weight: 500;
 }
 
 .hint-text {
@@ -85,4 +102,23 @@
     top: 0;
     right: 0;
     z-index: 1;
-  }
+}
+
+.clickable-row {
+    cursor: pointer;
+}
+
+.row-buttons {
+    text-align: right;
+    vertical-align: middle;
+}
+
+.wrap-text {
+    white-space: pre-wrap;
+}
+
+.number {
+    font-weight: 800;
+    font-size: 1.5rem;
+    margin-left: 1rem;
+}

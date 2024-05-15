@@ -1,250 +1,393 @@
 <template>
     <v-row class="justify-center">
         <v-col cols=12 class="max-form-width">
-            <v-card>
-                <v-row dense>
-                    <v-col cols="auto">
-                        <v-card-title class="big-title">WIS2 Subscription Configuration</v-card-title>
-                    </v-col>
-                    <v-spacer />
-                    <v-col cols="4">
-                        <v-select label="Configurations" density="comfortable" variant="solo-filled" class="mx-3"
-                            :items="configList" v-model="selectedConfig"></v-select>
-                    </v-col>
-                    <v-col cols="1">
-                        <v-btn color="#003DA5" variant="flat" icon="mdi-delete" class="mx-1" @click="configDialog = true" />
+            <v-card min-height="88vh">
+                <v-toolbar>
+                    <v-toolbar-title class="big-title">WIS2 Subscription Dashboard</v-toolbar-title>
+                    <v-toolbar-items class="sync-time pa-5">
+                        <transition name="fade-transition">
+                            <p v-if="connectionStatus">Last synchronized: <b>{{ lastSyncTime }}</b></p>
+                        </transition>
+                    </v-toolbar-items>
+                </v-toolbar>
+
+                <v-col cols="12" />
+
+                <v-row>
+                    <v-col cols="12">
+                        <v-card-title>Downloader Server Information</v-card-title>
+                        <v-card-subtitle>Enter your server information to get started</v-card-subtitle>
+                        <v-card-text>
+                            <v-row>
+                                <v-col cols="3">
+                                    <v-text-field v-model="host" label="Server Host"
+                                        :disabled="connectionStatus"></v-text-field>
+                                </v-col>
+                                <v-col cols="2">
+                                    <v-text-field v-model="port" label="Server Port"
+                                        :disabled="connectionStatus"></v-text-field>
+                                </v-col>
+                                <v-col cols="2">
+                                    <v-text-field v-model="username" label="Username"
+                                        :disabled="connectionStatus"></v-text-field>
+                                </v-col>
+                                <v-col cols="2">
+                                    <v-text-field v-model="password" label="Password"
+                                        :disabled="connectionStatus"></v-text-field>
+                                </v-col>
+                                <v-col cols="3">
+                                    <!-- Before connecting -->
+                                    <v-btn v-if="!connectionStatus" color="#003DA5" size="x-large" block
+                                        append-icon="mdi-link" @click="getServerData"
+                                        :loading="connectingToServer">Connect</v-btn>
+
+                                    <!-- After connecting -->
+                                    <v-row v-if="connectionStatus" dense>
+                                        <template v-if="lgAndUp">
+                                            <v-col cols="5">
+                                                <v-btn color="#00ABC9" size="x-large" block
+                                                    append-icon="mdi-sync" @click="getServerData"
+                                                    :loading="connectingToServer">Sync</v-btn>
+                                            </v-col>
+                                            <v-col cols="7">
+                                                <v-btn color="#E09D00" size="x-large" block
+                                                    append-icon="mdi-link-off" @click="clearServerData"
+                                                    :loading="connectingToServer">Disconnect</v-btn>
+                                            </v-col>
+                                        </template>
+                                        <template v-else>
+                                            <v-col cols="12">
+                                                <v-btn color="#00ABC9" block
+                                                    append-icon="mdi-sync" @click="getServerData"
+                                                    :loading="connectingToServer">Sync</v-btn>
+                                            </v-col>
+                                            <v-col cols="12">
+                                                <v-btn color="#E09D00" block
+                                                    append-icon="mdi-link-off" @click="clearServerData"
+                                                    :loading="connectingToServer">Disconnect</v-btn>
+                                            </v-col>
+                                        </template>
+                                    </v-row>
+
+                                </v-col>
+                            </v-row>
+                        </v-card-text>
                     </v-col>
                 </v-row>
 
-                <!-- Configuration deletion dialog -->
-                <v-dialog v-model="configDialog" max-width="300px">
-                    <v-card>
-                        <v-toolbar title="Delete Configurations" color="#003DA5">
-                            <v-btn icon="mdi-close" variant="text" @click="configDialog = false" />
-                        </v-toolbar>
-                        <v-card-text>
-                            <div v-if="configList.length === 0">No configurations to delete</div>
-                            <v-list lines="one">
-                                <v-list-item v-for="(config, index) in configList" :key="index" :title="config">
-                                    <template v-slot:append>
-                                        <v-btn icon="mdi-minus" variant="flat" @click="confirmConfigDelete(config)" />
-                                    </template>
-                                </v-list-item>
-                            </v-list>
-                        </v-card-text>
-                    </v-card>
-                </v-dialog>
+                <v-col cols="12" />
 
-                <!-- Open dialog for show to confirm deletion of config -->
-                <v-dialog v-model="showConfigWarningDialog" max-width="750px">
-                    <v-card>
-                        <v-toolbar title="Warning!" color="#D90429">
-                            <v-btn icon="mdi-close" variant="text" @click="showConfigWarningDialog = false" />
-                        </v-toolbar>
-                        <v-card-text>
-                            <v-row>
-                                Are you sure you want to delete the following configuration:
-                            </v-row>
-                            <v-row justify="center">
-                                <b>{{ configToDelete }}</b>
-                            </v-row>
-                        </v-card-text>
-                        <v-card-actions>
-                            <v-btn @click="deleteConfig(configToDelete)" color="#64BF40" variant="flat" block
-                                :loading="deleteLoadingBoolean">I Confirm</v-btn>
-                        </v-card-actions>
-                    </v-card>
-                </v-dialog>
+                <transition name="slide-y-transition">
+                    <v-card-item v-if="connectionStatus">
+                        <v-divider class="pa-3" />
 
-                <v-form>
-                    <v-card-item class="py-0">
-                        <v-card-title>Global broker</v-card-title>
                         <v-row>
-                            <v-col cols="11">
-                                <v-select label="Please choose a broker" :items="brokerList" item-title="title"
-                                    item-value="url" variant="solo-filled" v-model="selectedBroker"
-                                    :disabled="syncLoadingBoolean"></v-select>
-                            </v-col>
-                            <v-col cols="1">
-                                <v-btn color="#003DA5" variant="flat" icon="mdi-sync" size="large" @click="syncBrokers"
-                                    :loading="syncLoadingBoolean"></v-btn>
+                            <v-col cols="12">
+                                <v-row justify="space-between" align="center">
+                                    <v-col cols="8">
+                                        <v-card-title>Currently Subscribed Topics</v-card-title>
+                                        <v-card-subtitle>Topics actively subscribed to by the
+                                            downloader</v-card-subtitle>
+                                    </v-col>
+                                    <v-col cols="4" class="text-right">
+                                        <v-card-title>Queue Size:
+                                            <v-chip size="large" class="number">{{ metrics['queue_size'] || 0
+                                                }}</v-chip>
+                                        </v-card-title>
+                                    </v-col>
+                                </v-row>
+                                <v-card-item>
+                                    <v-table :hover="true">
+                                        <thead>
+                                            <tr>
+                                                <th scope="row" class="topic-column">
+                                                    <p v-if="activeTopics.length > 0" class="medium-title">Topic</p>
+                                                    <p v-else class="medium-title text-center">No topics are currently
+                                                        active
+                                                    </p>
+                                                </th>
+                                                <th scope="row" class="directory-column">
+                                                    <p v-if="activeTopics.length > 0" class="medium-title text-center">
+                                                        Sub-Directory
+                                                    </p>
+                                                </th>
+                                                <th scope="row" class="button-column">
+                                                    <p v-if="activeTopics.length > 0" class="medium-title text-center">
+                                                        Actions</p>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="item in activeTopics" :key="item.topic"
+                                                @click="configureTopic(item)" class="clickable-row">
+                                                <td class="small-title">
+                                                    {{ item.topic }}
+                                                </td>
+                                                <td class="small-title text-center">
+                                                    {{ item.target }}
+                                                </td>
+                                                <td class="text-center">
+                                                    <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-chart-box' : ''" color="#00ABC9"
+                                                        variant="flat" @click.stop="monitorTopic(item.topic)">
+                                                        Monitor
+                                                    </v-btn>
+                                                    <v-btn :append-icon="lgAndUp ? 'mdi-delete' : ''" color="error" variant="flat"
+                                                        @click.stop="confirmRemoval(item.topic, 'active')">Remove</v-btn>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </v-table>
+                                </v-card-item>
                             </v-col>
                         </v-row>
-                    </v-card-item>
 
-                    <v-card-item class="py-0">
-                        <v-card-title>Topics</v-card-title>
+                        <v-col cols="12" />
+                        <v-divider class="py-3" />
+
                         <v-row>
-                            <v-col cols="11">
-                                <v-text-field label="Please enter one or more topics" variant="solo-filled"
-                                    v-model="topicEntry" @keyup.enter="addTopic" :disabled="!isBrokerSelected">
-                                </v-text-field>
+                            <v-col cols="12">
+                                <v-card-title>Topics To Add</v-card-title>
+                                <v-card-subtitle>Pending topics that aren't currently subscribed to by the
+                                    downloader</v-card-subtitle>
+
+                                <v-card-item>
+                                    <v-table :hover="true">
+                                        <thead>
+                                            <tr>
+                                                <th scope="row" class="topic-column">
+                                                    <p v-if="pendingTopics.length > 0" class="medium-title">Topic</p>
+                                                    <p v-else class="medium-title text-center">No topics have been added
+                                                    </p>
+                                                </th>
+                                                <th scope="row" class="directory-column">
+                                                    <p v-if="pendingTopics.length > 0" class="medium-title text-center">
+                                                        Sub-Directory</p>
+                                                </th>
+                                                <th scope="row" class="button-column">
+                                                    <p v-if="pendingTopics.length > 0" class="medium-title text-center">
+                                                        Actions
+                                                    </p>
+                                                    <v-btn v-else block color="#64BF40" append-icon="mdi-plus"
+                                                        @click="configureTopic()">Add A
+                                                        Topic</v-btn>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="item in pendingTopics" :key="item.topic"
+                                                @click="configureTopic(item)" class="clickable-row">
+                                                <td class="small-title">
+                                                    {{ item.topic }}
+                                                </td>
+                                                <td class="small-title text-center">
+                                                    {{ item.target }}
+                                                </td>
+                                                <td class="text-center">
+                                                    <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-cloud-upload' : ''" color="#003DA5"
+                                                        variant="flat" @click.stop="addToSubscription(item)"
+                                                        :loading="makingServerRequest[item.topic]">
+                                                        Activate
+                                                    </v-btn>
+                                                    <v-btn :append-icon="lgAndUp ? 'mdi-delete' : ''" color="error" variant="flat"
+                                                        @click.stop="confirmRemoval(item.topic, 'pending')">Remove</v-btn>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </v-table>
+                                    <v-col />
+
+                                    <v-col cols="12">
+                                        <v-row>
+                                            <v-col cols="6">
+                                                <v-btn v-if="pendingTopics.length > 0" block color="#64BF40"
+                                                    append-icon="mdi-plus" @click="configureTopic()">Add A
+                                                    New Topic</v-btn>
+                                            </v-col>
+                                            <v-col cols="6">
+                                                <v-btn v-if="pendingTopics.length > 0" block color="#003DA5"
+                                                    append-icon="mdi-expand-all"
+                                                    @click="addAllToSubscription()">Activate All</v-btn>
+                                            </v-col>
+                                        </v-row>
+                                    </v-col>
+                                </v-card-item>
                             </v-col>
-                            <v-col cols="1">
-                                <v-btn color="#003DA5" variant="flat" icon="mdi-plus" size="large" @click="addTopic"
-                                    :disabled="!isBrokerSelected"></v-btn>
+                        </v-row>
+                    </v-card-item>
+                </transition>
+            </v-card>
+        </v-col>
+    </v-row>
+
+    <!-- Dialogs -->
+
+    <!-- Shows the topic/target information to be edited -->
+    <v-dialog v-model="showTopicConfigDialog" class="max-dialog-width" transition="slide-y-transition">
+        <v-card>
+            <v-toolbar :title="topicDialogTitle" color="#003DA5">
+                <v-btn icon="mdi-close" variant="text" size="small" @click="showTopicConfigDialog = false" />
+            </v-toolbar>
+            <v-container>
+                <v-form @submit.prevent="saveTopic">
+                    <v-col cols="12">
+                        <v-row>
+                            <v-col cols="12">
+
+                                <!-- If active topic -->
+                                <v-row v-if="topicFound(topicToAdd, activeTopics)" class="pb-5">
+                                    <v-col cols="2">
+                                        <p class="medium-title"><b>Topic:</b></p>
+                                    </v-col>
+                                    <v-col cols="10">
+                                        <p class="medium-title">{{ topicToAdd }}</p>
+                                    </v-col>
+                                </v-row>
+
+                                <v-divider />
+
+                                <v-row v-if="topicFound(topicToAdd, activeTopics)" class="pt-5">
+                                    <v-col cols="2">
+                                        <p class="medium-title"><b>Target:</b></p>
+                                    </v-col>
+                                    <v-col cols="8">
+                                        <!-- Target switches between read-only and editable -->
+                                        <p v-if="!editActiveTarget" class="medium-title">{{ targetToAdd }}</p>
+                                        <v-text-field v-else v-model="targetToAdd" density="comfortable"
+                                            variant="outlined" clearable :rules="[rules.required, rules.target]" />
+                                    </v-col>
+                                    <v-col cols="2">
+                                        <v-btn v-if="!editActiveTarget" variant="flat" color="#E09D00" block
+                                            size="large" @click.stop="editActiveTarget = true">Edit</v-btn>
+                                        <v-btn v-if="editActiveTarget" variant="flat" color="#00ABC9" block size="large"
+                                            @click.stop="editActiveTarget = false">Confirm</v-btn>
+                                    </v-col>
+                                </v-row>
+
+                                <!-- If pending topic -->
+                                <v-text-field v-if="!topicFound(topicToAdd, activeTopics)" v-model="topicToAdd"
+                                    label="Topic" :rules="[rules.required, rules.topic]" />
                             </v-col>
                         </v-row>
 
-                        <v-chip-group>
-                            <v-chip v-for="topic in topicsList" :key="topic" closable label
-                                @click:close="removeTopic(topic)">
-                                {{ topic }}
-                            </v-chip>
-                        </v-chip-group>
-                    </v-card-item>
-
-                    <v-card-item class="py-4">
-                        <v-row align="center" class="ma-1">
-                            <v-card-title>Download data</v-card-title>
-                        </v-row>
-                        <v-row align="center">
-                            <v-col cols="auto">
-                                <v-btn prepend-icon="mdi-folder-download" color="#003DA5" variant="flat"
-                                    :disabled="!isBrokerSelected" @click="selectDirectory('download')">Select a
-                                    folder</v-btn>
-                            </v-col>
-                            <v-col cols="auto">
-                                <v-chip label v-if="downloadDirectory">{{ truncatedDirectory }}</v-chip>
+                        <v-row>
+                            <v-col cols="12">
+                                <v-text-field v-if="!topicFound(topicToAdd, activeTopics)" v-model="targetToAdd"
+                                    label="Associated Sub-Directory" :rules="[rules.required, rules.target]" />
                             </v-col>
                         </v-row>
-                    </v-card-item>
 
-
-                    <v-card-item>
-                        <div class="d-flex justify-center">
-                            <!-- Save configuration button -->
-                            <v-btn @click="showSaveDialog = true" :disabled="!canSubscribe" color="#64BF40" variant="flat"
-                                class="ma-1" block>
-                                Save Configuration</v-btn>
-                        </div>
-                        <div class="d-flex justify-center">
-
-                            <!-- Subscribe/Unsubscribe buttons -->
-                            <v-btn v-if="!subscribePressed" :disabled="!canSubscribe" @click="toggleSubscription"
-                                color="#003DA5" variant="flat" class="ma-1" block>Subscribe</v-btn>
-                            <v-btn v-if="subscribePressed" @click="toggleSubscription" color="#E09D00" variant="flat"
-                                class="ma-1" block>Cancel Subscription</v-btn>
-                        </div>
-                        <div class="d-flex justify-center">
-                            <!-- Add or remove topics from on going subscription -->
-                            <v-btn v-if="subscribePressed" @click="showTopicDialog = true" color="#00A9CE" variant="flat"
-                                class="ma-1" block>Add or Delete Topics</v-btn>
-                        </div>
-                    </v-card-item>
+                        <v-row>
+                            <v-col cols="12">
+                                <!-- If an active target is being edited, you can't save -->
+                                <v-btn :disabled="editActiveTarget" type="submit" color="#003DA5" variant="flat" block
+                                    @click="saveTopic" :loading="makingServerRequest[topicToAdd]">Save</v-btn>
+                            </v-col>
+                        </v-row>
+                    </v-col>
                 </v-form>
+            </v-container>
+        </v-card>
+    </v-dialog>
 
-                <!-- Dialog for saving configuration, appears when 'Save Configuration' clicked -->
-                <v-dialog v-model="showSaveDialog" max-width="750px">
-                    <v-card>
-                        <v-card-title>
-                            Please enter a name for your configuration
-                            <v-btn icon="mdi-close" variant="text" class="close-button" @click="showSaveDialog = false" />
+    <!-- Shows Prometheus metrics of topic -->
+    <v-dialog v-model="showTopicMonitorDialog" class="max-table-width" transition="slide-y-transition">
+        <v-card>
+            <v-toolbar :title="monitorDialogTitle" color="#003DA5">
+                <v-btn icon="mdi-close" variant="text" size="small" @click="showTopicMonitorDialog = false" />
+            </v-toolbar>
+            <v-container>
+                <v-row class="py-5">
+                    <v-col cols="6">
+                        <v-card-title class="text-center">Downloaded Files
                         </v-card-title>
-                        <v-text-field v-model="configName" label="Configuration Name"></v-text-field>
-                        <v-card-actions>
-                            <v-col cols="6">
-                                <v-btn @click="saveConfiguration" color="#64BF40" variant="flat" block>Save</v-btn>
-                            </v-col>
-                            <v-col cols="6">
-                                <!-- Button that opens the directory dialog -->
-                                <v-btn @click="selectDirectory('save')" color="#E09D00" variant="flat" block>Save As</v-btn>
-                            </v-col>
-                        </v-card-actions>
-                    </v-card>
-                </v-dialog>
-
-                <!-- Dialog that displays the topics list as checkboxes -->
-                <v-dialog v-model="showTopicDialog" max-width="750px">
-                    <v-card>
-                        <v-toolbar title="Current Topics Subscribed To" color="#00A9CE">
-                            <v-btn icon="mdi-close" variant="text" @click="showTopicDialog = false" />
-                        </v-toolbar>
-                        <v-list lines="one">
-                            <v-list-item v-for="(topic, index) in topicsList" :key="index" :title="topic">
-                                <template v-slot:append>
-                                    <v-btn icon="mdi-minus" variant="flat" @click="confirmTopicDelete(topic)" />
-                                </template>
-                            </v-list-item>
-                        </v-list>
-                        <v-card-actions>
-                            <v-btn color="#64BF40" variant="flat" block @click="showAddTopicDialog = true">Add A New Topic
-                                To Subscription</v-btn>
-                        </v-card-actions>
-                    </v-card>
-                </v-dialog>
-
-                <!-- Dialog for confirming they want to delete that topic -->
-                <v-dialog v-model="showTopicWarningDialog" max-width="750px">
-                    <v-card>
-                        <v-toolbar title="Warning!" color="#D90429">
-                            <v-btn icon="mdi-close" variant="text" @click="showTopicWarningDialog = false" />
-                        </v-toolbar>
-                        <v-card-text>
-                            <v-row>
-                                Are you sure you want to delete the following topic:
-                            </v-row>
-                            <v-row justify="center">
-                                <b>{{ topicToDelete }}</b>
-                            </v-row>
-                            <v-row>
-                                from your subscription?
-                            </v-row>
-                        </v-card-text>
-                        <v-card-actions>
-                            <v-btn @click="manageTopics(topicToDelete, 'delete')" color="#64BF40" variant="flat" block>I
-                                Confirm</v-btn>
-
-                        </v-card-actions>
-                    </v-card>
-                </v-dialog>
-
-                <!-- Dialog for typing the name of the topic to add -->
-                <v-dialog v-model="showAddTopicDialog" max-width="750px">
-                    <v-card>
-                        <v-card-title>
-                            Add A New Topic
-                            <v-btn icon="mdi-close" variant="text" class="close-button"
-                                @click="showAddTopicDialog = false" />
+                        <vue-apex-charts ref="chart" type="bar" height="300" :options="chartOptions"
+                            :series="buildSeries('downloaded_files_total')">
+                        </vue-apex-charts>
+                    </v-col>
+                    <v-col cols="6">
+                        <v-card-title class="text-center">Downloaded Bytes
                         </v-card-title>
-                        <v-card-text>
-                            <v-text-field label="Please enter a new topic" variant="solo-filled" v-model="topicToAdd"
-                                @keyup.enter="manageTopics(topicToAdd, 'add')">
-                            </v-text-field>
-                        </v-card-text>
-                        <v-card-actions>
-                            <v-btn @click="manageTopics(topicToAdd, 'add')" color="#64BF40" variant="flat" block>Add
-                                Topic</v-btn>
-                        </v-card-actions>
-                    </v-card>
-                </v-dialog>
-            </v-card>
-        </v-col>
-    </v-row>
+                        <vue-apex-charts ref="chart" type="bar" height="300" :options="chartOptions"
+                            :series="buildSeries('downloaded_bytes_total')">
+                        </vue-apex-charts>
+                    </v-col>
+                </v-row>
 
-    <v-row class="justify-center">
-        <v-col cols="12" class="max-form-width">
-            <v-card>
-                <v-card-title class="big-title">
-                    Notifications
-                </v-card-title>
-                <v-card-item>
-                    <v-card variant="tonal">
-                        <v-container class="backend-output">
-                            {{ backendOutput }}
-                            <!-- Empty div to scroll to the bottom -->
-                            <div ref="latestResponse"></div>
-                        </v-container>
-                    </v-card>
-                </v-card-item>
-            </v-card>
-        </v-col>
-    </v-row>
+                <v-divider />
+
+                <v-row class="py-5">
+                    <v-col cols="3" />
+                    <v-col cols="6">
+                        <v-card-title class="text-center">Failed Downloads:
+                            <v-chip size="large" class="number">{{ topicMetrics['failed_downloads_total'] || 0
+                                }}</v-chip>
+                        </v-card-title>
+                    </v-col>
+                    <v-col cols="3" />
+                </v-row>
+            </v-container>
+        </v-card>
+    </v-dialog>
+
+    <!-- Confirm removal of topic -->
+    <v-dialog v-model="showRemoveWarningDialog" class="max-dialog-width">
+        <v-card>
+            <v-toolbar title="Confirm Action" color="error">
+                <v-btn icon="mdi-close" variant="text" size="small" @click="showRemoveWarningDialog = false" />
+            </v-toolbar>
+            <v-card-text>
+                <p>Are you sure that you want to remove the topic:</p>
+                <br>
+                <p class="medium-title text-center">{{ topicToRemove }}</p>
+                <br>
+                <p>{{ removalMessage }}</p>
+            </v-card-text>
+            <v-card-actions>
+                <v-col cols="6">
+                    <!-- Pending topic 'Yes' button -->
+                    <v-btn v-if="topicFound(topicToRemove, pendingTopics)" color="error" variant="flat" block
+                        @click="removeTopicFromPending">Yes</v-btn>
+                    <!-- Active topic 'Yes' button -->
+                    <v-btn v-if="topicFound(topicToRemove, activeTopics)" color="error" variant="flat" block
+                        @click="removeFromSubscription(topicToRemove)"
+                        :loading="makingServerRequest[topicToRemove]">Yes</v-btn>
+                </v-col>
+                <v-col cols="6">
+                    <v-btn color="black" variant="flat" block @click="showRemoveWarningDialog = false">No</v-btn>
+                </v-col>
+            </v-card-actions>
+        </v-card>
+    </v-dialog>
+
+    <!-- Error dialogs when something goes wrong connecting to the server, etc. -->
+    <v-dialog v-model="showErrorDialog" class="max-error-width">
+        <v-card>
+            <v-toolbar :title="errorTitle" color="error">
+                <v-btn icon="mdi-close" variant="text" size="small" @click="showErrorDialog = false" />
+            </v-toolbar>
+            <v-card-text>
+                <p>{{ errorMessage }}</p>
+            </v-card-text>
+            <v-card-actions>
+                <v-col cols="12">
+                    <v-btn color="black" variant="flat" block @click="showErrorDialog = false">OK</v-btn>
+                </v-col>
+            </v-card-actions>
+        </v-card>
+    </v-dialog>
 </template>
 
 <script>
-import { defineComponent, ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { defineComponent, ref, computed, onMounted, watch } from 'vue';
 import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VChipGroup, VChip, VCheckboxBtn } from 'vuetify/lib/components/index.mjs';
+import { useDisplay } from 'vuetify';
+import VueApexCharts from 'vue3-apexcharts'
+
+// Utilities
+import { HTTP_CODES } from '@/utils/constants.js';
+import { topicsIntersect } from '@/utils/topicTools.js';
+import { parsePrometheusText } from '@/utils/prometheusTools.js';
+
 
 export default defineComponent({
     name: 'ConfigSub',
@@ -260,56 +403,154 @@ export default defineComponent({
         VTextField,
         VChipGroup,
         VChip,
-        VCheckboxBtn
+        VCheckboxBtn,
+        VueApexCharts
     },
     setup() {
+        // Deep clone function to avoid reference issues between model and default model
+        function deepClone(obj) {
+            return JSON.parse(JSON.stringify(obj));
+        };
+
+        // Static variables
+        const rules = {
+            required: value => !!value || 'Field is required.',
+            topic: value => {
+                if (topicFound(value, activeTopics.value) || topicFound(value, pendingTopics.value)) {
+                    return 'This topic is already added to or overlaps with an existing topic';
+                }
+            },
+            target: value => {
+                // Check if the target is exactly "$TOPIC"
+                if (value === "$TOPIC") {
+                    return true;
+                }
+                // Regular expression for whitelisted characters
+                const validPattern = /^[A-Za-z0-9/_-]+$/;
+                return validPattern.test(value) || 'Invalid target';
+            }
+        };
+
+        const { mdAndUp, lgAndUp } = useDisplay();
+
+        // Bar chart options
+        const chartOptions = {
+            chart: {
+                id: 'chart-by-filetype',
+                animations: {
+                    enable: true,
+                    easy: 'linear'
+                },
+                toolbar: {
+                    show: false
+                }
+            },
+            plotOptions: {
+                bar: {
+                    borderRadius: 2,
+                    columnWidth: '50%',
+                    dataLabels: {
+                        position: 'top',
+                    },
+                }
+            },
+            colors: ['#00ABC9'],
+            dataLabels: {
+                enabled: true,
+                offsetY: -20,
+                style: {
+                    fontSize: '12px',
+                    colors: ["#304758"]
+                }
+            },
+            stroke: {
+                curve: 'straight'
+            },
+            xaxis: {
+                categories: ['bufr', 'grib', 'json', 'xml', 'png', 'other'],
+            },
+            yaxis: {
+                min: 0,
+                labels: {
+                    show: false
+                },
+                axisBorder: {
+                    show: false
+                },
+                axisTicks: {
+                    show: false
+                }
+            }
+        };
 
         // Reactive variables
-        const configDialog = ref(false);
-        const deleteLoadingBoolean = ref(false);
-        const brokerList = ref([]);
-        const syncLoadingBoolean = ref(false);
-        const selectedBroker = ref('');
-        const topicEntry = ref('')
-        const topicsList = ref([]);
-        const downloadDirectory = ref('');
-        const subscribePressed = ref(false);
-        const backendOutput = ref('');
-        const latestResponse = ref(null);
-        const selectedConfig = ref(null);
-        const configList = ref([]);
-        const showSaveDialog = ref(false);
-        const configName = ref('');
-        const configDirectory = ref('');
-        const configToDelete = ref('');
-        const showConfigWarningDialog = ref(false);
-        const showTopicDialog = ref(false);
-        const showAddTopicDialog = ref(false);
-        const topicToAdd = ref('');
-        const showTopicWarningDialog = ref(false);
-        const topicToDelete = ref('');
+
+        // Server information
+        const host = ref('127.0.0.1');
+        const port = ref('8080');
+        const username = ref('');
+        const password = ref('');
+        const connectionStatus = ref(false);
+
+        // The topics (as keys) and their associated targets (as values)
+        const activeTopics = ref([]);
+        const pendingTopics = ref([]);
+
+        // Download metrics of all topics, file types, etc.
+        const metrics = ref({});
+
+        // The topic and associated target to be added/deleted
+        const topicToAdd = ref('')
+        const targetToAdd = ref('')
+        const topicToRemove = ref('');
+
+        // Loading animation when connecting to the server or making requests
+        const connectingToServer = ref(false);
+        const makingServerRequest = ref({});
+
+        // Last time the frontend was synced with the backend
+        const lastSyncTime = ref(new Date().toLocaleTimeString());
+
+        // Topic configuration dialog
+        const showTopicConfigDialog = ref(false);
+        const topicDialogTitle = ref('Create New Topic');
+        const previousTopic = ref('');
+        const previousTarget = ref('');
+        const editActiveTarget = ref(false);
+
+        // Topic metric monitoring dialog
+        const showTopicMonitorDialog = ref(false);
+        const monitorDialogTitle = ref('');
+        const topicMetrics = ref({});
+
+        // Warning dialog for removing a topic
+        const showRemoveWarningDialog = ref(false);
+        const removalMessage = ref('');
+
+        // Error dialog
+        const showErrorDialog = ref(false);
+        const errorMessage = ref('');
+        const errorTitle = ref('');
 
         // Computed
-
-        // Checks if the global broker has been selected
-        const isBrokerSelected = computed(() => {
-            return selectedBroker.value !== ''
-        });
-
-        // Checks if the global broker has been selected and at
-        // least one topic has been added
-        const canSubscribe = computed(() => {
-            return isBrokerSelected.value && topicsList.value.length > 0 && downloadDirectory.value !== '';
-        });
-
-        // Truncates the selected folder directory if it is too long
-        const truncatedDirectory = computed(() => {
-            const maxPathLength = 30;
-            if (downloadDirectory.value.length > maxPathLength) {
-                return '...' + downloadDirectory.value.slice(-maxPathLength);
+        const settings = computed(() => {
+            return {
+                host: host.value,
+                port: port.value,
+                username: username.value,
+                password: password.value,
+                connectionStatus: connectionStatus.value,
+                activeTopics: activeTopics.value,
+                pendingTopics: pendingTopics.value
             }
-            // If the selected directory is less than 30 characters, leave as is
-            return downloadDirectory.value;
+        });
+
+        // Base URL to use with Flask endpoints (list, add, delete, etc.)
+        const serverLink = computed(() => {
+            if (port.value === '')
+                return `http://${host.value}`;
+            else
+                return `http://${host.value}:${port.value}`;
         });
 
         // Methods
@@ -317,389 +558,540 @@ export default defineComponent({
         // Load the saved information from the electron API
         const loadSettings = async () => {
             try {
-                const settings =  await window.electronAPI.loadSettings();
-                if (settings) {
-                    selectedBroker.value = settings.broker;
-                    topicsList.value = settings.topics;
-                    downloadDirectory.value = settings.downloadDirectory;
-                    subscribePressed.value = settings.subscribeStatus;
+                const storedSettings = await window.electronAPI.loadSettings();
+                if (storedSettings) {
+                    host.value = storedSettings?.host || '127.0.0.1';
+                    port.value = storedSettings?.port || '8080';
+                    username.value = storedSettings?.username || '';
+                    password.value = storedSettings?.password || '';
+                    connectionStatus.value = storedSettings?.connectionStatus || false;
+                    activeTopics.value = storedSettings?.activeTopics || [];
+                    pendingTopics.value = storedSettings?.pendingTopics || [];
                 }
             }
             catch (error) {
-                console.error('Error loading settings: ', error);
+                console.error('Error loading stored settings: ', error);
             }
         }
 
-        // Load the list of saved configurations
-        const loadConfigNames = async () => {
-            try {
-                const configs = await window.electronAPI.loadConfigNames();
-                configList.value = configs;
+        // Server interaction
+
+        // Processes the data from the /list endpoint to display in the table
+        const processTopicData = (data) => {
+            const processedData = [];
+            for (const topic in data) {
+                const target = data[topic].target;
+
+                processedData.push({
+                    topic: topic,
+                    target: target
+                });
             }
-            catch (error) {
-                console.error('Error loading config list: ', error);
-            }
+            return processedData;
         };
 
-        // Store config to delete and open confirmation dialog
-        const confirmConfigDelete = (config) => {
-            configToDelete.value = config;
-            showConfigWarningDialog.value = true;
-        };
+        // Get the topics and their associated targets from the /list endpoint
+        const getTopicList = async () => {
+            // Build the full URL for listing subscriptions
+            const url = `${serverLink.value}/list`;
 
-        // Deletes the configuration selected in the dialog
-        const deleteConfig = async () => {
             try {
-                // Enable loading animation of button
-                deleteLoadingBoolean.value = true;
-                // Send array of configs to delete to backend
-                await window.electronAPI.deleteConfig(configToDelete.value);
-                // Reload the list of configurations after a short delay
-                setTimeout(() => {
-                    loadConfigNames();
-                    // Close the warning dialog
-                    showConfigWarningDialog.value = false;
-                    // Disable loading animation of button
-                    deleteLoadingBoolean.value = false;
-                }, 1000);
-            }
-            catch (error) {
-                console.error('Error deleting configurations: ', error);
-            }
-        };
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
 
-        // Load the list of brokers from the JSON file when application is started
-        const loadBrokers = async () => {
-            try {
-                const data = await window.electronAPI.loadBrokers();
-                brokerList.value = data;
-            }
-            catch (error) {
-                console.error('Error loading brokers: ', error);
-            }
-        };
-
-        // Get the latest list of brokers for the Canada GDC API
-        const syncBrokers = async () => {
-            try {
-                // Set loading animation to true
-                syncLoadingBoolean.value = true;
-
-                // Query the catalogue
-                const CANADA_GDC_API = "https://api.weather.gc.ca/collections/wis2-discovery-metadata/items"
-                const response = await fetch(CANADA_GDC_API);
                 if (!response.ok) {
-                    throw new Error('Failed to query catalogue')
-                }
-                const items = await response.json();
-                const firstFeature = items.features[0];
-
-                if (firstFeature) {
-                    // Initialise array for broker URLs and titles
-                    const brokerList = [];
-                    let brokerURL = '';
-                    let brokerTitle = '';
-
-                    // In the links where the rel is 'items', the href starts with 'mqtt',
-                    // and the channel starts with 'cache', the global broker URLs can be found
-                    // in the the href after the 'mqtt://every.everyone@' part and before
-                    // the ':8883' part, and the global broker titles can be found
-                    // in the title after the 'Notifications from ' part
-                    firstFeature.links.forEach(link => {
-                        if (link.rel === 'items' && link.href.startsWith('mqtt') && link.channel.startsWith('cache')) {
-                            brokerURL = link.href.split('@')[1].split(':')[0];
-                            if (link.title) {
-                                brokerTitle = link.title.split('Notifications from ')[1];
-                            }
-                            else {
-                                brokerTitle = brokerURL;
-                            }
-                            brokerList.push({ title: brokerTitle, url: brokerURL });
-                        }
-                    });
-                    // Write it to the JSON file 'backend/brokers.json'
-                    window.electronAPI.writeBrokers(brokerList);
+                    // Show a readable error and disconnect
+                    const readableError = HTTP_CODES[response.status] || response.statusText;
+                    errorMessage.value = `There was a problem getting the subscribed topics: ${readableError}`;
+                    errorTitle.value = "Error Listing Topics";
+                    showErrorDialog.value = true;
+                    connectionStatus.value = false;
+                    return;
                 }
 
-                // Delay loading of JSON file to allow time for the backend
-                setTimeout(() => {
-                    // Load the brokers from the JSON file
-                    loadBrokers();
-                    // Disable loading animation of button
-                    syncLoadingBoolean.value = false;
-                }, 1000);
+                const data = await response.json();
+                console.log('Server topic data:', data);
+
+                // Process the data before displaying the table
+                activeTopics.value = processTopicData(data);
+
+                // Display the table of active/pending topics
+                connectionStatus.value = true;
             }
             catch (error) {
-                console.error('Error syncing brokers: ', error);
+                errorMessage.value = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
+                errorTitle.value = "Server Error";
+                showErrorDialog.value = true;
+                connectionStatus.value = false;
             }
         };
 
-        // If the user types a topic and presses +, it will add it to the
-        // topic list and reset the text field
-        const addTopic = () => {
-            if (topicEntry.value.trim() !== '') {
-                topicsList.value.push(topicEntry.value);
-                topicEntry.value = '';
-            }
-        };
+        // Get download metrics by querying Prometheus /metrics endpoint
+        const getMetrics = async () => {
 
-        // If the user clicks the 'close' button on a pre-entered topic,
-        // the topic will be removed from the list
-        const removeTopic = (topic) => {
-            const index = topicsList.value.indexOf(topic);
-            if (index > -1) {
-                /// Create a shallow copy first
-                let updatedTopicsList = [...topicsList.value];
+            // Build the full URL for Prometheus metrics
+            const url = `${serverLink.value}/metrics`;
 
-                // Remove the item at the specified index
-                updatedTopicsList.splice(index, 1);
-
-                // Reassign the topic list to the updated one
-                topicsList.value = updatedTopicsList;
-            }
-        };
-
-        // Communicates with the electron API to use the
-        // openDialog method, allowing the user to pick a folder
-        const selectDirectory = async (action) => {
             try {
-                // Use the method exposed in preload.js
-                const path = await window.electronAPI.openDialog();
-                if (path) {
-                    // Assign the directory depending on whether the user
-                    // intends this directory to be for downloading of data
-                    // or the saving of a configuration
-                    if (action == 'download') {
-                        downloadDirectory.value = path;
-                    }
-                    else if (action == 'save') {
-                        configDirectory.value = path;
-                        // Save the configuration
-                        saveConfiguration();
-                        // Close the save dialog
-                        showSaveDialog.value = false;
-                    }
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    const readableError = HTTP_CODES[response.status] || response.statusText;
+                    // Display the error message from server response, if available
+                    errorMessage.value = readableError;
+                    errorTitle.value = "Error Fetching Metrics";
+                    showErrorDialog.value = true;
+                    return;
                 }
+
+                const data = await response.text();
+
+                // Parse the Prometheus text data into an object
+                metrics.value = parsePrometheusText(data);
             }
             catch (error) {
-                console.error('Error selecting directory:', error);
+                errorMessage.value = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
+                errorTitle.value = "Server Error";
+                showErrorDialog.value = true;
             }
         };
 
-        // Saves the configuration settings to a local JSON file
-        const saveConfiguration = () => {
+        // Get the data from the server, such as topics, their associated
+        // targets, and the current status of the server
+        const getServerData = async () => {
+            // Start the button loading animation
+            connectingToServer.value = true;
+
+            // Use various endpoints to get the data
+            await getTopicList();
+            await getMetrics();
+
+            // If the connection is successful, update the last sync time
+            if (connectionStatus.value) {
+                lastSyncTime.value = new Date().toLocaleTimeString();
+            }
+
+            // Stop the button loading animation
+            connectingToServer.value = false;
+        };
+
+        // Clear the server data and reset the connection status
+        const clearServerData = () => {
+            connectionStatus.value = false;
+            activeTopics.value = [];
+        };
+
+        // Add the topic and target to the downloader using the /add endpoint
+        const addToSubscription = async (item) => {
+            // Start the button loading animation for this topic
+            makingServerRequest.value[item.topic] = true;
+
+            // The topic, in particular the wildcards (+,#), must be URI encoded
+            const encodedTopic = encodeURIComponent(item.topic);
+
+            // Build the full URL for adding a subscription
+            const url = `${serverLink.value}/add?topic=${encodedTopic}&target=${item.target}`;
+
             try {
-                const metadata = {
-                    'name': configName.value,
-                    'directory': configDirectory.value
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    const readableError = HTTP_CODES[response.status] || response.statusText;
+                    // Display the error message from server response, if available
+                    errorMessage.value = errorData.error ? errorData.error : readableError;
+                    errorTitle.value = "Error Adding Topic";
+                    showErrorDialog.value = true;
+                    // End the button loading animation for this topic
+                    makingServerRequest.value[item.topic] = false;
+                    return;
+                }
+
+                topicToRemove.value = item.topic;
+                removeTopicFromPending();
+
+                // Update the active topics
+                await getTopicList();
+
+                // End the button loading animation for this topic
+                makingServerRequest.value[item.topic] = false;
+            }
+            catch (error) {
+                errorMessage.value = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
+                errorTitle.value = "Server Error";
+                showErrorDialog.value = true;
+            }
+        };
+
+        const addAllToSubscription = async () => {
+            for (const item of pendingTopics.value) {
+                await addToSubscription(item);
+            }
+        };
+
+        const removeFromSubscription = async (topic) => {
+            // Start the button loading animation for this topic
+            makingServerRequest.value[topic] = true;
+
+            // The topic, in particular the wildcards (+,#), must be URI encoded
+            const encodedTopic = encodeURIComponent(topic);
+
+            // Build the full URL for deleting a subscription
+            const url = `${serverLink.value}/delete?topic=${encodedTopic}`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    const readableError = HTTP_CODES[response.status] || response.statusText;
+                    // Display the error message from server response, if available
+                    errorMessage.value = errorData.error ? errorData.error : readableError;
+                    errorTitle.value = "Error Removing Topic";
+                    showErrorDialog.value = true;
+                    // End the button loading animation for this topic
+                    makingServerRequest.value[topic] = false;
+                    return;
+                }
+
+                // Update the active topics
+                await getTopicList();
+
+                // Close the warning dialog
+                showRemoveWarningDialog.value = false;
+
+                // End the button loading animation for this topic
+                makingServerRequest.value[topic] = false;
+            }
+            catch (error) {
+                errorMessage.value = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
+                errorTitle.value = "Server Error";
+                showErrorDialog.value = true;
+            }
+        };
+
+        // Local interaction
+
+        // Check if the topic is found in the list of topic items
+        const topicFound = (topicToFind, topicList) => {
+            return topicList.some(item => topicsIntersect(item.topic, topicToFind));
+        };
+
+        const populateFields = (item) => {
+            // If item exists, show existing values
+            if (item) {
+                topicToAdd.value = item.topic;
+                targetToAdd.value = item.target;
+            }
+            // Otherwise show empty fields
+            else {
+                topicToAdd.value = '';
+                targetToAdd.value = '';
+            }
+        };
+
+        // Configure pending topic and target
+        const configureTopic = (item) => {
+            showTopicConfigDialog.value = true;
+
+            if (!item) {
+                topicDialogTitle.value = 'Create New Topic';
+            }
+            else {
+                topicDialogTitle.value = 'Edit Topic';
+            }
+
+            // Save the original plugin name and filetype
+            previousTopic.value = item?.topic;
+            previousTarget.value = item?.target;
+
+            populateFields(item);
+        };
+
+        // Adds or updates the topic, both in the list of active topics and pending topics
+        const saveTopic = async () => {
+            const isActive = topicFound(topicToAdd.value, activeTopics.value);
+
+            if (isActive) {
+                // To update the topic's target, we must first remove it and then add it back
+                await removeFromSubscription(topicToAdd.value);
+
+                const updatedItem = {
+                    topic: topicToAdd.value,
+                    target: targetToAdd.value
                 };
 
-                const data = {
-                    broker: selectedBroker.value,
-                    topics: Array.from(topicsList.value), // Convert Proxy to regular array
-                    download_directory: downloadDirectory.value
-                };
-
-                // Write to file named by user
-                window.electronAPI.saveConfig(metadata, data);
-
-                // Check if the config name already exists in the list,
-                // if not, add it
-                if (!configList.value.includes(metadata.name)) {
-                    configList.value.push(metadata.name);
-                };
-
+                await addToSubscription(updatedItem);
                 // Close the dialog
-                showSaveDialog.value = false;
+                showTopicConfigDialog.value = false;
+                return;
             }
 
-            catch (error) {
-                console.error('Error saving config: ', error);
+            const isPending = topicFound(previousTopic.value, pendingTopics.value);
+
+            if (isPending) {
+                updateTopicInPending();
+            } else {
+                addTopicToPending();
             }
+
+            // Close the dialog
+            showTopicConfigDialog.value = false;
+        };
+
+        // Make the names of metrics human readable
+        const makeReadable = (metricName) => {
+            return metricName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        };
+
+        // Build an array suitable for the bar charts
+        const buildSeries = (metricName) => {
+            const data = [];
+
+            // We must ensure the array is populated in the same
+            // order as the x-axis categories
+            for (const key of chartOptions.xaxis.categories) {
+                data.push(topicMetrics.value[metricName]?.[key] || 0);
+            }
+
+            return [{
+                name: makeReadable(metricName),
+                data: data
+            }];
+        };
+
+        // Add metric totals (e.g. total downloaded files) to topic metric data
+        const appendTotals = (data) => {
+            Object.keys(data).forEach(metricName => {
+
+                if (typeof data[metricName] !== 'object' || !data[metricName]) {
+                    return;
+                }
+
+                // Calculate the total for each object-based metric (e.g. downloaded files by type)
+                data[metricName]['total'] = Object.values(data[metricName]).reduce(
+                    (acc, val) => acc + val, 0);
+            })
+
+            return data;
         }
 
-        // Toggles the subscription process depending on whether the user
-        // intends to start a subscription or cancel a subscription
-        const toggleSubscription = () => {
-            // When subscribe/cancel button pressed, change boolean state
-            subscribePressed.value = !subscribePressed.value;
+        // Monitor the topic's metrics
+        const monitorTopic = async (selectedTopic) => {
+            // Update to latest server data
+            await getServerData();
 
-            try {
-                // Construct data to be sent
-                const data = {
-                    broker: selectedBroker.value,
-                    topics: Array.from(topicsList.value), // Convert Proxy to regular array
-                    downloadDirectory: downloadDirectory.value,
-                    shouldSubscribe: subscribePressed.value
-                };
+            // Wipe the metrics clean for this topic
+            topicMetrics.value = {};
 
-                console.log('Data sent to backend: ', data)
+            // Aggregate all data from topics that intersect with the selected one
+            Object.keys(metrics.value).forEach(topic => {
 
-                // Start or kill backend process
-                window.electronAPI.handleSubscription(data);
-            }
-            catch (error) {
-                console.error('Error subscribing: ', error);
-                backendOutput.value = 'Error occurred with backend subscriber';
-            }
-        };
-
-        // Start listeners of standard out and error from the 
-        // backend process
-
-        const handleBackendStatus = (event, response) => {
-            console.log('Backend response:', response);
-            backendOutput.value += "\n" + response.status + "\n";
-        };
-
-        const handleStdout = (event, message) => {
-            backendOutput.value += "\n" + message + "\n";
-        };
-
-        const handleStderr = (event, message) => {
-            backendOutput.value += "\n" + message + "\n";
-        };
-
-        // Store topic to delete and open confirmation dialog
-        const confirmTopicDelete = (topic) => {
-            topicToDelete.value = topic;
-            showTopicWarningDialog.value = true;
-        };
-
-        // Manage topics for existing subscription
-        const manageTopics = async (topic, action) => {
-            if (action === 'add') {
-                // Add topic to topic list so it appears in the UI
-                topicsList.value.push(topic);
-                // Send topic to backend to add to subscription
-                const data = {
-                    topic: topic,
-                    action: 'add'
+                if (!topicsIntersect(selectedTopic, topic)) {
+                    return;
                 }
-                await window.electronAPI.manageTopics(data);
-                // Now close the add topic dialog
-                showAddTopicDialog.value = false;
-            }
-            else if (action === 'delete') {
-                // Start loading animation of delete button
-                deleteLoadingBoolean.value = true;
-                // Remove from topic list so it no longer shows in the UI
-                topicsList.value.splice(topicsList.value.indexOf(topic), 1);
-                // Send topic to backend to delete from subscription
-                const data = {
-                    topic: topic,
-                    action: 'delete'
+
+                const topicData = metrics.value[topic];
+
+                // Iterate over each metric within the topic data
+                Object.keys(topicData).forEach(metricName => {
+                    const metricValue = topicData[metricName];
+
+                    // Directly aggregate numbers if no further labels are present
+                    if (typeof metricValue === 'number') {
+                        topicMetrics.value[metricName] = (topicMetrics.value[metricName] || 0) + metricValue;
+                    }
+
+                    // If file type labels present, the data will be an object 
+                    else if (typeof metricValue === 'object' && metricValue) {
+                        // Initialize metric container if not present
+                        topicMetrics.value[metricName] = topicMetrics.value[metricName] || {};
+
+                        // Aggregate data for each file type or label within the metric
+                        Object.keys(metricValue).forEach(label => {
+                            topicMetrics.value[metricName][label] = (topicMetrics.value[metricName][label] || 0) + metricValue[label];
+                        });
+                    }
+                });
+            });
+
+            // Now finally totals to the metrics with additional labels
+            // e.g. downloaded files by file type
+            topicMetrics.value = appendTotals(topicMetrics.value);
+
+            // Display the metrics to the user
+            monitorDialogTitle.value = `Download Metrics of ${selectedTopic}`;
+            showTopicMonitorDialog.value = true;
+        };
+
+        // Update topic and target in the list of pending topics
+        const updateTopicInPending = () => {
+            const updatedPendingTopics = pendingTopics.value.map(item => {
+                if (item.topic === previousTopic.value && item.target === previousTarget.value) {
+                    return {
+                        topic: topicToAdd.value,
+                        target: targetToAdd.value
+                    };
                 }
-                await window.electronAPI.manageTopics(data);
-                // Close warning dialog
-                showTopicWarningDialog.value = false;
-                // Stop loading animation
-                deleteLoadingBoolean.value = false;
+                return item;
+            });
+
+            pendingTopics.value = updatedPendingTopics;
+        };
+
+        // Add a topic and its associated target to the list of pending topics
+        const addTopicToPending = () => {
+
+            const toAdd = {
+                topic: topicToAdd.value,
+                target: targetToAdd.value
+            };
+
+            const topicIsDuplicate = topicFound(toAdd.topic, activeTopics.value);
+
+            if (topicIsDuplicate) {
+                errorMessage.value = 'Topic is already subscribed to';
+                return;
+            }
+
+            const updatedTopics = [...pendingTopics.value, toAdd];
+
+            pendingTopics.value = updatedTopics;
+
+            // Clear the input fields
+            topicToAdd.value = '';
+            targetToAdd.value = '';
+        };
+
+        // Remove a topic and its associated target from the list of pending topics
+        const removeTopicFromPending = () => {
+
+            const topicCanBeRemoved = topicFound(topicToRemove.value, pendingTopics.value);
+
+            if (!topicCanBeRemoved) {
+                console.log(`Topic ${topicToRemove.value} not found in subscription, nothing to remove`);
+                return;
+            }
+
+            let updatedTopics = [...pendingTopics.value];
+
+            updatedTopics = updatedTopics.filter(item => item.topic !== topicToRemove.value);
+
+            pendingTopics.value = updatedTopics;
+
+            // Close the warning dialog
+            showRemoveWarningDialog.value = false;
+        };
+
+        // Dialog to confirm deletion of a topic, with associated message depending on
+        // whether the topic is pending or active
+        const confirmRemoval = (topic, list) => {
+            showRemoveWarningDialog.value = true;
+
+            topicToRemove.value = topic;
+
+            if (list === 'pending') {
+                removalMessage.value = `This topic is not currently actively subscribed to. It can be easily added back later.`;
+            }
+            else if (list === 'active') {
+                removalMessage.value = `This topic is an active topic. Removing it will stop any real-time data being downloaded from it.`;
             }
         };
 
         onMounted(() => {
             // Get settings from GDC or previous usage of configuration page
             loadSettings();
-            // Get config list
-            loadConfigNames();
-            // Get broker list
-            loadBrokers();
-            // Get responses from backend to be displayed in frontend
-            window.electronAPI.onSubscriptionResponse(handleBackendStatus);
-            window.electronAPI.onBackendStdout(handleStdout);
-            window.electronAPI.onBackendStderr(handleStderr);
-        });
-
-        // Watch for changes in selectedConfig and update the UI
-        watch(selectedConfig, async () => {
-            if (selectedConfig.value) {
-                // Get the config data from the file
-                const configData = await window.electronAPI.loadConfig(selectedConfig.value);
-
-                // Log the config data obtained
-                console.log('Config data obtained: ', configData);
-
-                // Update the UI
-                selectedBroker.value = configData.broker;
-                topicsList.value = configData.topics;
-                downloadDirectory.value = configData['download_directory'];
+            // If the connection is already established, get the topic list every 5 minutes
+            if (connectionStatus.value) {
+                setInterval(getServerData, 5 * 60 * 1000);
             }
         });
 
         // Watch for changes in any of the user inputs, so that if they
         // navigate to the Explore page and return, their configuration is not lost
-        watch([selectedBroker, topicsList, downloadDirectory, subscribePressed], () => {
-            const settings = {
-                broker: selectedBroker.value, 
-                topics: Array.from(topicsList.value), 
-                downloadDirectory: downloadDirectory.value,
-                subscribeStatus: subscribePressed.value
-            };
-            console.log("Storing settings:", settings);
+        watch(settings, () => {
+            // As reactive objects aren't serialisable, we must deep copy it
+            const settingsToStore = deepClone(settings.value);
+            console.log("Storing settings:", settingsToStore);
             // Store the information in the electron API
-            window.electronAPI.storeSettings(settings);
+            window.electronAPI.storeSettings(settingsToStore);
         }, { deep: true }); // Use deep watch to track nested array
 
-        // Watch for changes in backendOutput and scroll to bottom
-        watch(backendOutput, () => {
-            nextTick(() => {
-                if (latestResponse.value) {
-                    latestResponse.value.scrollIntoView();
-                }
-                // Trim excess newline from backendOutput
-                backendOutput.value = backendOutput.value.trim();
-            });
-        });
-
-        // Clean up listeners
-        onUnmounted(() => {
-            window.electronAPI.removeListener('subscription-response',
-                handleBackendStatus);
-            window.electronAPI.removeListener('backend-stdout',
-                handleStdout);
-            window.electronAPI.removeListener('backend-stderr',
-                handleStderr);
-        });
 
         return {
-            brokerList,
-            syncLoadingBoolean,
-            selectedBroker,
-            topicEntry,
-            topicsList,
-            downloadDirectory,
-            isBrokerSelected,
-            canSubscribe,
-            truncatedDirectory,
-            addTopic,
-            removeTopic,
-            selectDirectory,
-            subscribePressed,
-            backendOutput,
-            latestResponse,
-            toggleSubscription,
-            selectedConfig,
-            configList,
-            configDialog,
-            showSaveDialog,
-            saveConfiguration,
-            configName,
-            configDirectory,
-            loadBrokers,
-            syncBrokers,
-            configToDelete,
-            deleteConfig,
-            showConfigWarningDialog,
-            confirmConfigDelete,
-            deleteLoadingBoolean,
-            showTopicDialog,
-            showAddTopicDialog,
+            // Static variables
+            rules,
+            mdAndUp,
+            lgAndUp,
+            chartOptions,
+
+            // Reactive variables
+            host,
+            port,
+            username,
+            password,
+            connectionStatus,
+            activeTopics,
+            pendingTopics,
+            metrics,
             topicToAdd,
-            manageTopics,
-            showTopicWarningDialog,
-            topicToDelete,
-            confirmTopicDelete
+            targetToAdd,
+            topicToRemove,
+            connectingToServer,
+            makingServerRequest,
+            lastSyncTime,
+            showTopicConfigDialog,
+            topicDialogTitle,
+            editActiveTarget,
+            showTopicMonitorDialog,
+            monitorDialogTitle,
+            topicMetrics,
+            showRemoveWarningDialog,
+            removalMessage,
+            showErrorDialog,
+            errorMessage,
+            errorTitle,
+
+            // Computed variables
+            settings,
+            serverLink,
+
+            // Methods
+            processTopicData,
+            getTopicList,
+            getMetrics,
+            getServerData,
+            clearServerData,
+            buildSeries,
+            monitorTopic,
+            topicFound,
+            configureTopic,
+            saveTopic,
+            addToSubscription,
+            addAllToSubscription,
+            removeFromSubscription,
+            addTopicToPending,
+            removeTopicFromPending,
+            confirmRemoval
         }
     }
 })
@@ -707,11 +1099,21 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.backend-output {
-    max-height: 200px;
-    /* Adjust as needed */
-    overflow-y: auto;
-    white-space: pre-wrap;
-    /* To respect line breaks and spaces */
+.topic-column {
+    width: 30%;
+}
+
+.directory-column {
+    width: 30%;
+}
+
+.button-column {
+    width: 40%;
+}
+
+.sync-time {
+    color: #666;
+    opacity: 0.75;
+    font-size: 1.1em;
 }
 </style>

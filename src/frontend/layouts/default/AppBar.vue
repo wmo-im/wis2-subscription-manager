@@ -12,8 +12,8 @@
         </a>
       </div>
 
-      <v-btn exact to="/" class="explore-button" color="white" prepend-icon="mdi-cloud-search">Explore</v-btn>
-      <v-btn exact to="/configure" class="configure-button" color="white" prepend-icon="mdi-account">Configure</v-btn>
+      <v-btn exact to="/" class="app-button" color="white" prepend-icon="mdi-account">Subscribe</v-btn>
+      <v-btn exact to="/catalogue" class="app-button" color="white" prepend-icon="mdi-cloud-search">Explore</v-btn>
     </template>
 
     <template v-slot:append v-if="isDarwin == true">
@@ -73,11 +73,7 @@ export default defineComponent({
   height: 50px;
 }
 
-.configure-button {
-  -webkit-app-region: no-drag;
-}
-
-.explore-button {
+.app-button {
   -webkit-app-region: no-drag;
   margin-left: 15px;
 }
