@@ -1108,11 +1108,11 @@ export default defineComponent({
 }
 
 .directory-column {
-    width: 20%;
+    width: 30%;
 }
 
 .button-column {
-    width: 50%;
+    width: 40%;
 }
 
 .sync-time {
