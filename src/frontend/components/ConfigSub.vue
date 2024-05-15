@@ -127,11 +127,11 @@
                                                     {{ item.target }}
                                                 </td>
                                                 <td class="text-center">
-                                                    <v-btn class="mr-5" append-icon="mdi-chart-box" color="#00ABC9"
+                                                    <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-chart-box' : ''" color="#00ABC9"
                                                         variant="flat" @click.stop="monitorTopic(item.topic)">
                                                         Monitor
                                                     </v-btn>
-                                                    <v-btn append-icon="mdi-delete" color="error" variant="flat"
+                                                    <v-btn :append-icon="lgAndUp ? 'mdi-delete' : ''" color="error" variant="flat"
                                                         @click.stop="confirmRemoval(item.topic, 'active')">Remove</v-btn>
                                                 </td>
                                             </tr>
@@ -183,12 +183,12 @@
                                                     {{ item.target }}
                                                 </td>
                                                 <td class="text-center">
-                                                    <v-btn class="mr-5" append-icon="mdi-cloud-upload" color="#003DA5"
+                                                    <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-cloud-upload' : ''" color="#003DA5"
                                                         variant="flat" @click.stop="addToSubscription(item)"
                                                         :loading="makingServerRequest[item.topic]">
                                                         Activate
                                                     </v-btn>
-                                                    <v-btn append-icon="mdi-delete" color="error" variant="flat"
+                                                    <v-btn :append-icon="lgAndUp ? 'mdi-delete' : ''" color="error" variant="flat"
                                                         @click.stop="confirmRemoval(item.topic, 'pending')">Remove</v-btn>
                                                 </td>
                                             </tr>
@@ -299,8 +299,6 @@
                 <v-row class="py-5">
                     <v-col cols="6">
                         <v-card-title class="text-center">Downloaded Files
-                            <!-- <v-chip size="large" class="number">Total: {{
-                                topicMetrics['downloaded_files_total']['total'] }}</v-chip> -->
                         </v-card-title>
                         <vue-apex-charts ref="chart" type="bar" height="300" :options="chartOptions"
                             :series="buildSeries('downloaded_files_total')">
@@ -308,8 +306,6 @@
                     </v-col>
                     <v-col cols="6">
                         <v-card-title class="text-center">Downloaded Bytes
-                            <!-- <v-chip size="large" class="number">Total: {{
-                                topicMetrics['downloaded_bytes_total']['total'] }}</v-chip> -->
                         </v-card-title>
                         <vue-apex-charts ref="chart" type="bar" height="300" :options="chartOptions"
                             :series="buildSeries('downloaded_bytes_total')">
