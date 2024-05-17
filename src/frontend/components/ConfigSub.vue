@@ -97,21 +97,21 @@
                                     </v-col>
                                 </v-row>
                                 <v-card-item>
-                                    <v-table :hover="true">
+                                    <v-table :hover="true" class="equal-width">
                                         <thead>
                                             <tr>
-                                                <th scope="row" class="topic-column">
+                                                <th scope="row">
                                                     <p v-if="activeTopics.length > 0" class="medium-title">Topic</p>
                                                     <p v-else class="medium-title text-center">No topics are currently
                                                         active
                                                     </p>
                                                 </th>
-                                                <th scope="row" class="directory-column">
+                                                <th scope="row">
                                                     <p v-if="activeTopics.length > 0" class="medium-title text-center">
                                                         Sub-Directory
                                                     </p>
                                                 </th>
-                                                <th scope="row" class="button-column">
+                                                <th scope="row">
                                                     <p v-if="activeTopics.length > 0" class="medium-title text-center">
                                                         Actions</p>
                                                 </th>
@@ -129,10 +129,14 @@
                                                 <td class="text-center">
                                                     <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-chart-box' : ''" color="#00ABC9"
                                                         variant="flat" @click.stop="monitorTopic(item.topic)">
-                                                        Monitor
+                                                        <p v-if="mdAndUp">Monitor</p>
+                                                        <v-icon v-if="!mdAndUp" icon="mdi-chart-box" />
                                                     </v-btn>
                                                     <v-btn :append-icon="lgAndUp ? 'mdi-delete' : ''" color="error" variant="flat"
-                                                        @click.stop="confirmRemoval(item.topic, 'active')">Remove</v-btn>
+                                                        @click.stop="confirmRemoval(item.topic, 'active')">
+                                                        <p v-if="mdAndUp">Remove</p>
+                                                        <v-icon v-if="!mdAndUp" icon="mdi-chart-box" />
+                                                    </v-btn>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -151,19 +155,19 @@
                                     downloader</v-card-subtitle>
 
                                 <v-card-item>
-                                    <v-table :hover="true">
+                                    <v-table :hover="true" class="equal-width">
                                         <thead>
                                             <tr>
-                                                <th scope="row" class="topic-column">
+                                                <th scope="row">
                                                     <p v-if="pendingTopics.length > 0" class="medium-title">Topic</p>
                                                     <p v-else class="medium-title text-center">No topics have been added
                                                     </p>
                                                 </th>
-                                                <th scope="row" class="directory-column">
+                                                <th scope="row">
                                                     <p v-if="pendingTopics.length > 0" class="medium-title text-center">
                                                         Sub-Directory</p>
                                                 </th>
-                                                <th scope="row" class="button-column">
+                                                <th scope="row">
                                                     <p v-if="pendingTopics.length > 0" class="medium-title text-center">
                                                         Actions
                                                     </p>
@@ -186,10 +190,14 @@
                                                     <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-cloud-upload' : ''" color="#003DA5"
                                                         variant="flat" @click.stop="addToSubscription(item)"
                                                         :loading="makingServerRequest[item.topic]">
-                                                        Activate
+                                                        <p v-if="mdAndUp">Activate</p>
+                                                        <v-icon v-if="!mdAndUp" icon="mdi-cloud-upload" />
                                                     </v-btn>
                                                     <v-btn :append-icon="lgAndUp ? 'mdi-delete' : ''" color="error" variant="flat"
-                                                        @click.stop="confirmRemoval(item.topic, 'pending')">Remove</v-btn>
+                                                        @click.stop="confirmRemoval(item.topic, 'pending')">
+                                                        <p v-if="mdAndUp">Remove</p>
+                                                        <v-icon v-if="!mdAndUp" icon="mdi-delete" />
+                                                    </v-btn>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -1099,18 +1107,13 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.topic-column {
-    width: 30%;
+
+.equal-width th, .equal-width td {
+    width: 33%;
+    word-break: break-word; /* Ensure long words wrap */
 }
 
-.directory-column {
-    width: 30%;
-}
-
-.button-column {
-    width: 40%;
-}
-
+/* Misc. */
 .sync-time {
     color: #666;
     opacity: 0.75;
