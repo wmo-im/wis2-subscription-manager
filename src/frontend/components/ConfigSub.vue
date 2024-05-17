@@ -303,8 +303,8 @@
             <v-toolbar :title="monitorDialogTitle" color="#003DA5">
                 <v-btn icon="mdi-close" variant="text" size="small" @click="showTopicMonitorDialog = false" />
             </v-toolbar>
-            <v-container>
-                <v-row class="py-5">
+            <v-container v-if="topicHasMetrics">
+                <v-row  class="py-5">
                     <v-col cols="6">
                         <v-card-title class="text-center">Downloaded Files
                         </v-card-title>
@@ -332,6 +332,15 @@
                         </v-card-title>
                     </v-col>
                     <v-col cols="3" />
+                </v-row>
+            </v-container>
+
+            <!-- If no metric data to present, show a message -->
+            <v-container v-else>
+                <v-row >
+                    <v-col cols="12">
+                        <p class="medium-title text-center">No metrics to display, as no notifications have been received yet from this topic.</p>
+                    </v-col>
                 </v-row>
             </v-container>
         </v-card>
@@ -559,6 +568,12 @@ export default defineComponent({
                 return `http://${host.value}`;
             else
                 return `http://${host.value}:${port.value}`;
+        });
+
+        // Check if the topic has metrics to display
+        // (If there are no keys, there is no Prometheus data for the topic)
+        const topicHasMetrics = computed(() => {
+            return Object.keys(topicMetrics.value).length > 0;
         });
 
         // Methods
@@ -946,6 +961,9 @@ export default defineComponent({
             // e.g. downloaded files by file type
             topicMetrics.value = appendTotals(topicMetrics.value);
 
+            // Remove redundant metric key for the subscription status
+            delete topicMetrics.value['topic_subscription_status'];
+
             // Display the metrics to the user
             monitorDialogTitle.value = `Download Metrics of ${selectedTopic}`;
             showTopicMonitorDialog.value = true;
@@ -1082,6 +1100,7 @@ export default defineComponent({
             // Computed variables
             settings,
             serverLink,
+            topicHasMetrics,
 
             // Methods
             processTopicData,
