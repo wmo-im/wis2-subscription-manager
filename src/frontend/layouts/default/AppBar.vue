@@ -7,17 +7,17 @@
       where the logo is. So fill the gap with a blank div -->
       <div class="logo-placeholder">
         <a v-if="isDarwin == false" 
-        href="https://docs.wis2box.wis.wmo.int/en/latest/" target="_blank">
+         target="_blank">
           <img src="/assets/logo-white.png" alt="Logo" class="wmo-logo" />
         </a>
       </div>
 
-      <v-btn exact to="/" class="app-button" color="white" prepend-icon="mdi-account">Subscribe</v-btn>
-      <v-btn exact to="/catalogue" class="app-button" color="white" prepend-icon="mdi-cloud-search">Explore</v-btn>
+      <v-btn exact to="/" class="app-button" color="white" prepend-icon="mdi-cloud-search">Explore</v-btn>
+      <v-btn exact to="/configure" class="app-button" color="white" prepend-icon="mdi-account">Subscribe</v-btn>
     </template>
 
     <template v-slot:append v-if="isDarwin == true">
-      <a href="https://docs.wis2box.wis.wmo.int/en/latest/" target="_blank">
+      <a target="_blank">
           <img src="/assets/logo-white.png" alt="Logo" class="wmo-logo" />
       </a>
     </template>

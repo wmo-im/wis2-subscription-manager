@@ -4,12 +4,12 @@ const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     {
-      path: '/',
+      path: '/configure',
       name: 'Configure',
       component: () => import('@/components/ConfigSub.vue')
     },
     {
-      path: '/catalogue',
+      path: '/',
       name: 'Catalogue',
       component: () => import('@/components/CatalogueView.vue')
     }
