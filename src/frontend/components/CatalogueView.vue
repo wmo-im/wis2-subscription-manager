@@ -247,94 +247,103 @@ export default defineComponent({
         }
 
         // Search the catalogue
-        const searchCatalogue = async () => {
-            // Enable the button loading animation
-            loadingBoolean.value = true;
+// Inside the searchCatalogue method
+// Search the catalogue
+const searchCatalogue = async () => {
+    try {
+        // Enable the button loading animation
+        loadingBoolean.value = true;
 
-            // Query the catalogue and write the results to JSON file
-            const params = new URLSearchParams();
-            // Add searched title if it exists
-            if (searchedTitle.value) {
-                params.append('title', searchedTitle.value);
-            }
-            // Add query if it exists
-            if (query.value) {
-                params.append('q', query.value);
-            }
+        // Query the catalogue and write the results to JSON file
+        const params = new URLSearchParams();
+        // Add searched title if it exists
+        if (searchedTitle.value) {
+            params.append('title', searchedTitle.value);
+        }
+        // Add query if it exists
+        if (query.value) {
+            params.append('q', query.value);
+        }
 
-            // Query the catalogue
-            const response = await fetch(`${selectedCatalogue.value}?${params}`);
-            if (!response.ok) {
-                const readableError = HTTP_CODES[response.status] || response.statusText;
-                errorMessage.value = `Error connecting to catalogue: ${readableError}`;
-                // Disable loading animation of button
-                loadingBoolean.value = false;
-                // Open the error message dialog
-                openErrorMessageDialog.value = true;
-                return;
-            }
-            const items = await response.json();
-            const features = items.features;
-
-            if (features) {
-                datasets.value = features.map(item => {
-                    const properties = item.properties || {};
-
-                    // Extract features from properties
-                    const identifier = properties.identifier;
-                    const title = properties.title;
-                    const creation_date = properties.created;
-                    const data_policy = properties['wmo:dataPolicy']
-
-                    // Initiate other features we want to extract
-                    let topic_hierarchy = null;
-                    let center_id = null;
-
-                    // The topic hierarchy is found in the 'channel'
-                    // property in 'links' where the 'rel' is 'items'
-                    // and the href starts with 'mqtt'
-                    for (const link of item.links || []) {
-                        if (link.rel === 'items' && link.href.startsWith('mqtt')) {
-                            topic_hierarchy = link.channel;
-                            // Once found, exit loop
-                            break;
-                        }
-                    }
-
-                    // Get the center ID from the identifier,
-                    // depending on the structure of the identifier
-                    if (identifier) {
-                        if (identifier.includes(':')) {
-                            const tokens = identifier.split(':');
-                            center_id = tokens.length < 5 ? tokens[1] : tokens[3];
-                        }
-                        else {
-                            const tokens = identifier.split('.');
-                            center_id = tokens[1];
-                        }
-                    }
-
-                    return {
-                        identifier: identifier,
-                        center_identifier: center_id,
-                        title: title,
-                        creation_date: creation_date,
-                        topic_hierarchy: topic_hierarchy,
-                        data_policy: data_policy,
-                    }
-                })
-            }
-
-            // Order this by alphabetical order of title
-            datasets.value.sort((a, b) => {
-                return a.title.localeCompare(b.title)
-            })
-
-            // Display table
-            tableBoolean.value = true;
+        // Query the catalogue
+        const response = await fetch(`${selectedCatalogue.value}?${params}`);
+        if (!response.ok) {
+            const readableError = HTTP_CODES[response.status] || response.statusText;
+            errorMessage.value = `Error connecting to catalogue: ${readableError}`;
             // Disable loading animation of button
             loadingBoolean.value = false;
+            // Open the error message dialog
+            openErrorMessageDialog.value = true;
+            return;
         }
+        const items = await response.json();
+        const features = items.features;
+
+        if (features) {
+            datasets.value = features.map(item => {
+                const properties = item.properties || {};
+
+                // Extract features from properties
+                const identifier = properties.identifier;
+                const title = properties.title;
+                const creation_date = properties.created;
+                const data_policy = properties['wmo:dataPolicy']
+
+                // Initiate other features we want to extract
+                let topic_hierarchy = null;
+                let center_id = null;
+
+                // The topic hierarchy is found in the 'channel'
+                // property in 'links' where the 'rel' is 'items'
+                // and the href starts with 'mqtt'
+                for (const link of item.links || []) {
+                    if (link.rel === 'items' && link.href.startsWith('mqtt')) {
+                        topic_hierarchy = link.channel;
+                        // Once found, exit loop
+                        break;
+                    }
+                }
+
+                // Get the center ID from the identifier,
+                // depending on the structure of the identifier
+                if (identifier) {
+                    if (identifier.includes(':')) {
+                        const tokens = identifier.split(':');
+                        center_id = tokens.length < 5 ? tokens[1] : tokens[3];
+                    }
+                    else {
+                        const tokens = identifier.split('.');
+                        center_id = tokens[1];
+                    }
+                }
+
+                return {
+                    identifier: identifier,
+                    center_identifier: center_id,
+                    title: title,
+                    creation_date: creation_date,
+                    topic_hierarchy: topic_hierarchy,
+                    data_policy: data_policy,
+                }
+            })
+        }
+
+        // Order this by alphabetical order of title
+        datasets.value.sort((a, b) => {
+            return a.title.localeCompare(b.title)
+        })
+
+        // Display table
+        tableBoolean.value = true;
+    } catch (error) {
+        console.error('Error searching catalogue: ', error);
+        errorMessage.value = 'Error searching catalogue. Please try again later.';
+        openErrorMessageDialog.value = true;
+    } finally {
+        // Disable loading animation of button
+        loadingBoolean.value = false;
+    }
+}
 
         // Open the dialog to display dataset metadata
         const openDialog = (item) => {
