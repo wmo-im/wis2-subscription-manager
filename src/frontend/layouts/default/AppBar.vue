@@ -6,21 +6,20 @@
       <!-- On MacOS, the traffic lights will be
       where the logo is. So fill the gap with a blank div -->
       <div class="logo-placeholder">
-        <a v-if="isDarwin == false" 
-         target="_blank">
+        <div v-if="isDarwin == false">
           <img src="/assets/logo-white.png" alt="Logo" class="wmo-logo" />
-        </a>
+        </div>
       </div>
 
       <v-btn exact to="/" class="app-button" color="white" prepend-icon="mdi-cloud-search">Explore</v-btn>
       <v-btn exact to="/configure" class="app-button" color="white" prepend-icon="mdi-account">Subscribe</v-btn>
-    </template>
+</template>
 
-    <template v-slot:append v-if="isDarwin == true">
-      <a target="_blank">
-          <img src="/assets/logo-white.png" alt="Logo" class="wmo-logo" />
-      </a>
-    </template>
+<template v-slot:append v-if="isDarwin == true">
+    <div>
+        <img src="/assets/logo-white.png" alt="Logo" class="wmo-logo" />
+    </div>
+</template>
 
   </v-app-bar>
 </template>
