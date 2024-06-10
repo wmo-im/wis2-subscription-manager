@@ -299,16 +299,16 @@ export default defineComponent({
                     let topic_hierarchy = null;
                     let center_id = null;
 
-                        // The topic hierarchy is found in the 'channel'
-                        // property in 'links' where the 'rel' is 'items'
-                        // and the href starts with 'mqtt'
-                        for (const link of item.links || []) {
-                            if (link.rel === 'items' && link.href.startsWith('mqtt')) {
-                                topic_hierarchy = link.channel;
-                                // Once found, exit loop
-                                break;
-                            }
+                    // The topic hierarchy is found in the 'channel'
+                    // property in 'links' where the 'rel' is 'items'
+                    // and the href starts with 'mqtt'
+                    for (const link of item.links || []) {
+                        if (link.rel === 'items' && link.href.startsWith('mqtt')) {
+                            topic_hierarchy = link.channel;
+                            // Once found, exit loop
+                            break;
                         }
+                    }
 
                     // Get the center ID from the identifier,
                     // depending on the structure of the identifier
