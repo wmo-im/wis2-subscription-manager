@@ -261,23 +261,17 @@ export default defineComponent({
         };
         // Search the catalogue
         const searchCatalogue = async () => {
-            // Enable the button loading animation
             loadingBoolean.value = true;
-
-            // Query the catalogue and write the results to JSON file
             const params = new URLSearchParams();
-            // Add searched title if it exists
             if (searchedTitle.value) {
                 params.append('title', searchedTitle.value);
             }
-            // Add query if it exists
             if (query.value) {
                 params.append('q', query.value);
             }
-            // Query the catalogue
+
             try {
                 const items = await fetchAPI(selectedCatalogue.value, params);
-                // check if items exists before trying to retrieve features
                 const features = items?.features;
                 if (!features) {
                     console.log("No features were found");
@@ -286,46 +280,42 @@ export default defineComponent({
                 }
 
                 datasets.value = features.map(item => {
-                    const properties = item.properties || {};
-                    let topic_hierarchy = null;
-                    let center_id = null;
+                const properties = item.properties || {};
+                let topic_hierarchy = null;
+                let center_id = null;
 
-                    for (const link of item.links || []) {
-                        if (link.rel === 'items' && link.href.startsWith('mqtt')) {
-                            topic_hierarchy = link.channel;
-                            break;
-                        }
+                for (const link of item.links || []) {
+                    if (link.rel === 'items' && link.href.startsWith('mqtt')) {
+                        topic_hierarchy = link.channel;
+                        break;
                     }
+                }
 
-                    if (properties.identifier) {
-                        const identifier = properties.identifier;
-                        if (identifier.includes(':')) {
-                            const tokens = identifier.split(':');
-                            center_id = tokens.length < 5 ? tokens[1] : tokens[3];
-                        } else {
-                            const tokens = identifier.split('.');
-                            center_id = tokens[1];
-                        }
+                if (properties.identifier) {
+                    const identifier = properties.identifier;
+                    if (identifier.includes(':')) {
+                        const tokens = identifier.split(':');
+                        center_id = tokens.length < 5 ? tokens[1] : tokens[3];
+                    } else {
+                        const tokens = identifier.split('.');
+                        center_id = tokens[1];
                     }
+                }
 
-                    return {
-                        identifier: properties.identifier,
-                        center_identifier: center_id,
-                        title: properties.title,
-                        creation_date: properties.created,
-                        topic_hierarchy: topic_hierarchy,
-                        data_policy: properties['wmo:dataPolicy'],
-                    }
-                })
-            // Order this by alphabetical order of title
-            datasets.value.sort((a, b) => {
-                return a.title.localeCompare(b.title)
-            })
+                return {
+                    identifier: properties.identifier,
+                    center_identifier: center_id,
+                    title: properties.title,
+                    creation_date: properties.created,
+                    topic_hierarchy: topic_hierarchy,
+                    data_policy: properties['wmo:dataPolicy'],
+                }
+            });
+                // Order by alphabetical order of title
+                datasets.value.sort((a, b) => a.title.localeCompare(b.title));
 
-            // Display table
-            tableBoolean.value = true;
-            // Disable loading animation of button
-            loadingBoolean.value = false;
+                // Display table
+                tableBoolean.value = true;
                 } catch (error) {
                     console.error('Error searching catalogue: ', error);
                     errorMessage.value = 'Error searching catalogue. Please try again later.';
