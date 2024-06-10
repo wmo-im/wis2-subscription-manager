@@ -289,20 +289,25 @@ export default defineComponent({
                     const properties = item.properties || {};
                     let topic_hierarchy = null;
                     let center_id = null;
-
+                    // The topic hierarchy is found in the 'channel'
+                    // property in 'links' where the 'rel' is 'items'
+                    // and the href starts with 'mqtt'
                     for (const link of item.links || []) {
                         if (link.rel === 'items' && link.href.startsWith('mqtt')) {
                             topic_hierarchy = link.channel;
+                            // Once found, exit loop
                             break;
                         }
                     }
-
+                    // Get the center ID from the identifier,
+                    // depending on the structure of the identifier
                     if (properties.identifier) {
                         const identifier = properties.identifier;
                         if (identifier.includes(':')) {
                             const tokens = identifier.split(':');
                             center_id = tokens.length < 5 ? tokens[1] : tokens[3];
-                        } else {
+                        } 
+                        else {
                             const tokens = identifier.split('.');
                             center_id = tokens[1];
                         }
