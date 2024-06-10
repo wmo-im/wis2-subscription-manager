@@ -246,89 +246,89 @@ export default defineComponent({
             }
         }
 
-// Helper function to fetch API data
-const fetchAPI = async (url, params) => {
-    try {
-        const response = await fetch(`${url}?${params}`);
-        if (!response.ok) {
-            const readableError = HTTP_CODES[response.status] || response.statusText;
-            throw new Error(`Error connecting to catalogue: ${readableError}`);
-        }
-        return await response.json();
-    } catch (error) {
-        throw new Error('Error fetching API data: ' + error.message);
-    }
-};
-// Search the catalogue
-// Inside the searchCatalogue method
-// Search the catalogue
-const searchCatalogue = async () => {
-    try {
-        // Enable the button loading animation
-        loadingBoolean.value = true;
+        // Helper function to fetch API data
+        const fetchAPI = async (url, params) => {
+            try {
+                const response = await fetch(`${url}?${params}`);
+                if (!response.ok) {
+                    const readableError = HTTP_CODES[response.status] || response.statusText;
+                    throw new Error(`Error connecting to catalogue: ${readableError}`);
+                }
+                return await response.json();
+            } catch (error) {
+                throw new Error('Error fetching API data: ' + error.message);
+            }
+        };
+        // Search the catalogue
+        // Inside the searchCatalogue method
+        // Search the catalogue
+        const searchCatalogue = async () => {
+            try {
+                // Enable the button loading animation
+                loadingBoolean.value = true;
 
-        // Prepare query parameters
-        const params = new URLSearchParams();
-        if (searchedTitle.value) {
-            params.append('title', searchedTitle.value);
-        }
-        if (query.value) {
-            params.append('q', query.value);
-        }
-
-        // Fetch data using fetchAPI helper function
-        const items = await fetchAPI(selectedCatalogue.value, params);
-        const features = items.features;
-
-        if (features) {
-            datasets.value = features.map(item => {
-                const properties = item.properties || {};
-                let topic_hierarchy = null;
-                let center_id = null;
-
-                for (const link of item.links || []) {
-                    if (link.rel === 'items' && link.href.startsWith('mqtt')) {
-                        topic_hierarchy = link.channel;
-                        break;
-                    }
+                // Prepare query parameters
+                const params = new URLSearchParams();
+                if (searchedTitle.value) {
+                    params.append('title', searchedTitle.value);
+                }
+                if (query.value) {
+                    params.append('q', query.value);
                 }
 
-                if (properties.identifier) {
-                    const identifier = properties.identifier;
-                    if (identifier.includes(':')) {
-                        const tokens = identifier.split(':');
-                        center_id = tokens.length < 5 ? tokens[1] : tokens[3];
-                    } else {
-                        const tokens = identifier.split('.');
-                        center_id = tokens[1];
-                    }
+                // Fetch data using fetchAPI helper function
+                const items = await fetchAPI(selectedCatalogue.value, params);
+                const features = items.features;
+
+                if (features) {
+                    datasets.value = features.map(item => {
+                        const properties = item.properties || {};
+                        let topic_hierarchy = null;
+                        let center_id = null;
+
+                        for (const link of item.links || []) {
+                            if (link.rel === 'items' && link.href.startsWith('mqtt')) {
+                                topic_hierarchy = link.channel;
+                                break;
+                            }
+                        }
+
+                        if (properties.identifier) {
+                            const identifier = properties.identifier;
+                            if (identifier.includes(':')) {
+                                const tokens = identifier.split(':');
+                                center_id = tokens.length < 5 ? tokens[1] : tokens[3];
+                            } else {
+                                const tokens = identifier.split('.');
+                                center_id = tokens[1];
+                            }
+                        }
+
+                        return {
+                            identifier: properties.identifier,
+                            center_identifier: center_id,
+                            title: properties.title,
+                            creation_date: properties.created,
+                            topic_hierarchy: topic_hierarchy,
+                            data_policy: properties['wmo:dataPolicy'],
+                        }
+                    });
                 }
 
-                return {
-                    identifier: properties.identifier,
-                    center_identifier: center_id,
-                    title: properties.title,
-                    creation_date: properties.created,
-                    topic_hierarchy: topic_hierarchy,
-                    data_policy: properties['wmo:dataPolicy'],
-                }
-            });
-        }
+                // Order by alphabetical order of title
+                datasets.value.sort((a, b) => a.title.localeCompare(b.title));
 
-        // Order by alphabetical order of title
-        datasets.value.sort((a, b) => a.title.localeCompare(b.title));
-
-        // Display table
-        tableBoolean.value = true;
-    } catch (error) {
-        console.error('Error searching catalogue: ', error);
-        errorMessage.value = 'Error searching catalogue. Please try again later.';
-        openErrorMessageDialog.value = true;
-    } finally {
-        // Disable loading animation of button
-        loadingBoolean.value = false;
-    }
-};
+                // Display table
+                tableBoolean.value = true;
+            } catch (error) {
+                console.error('Error searching catalogue: ', error);
+                errorMessage.value = 'Error searching catalogue. Please try again later.';
+                openErrorMessageDialog.value = true;
+            } finally {
+                // Disable loading animation of button
+                loadingBoolean.value = false;
+            }
+        };
 
         // Open the dialog to display dataset metadata
         const openDialog = (item) => {
