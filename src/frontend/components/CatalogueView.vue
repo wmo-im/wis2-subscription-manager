@@ -287,8 +287,10 @@ export default defineComponent({
 
                 datasets.value = features.map(item => {
                     const properties = item.properties || {};
+                    // Initiate other features we want to extract
                     let topic_hierarchy = null;
                     let center_id = null;
+
                     // The topic hierarchy is found in the 'channel'
                     // property in 'links' where the 'rel' is 'items'
                     // and the href starts with 'mqtt'
@@ -299,6 +301,7 @@ export default defineComponent({
                             break;
                         }
                     }
+
                     // Get the center ID from the identifier,
                     // depending on the structure of the identifier
                     if (properties.identifier) {
@@ -306,7 +309,7 @@ export default defineComponent({
                         if (identifier.includes(':')) {
                             const tokens = identifier.split(':');
                             center_id = tokens.length < 5 ? tokens[1] : tokens[3];
-                        } 
+                        }
                         else {
                             const tokens = identifier.split('.');
                             center_id = tokens[1];
@@ -322,6 +325,7 @@ export default defineComponent({
                         data_policy: properties['wmo:dataPolicy'],
                     }
                 })
+                
             // Order this by alphabetical order of title
             datasets.value.sort((a, b) => {
                 return a.title.localeCompare(b.title)
