@@ -297,8 +297,9 @@ export default defineComponent({
             }
 
             datasets.value = features.map(item => {
-                const properties = item.properties || {};
-                // Initiate other features we want to extract
+                const properties = item.properties;
+
+                // Initialise other features we want to extract
                 let topic_hierarchy = null;
                 let center_id = null;
 
@@ -315,8 +316,9 @@ export default defineComponent({
 
                 // Get the center ID from the identifier,
                 // depending on the structure of the identifier
-                if (properties.identifier) {
-                    const identifier = properties?.identifier;
+                const identifier = properties?.identifier
+
+                if (identifier) {
                     if (identifier.includes(':')) {
                         const tokens = identifier.split(':');
                         center_id = tokens.length < 5 ? tokens[1] : tokens[3];
@@ -328,10 +330,10 @@ export default defineComponent({
                     }
                 }
                 return {
-                    identifier: properties?.identifier,
+                    identifier: identifier,
                     center_identifier: center_id,
                     title: properties?.title,
-                    creation_date: properties.created,
+                    creation_date: properties?.created,
                     topic_hierarchy: topic_hierarchy,
                     data_policy: properties?.['wmo:dataPolicy'],
                 }
