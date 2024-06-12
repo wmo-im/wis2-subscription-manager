@@ -11,15 +11,11 @@
 
                 <v-card-item>
                     <v-row dense>
-                        <v-col cols="4">
+                        <v-col cols="5.5">
                             <v-select v-model="selectedCatalogue" :items="catalogueList" item-title="title"
                                 item-value="url" label="Choose a catalogue"></v-select>
                         </v-col>
-                        <v-col cols="4">
-                            <v-text-field v-model="searchedTitle" label="Enter a title" hint="Optional" persistent-hint
-                                clearable></v-text-field>
-                        </v-col>
-                        <v-col cols="3">
+                        <v-col cols="5.5">
                             <v-text-field v-model="query" label="Search the catalogue" hint="Optional" persistent-hint
                                 clearable></v-text-field>
                         </v-col>
@@ -175,7 +171,6 @@ export default defineComponent({
 
         // Reactive variables
         const selectedCatalogue = ref('');
-        const searchedTitle = ref(null);
         const query = ref(null);
         const datasets = ref([]);
         const loadingBoolean = ref(false);
@@ -267,10 +262,7 @@ export default defineComponent({
 
             // Query the catalogue and write the results to JSON file
             const params = new URLSearchParams();
-            // Add searched title if it exists
-            if (searchedTitle.value) {
-                params.append('title', searchedTitle.value);
-            }
+
             // Add query if it exists
             if (query.value) {
                 params.append('q', query.value);
@@ -499,7 +491,6 @@ export default defineComponent({
 
             // Reactive variables
             selectedCatalogue,
-            searchedTitle,
             query,
             datasets,
             loadingBoolean,
