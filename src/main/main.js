@@ -1,9 +1,5 @@
-const { app, BrowserWindow, Menu, Tray, nativeImage, ipcMain, dialog } = require("electron");
+const { app, BrowserWindow, Menu, Tray, nativeImage, ipcMain } = require("electron");
 const path = require("path");
-const fs = require('fs');
-const spawn = require('child_process').spawn;
-const kill = require('tree-kill');
-let backendProcess = null;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
@@ -42,7 +38,7 @@ const createWindow = () => {
   mainWindow.webContents.insertCSS("body::-webkit-scrollbar { display: none !important; }");
 
   // Always minimise to tray
-  mainWindow.on('minimize',function(event){
+  mainWindow.on('minimize',function(event) {
     event.preventDefault();
     mainWindow.hide();
   });

@@ -183,10 +183,8 @@ export default defineComponent({
         const jsonDialog = ref(false);
 
         // Information from Subscribe page
-        const host = ref('');
-        const port = ref('');
-        const username = ref('');
-        const password = ref('');
+        const serverLink = ref('');
+        const token = ref('');
         const connectionStatus = ref(false);
         const activeTopics = ref([]);
         const pendingTopics = ref([]);
@@ -200,10 +198,8 @@ export default defineComponent({
         // Stored settings from Subscribe page
         const settings = computed(() => {
             return {
-                host: host.value,
-                port: port.value,
-                username: username.value,
-                password: password.value,
+                serverLink: serverLink.value,
+                token: token.value,
                 connectionStatus: connectionStatus.value,
                 activeTopics: activeTopics.value,
                 pendingTopics: pendingTopics.value
@@ -227,10 +223,8 @@ export default defineComponent({
             try {
                 const storedSettings = await window.electronAPI.loadSettings();
                 if (storedSettings) {
-                    host.value = storedSettings?.host || '';
-                    port.value = storedSettings?.port || '';
-                    username.value = storedSettings?.username || '';
-                    password.value = storedSettings?.password || '';
+                    serverLink.value = storedSettings?.serverLink || '';
+                    token.value = storedSettings?.token || '';
                     connectionStatus.value = storedSettings?.connectionStatus || false;
                     activeTopics.value = storedSettings?.activeTopics || [];
                     pendingTopics.value = storedSettings?.pendingTopics || [];
