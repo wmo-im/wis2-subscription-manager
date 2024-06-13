@@ -7,7 +7,7 @@
 
 The WIS2 Subscription Manager is an Electron application that allows you to easily maintain your on-going subscriptions, as well as explore new topics of interest on a Global Discovery Catalogue.
 
-**Note**: This repository does *not* contain the downloader which actually enables the subscription process. <a href="https://github.com/wmo-im/wis2-downloader">The WIS2 Downloader can be found here.</a>
+**Note**: This repository does *not* contain the downloader which actually enables the subscription process. <a href="https://github.com/wmo-im/wis2downloader">The WIS2 Downloader can be found here.</a>
 
 <!-- TABLE OF CONTENTS -->
 <details>
