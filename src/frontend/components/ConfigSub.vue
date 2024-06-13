@@ -6,7 +6,7 @@
                     <v-toolbar-title class="big-title">WIS2 Subscription Dashboard</v-toolbar-title>
                     <v-toolbar-items class="sync-time pa-5">
                         <transition name="fade-transition">
-                            <p v-if="connectionStatus">Last synchronized: <b>{{ lastSyncTime }}</b></p>
+                            <p v-if="connectedToDownloader">Last synchronized: <b>{{ lastSyncTime }}</b></p>
                         </transition>
                     </v-toolbar-items>
                 </v-toolbar>
@@ -21,20 +21,20 @@
                             <v-row>
                                 <v-col cols="5">
                                     <v-text-field v-model="serverLink" label="Server URL"
-                                        :disabled="connectionStatus"></v-text-field>
+                                        :disabled="connectedToDownloader"></v-text-field>
                                 </v-col>
                                 <v-col cols="4">
                                     <v-text-field v-model="token" label="API Token"
-                                        :disabled="connectionStatus"></v-text-field>
+                                        :disabled="connectedToDownloader"></v-text-field>
                                 </v-col>
                                 <v-col cols="3">
                                     <!-- Before connecting -->
-                                    <v-btn v-if="!connectionStatus" color="#003DA5" size="x-large" block
+                                    <v-btn v-if="!connectedToDownloader" color="#003DA5" size="x-large" block
                                         append-icon="mdi-link" @click="getServerData"
                                         :loading="connectingToServer">Connect</v-btn>
 
                                     <!-- After connecting -->
-                                    <v-row v-if="connectionStatus" dense>
+                                    <v-row v-if="connectedToDownloader" dense>
                                         <template v-if="lgAndUp">
                                             <v-col cols="5">
                                                 <v-btn color="#00ABC9" size="x-large" block
@@ -70,7 +70,7 @@
                 <v-col cols="12" />
 
                 <transition name="slide-y-transition">
-                    <v-card-item v-if="connectionStatus">
+                    <v-card-item v-if="connectedToDownloader">
                         <v-divider class="pa-3" />
 
                         <v-row>
@@ -497,7 +497,7 @@ export default defineComponent({
         // Server information
         const serverLink = ref('127.0.0.1:8080');
         const token = ref('')
-        const connectionStatus = ref(false);
+        const connectedToDownloader = ref(false);
 
         // The topics (as keys) and their associated targets (as values)
         const activeTopics = ref([]);
@@ -544,7 +544,7 @@ export default defineComponent({
             return {
                 serverLink: serverLink.value,
                 token: token.value,
-                connectionStatus: connectionStatus.value,
+                connectedToDownloader: connectedToDownloader.value,
                 activeTopics: activeTopics.value,
                 pendingTopics: pendingTopics.value
             }
@@ -565,7 +565,7 @@ export default defineComponent({
                 if (storedSettings) {
                     serverLink.value = storedSettings?.serverLink || '127.0.0.1:8080';
                     token.value = storedSettings?.token || '';
-                    connectionStatus.value = storedSettings?.connectionStatus || false;
+                    connectedToDownloader.value = storedSettings?.connectedToDownloader || false;
                     activeTopics.value = storedSettings?.activeTopics || [];
                     pendingTopics.value = storedSettings?.pendingTopics || [];
                 }
@@ -615,7 +615,7 @@ export default defineComponent({
                     }
                     errorTitle.value = "Error Listing Topics";
                     showErrorDialog.value = true;
-                    connectionStatus.value = false;
+                    connectedToDownloader.value = false;
                     return;
                 }
 
@@ -626,13 +626,13 @@ export default defineComponent({
                 activeTopics.value = processTopicData(data);
 
                 // Display the table of active/pending topics
-                connectionStatus.value = true;
+                connectedToDownloader.value = true;
             }
             catch (error) {
                 errorMessage.value = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
                 errorTitle.value = "Server Error";
                 showErrorDialog.value = true;
-                connectionStatus.value = false;
+                connectedToDownloader.value = false;
             }
         };
 
@@ -683,7 +683,7 @@ export default defineComponent({
             await getMetrics();
 
             // If the connection is successful, update the last sync time
-            if (connectionStatus.value) {
+            if (connectedToDownloader.value) {
                 lastSyncTime.value = new Date().toLocaleTimeString();
             }
 
@@ -693,7 +693,7 @@ export default defineComponent({
 
         // Clear the server data and reset the connection status
         const clearServerData = () => {
-            connectionStatus.value = false;
+            connectedToDownloader.value = false;
             activeTopics.value = [];
         };
 
@@ -1033,7 +1033,7 @@ export default defineComponent({
             // Get settings from GDC or previous usage of configuration page
             loadSettings();
             // If the connection is already established, get the topic list every 5 minutes
-            if (connectionStatus.value) {
+            if (connectedToDownloader.value) {
                 setInterval(getServerData, 5 * 60 * 1000);
             }
         });
@@ -1059,7 +1059,7 @@ export default defineComponent({
             // Reactive variables
             serverLink,
             token,
-            connectionStatus,
+            connectedToDownloader,
             activeTopics,
             pendingTopics,
             metrics,

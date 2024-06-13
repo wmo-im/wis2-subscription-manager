@@ -52,7 +52,7 @@
                                 </th>
                                 <th scope="row" class="button-column">
                                     <v-row justify="center" class="pa-2"
-                                        v-if="tableBoolean === true && connectionStatus === true">
+                                        v-if="tableBoolean === true && connectionStatus">
                                         <v-switch inset label="Add All" v-model="addAllTopics"
                                             @change="addOrRemoveAllTopics(datasets, addAllTopics)"
                                             :disabled="tableBoolean === false" color="#003DA5" />
@@ -70,19 +70,19 @@
                                     <td>
                                         <!-- If topic not added, allow them to add -->
                                         <v-btn block
-                                            v-if="!topicFound(item.topic_hierarchy, selectedTopics) && item.topic_hierarchy && connectionStatus === true"
+                                            v-if="!topicFound(item.topic_hierarchy, selectedTopics) && item.topic_hierarchy && connectionStatus"
                                             color="#64BF40" append-icon="mdi-plus" variant="flat"
                                             @click.stop="addTopicToPending(item)">
                                             Add</v-btn>
                                         <v-btn block
-                                            v-if="topicFound(item.topic_hierarchy, pendingTopics) && connectionStatus === true"
+                                            v-if="topicFound(item.topic_hierarchy, pendingTopics) && connectionStatus"
                                             color="error" append-icon="mdi-minus" variant="flat"
                                             @click.stop="removeTopicFromPending(item)">
                                             Remove</v-btn>
                                         <v-btn block v-if="topicFound(item.topic_hierarchy, activeTopics)" disabled
                                             color="#003DA5" append-icon="mdi-download-multiple" variant="flat">
                                             Active</v-btn>
-                                        <v-btn block v-if="!item.topic_hierarchy && connectionStatus === true" disabled variant="flat">
+                                        <v-btn block v-if="!item.topic_hierarchy && connectionStatus" disabled variant="flat">
                                             No Topic</v-btn>
                                     </td>
                                 </tr>
