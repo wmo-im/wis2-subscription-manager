@@ -5,7 +5,7 @@
                 <v-toolbar dense>
                     <v-toolbar-title class="big-title">Search a WIS2 Global Discovery Catalogue</v-toolbar-title>
                 </v-toolbar>
-                <v-card-subtitle>Find datasets to add to your list of pending subscriptions</v-card-subtitle>
+                <v-card-subtitle>Explore and find datasets to add to your list of pending subscriptions</v-card-subtitle>
 
                 <v-col cols="12" />
 
@@ -51,7 +51,8 @@
                                     <p class="medium-title">Discovery Metadata Records Found</p>
                                 </th>
                                 <th scope="row" class="button-column">
-                                    <v-row justify="center" class="pa-2" v-if="tableBoolean === true">
+                                    <v-row justify="center" class="pa-2"
+                                        v-if="tableBoolean === true && connectionStatus">
                                         <v-switch inset label="Add All" v-model="addAllTopics"
                                             @change="addOrRemoveAllTopics(datasets, addAllTopics)"
                                             :disabled="tableBoolean === false" color="#003DA5" />
@@ -69,18 +70,19 @@
                                     <td>
                                         <!-- If topic not added, allow them to add -->
                                         <v-btn block
-                                            v-if="!topicFound(item.topic_hierarchy, selectedTopics) && item.topic_hierarchy"
+                                            v-if="!topicFound(item.topic_hierarchy, selectedTopics) && item.topic_hierarchy && connectionStatus"
                                             color="#64BF40" append-icon="mdi-plus" variant="flat"
                                             @click.stop="addTopicToPending(item)">
                                             Add</v-btn>
-                                        <v-btn block v-if="topicFound(item.topic_hierarchy, pendingTopics)"
+                                        <v-btn block
+                                            v-if="topicFound(item.topic_hierarchy, pendingTopics) && connectionStatus"
                                             color="error" append-icon="mdi-minus" variant="flat"
                                             @click.stop="removeTopicFromPending(item)">
                                             Remove</v-btn>
                                         <v-btn block v-if="topicFound(item.topic_hierarchy, activeTopics)" disabled
                                             color="#003DA5" append-icon="mdi-download-multiple" variant="flat">
                                             Active</v-btn>
-                                        <v-btn block v-if="!item.topic_hierarchy" disabled variant="flat">
+                                        <v-btn block v-if="!item.topic_hierarchy && connectionStatus" disabled variant="flat">
                                             No Topic</v-btn>
                                     </td>
                                 </tr>
@@ -166,7 +168,7 @@ export default defineComponent({
         // Static variables
         const catalogueList = [
             { title: 'Meteorological Service of Canada', url: 'https://api.weather.gc.ca/collections/wis2-discovery-metadata/items' },
-            { title: 'China Meteorological Administration', url: 'https://gdc.wis.cma.cn/collections/wis2-discovery-metadata/items' }
+            { title: 'China Meteorological Administration', url: 'https://gdc.wis.cma.cn/collections/wis2-discovery-metadata/items?f=json' }
         ];
 
         // Reactive variables
