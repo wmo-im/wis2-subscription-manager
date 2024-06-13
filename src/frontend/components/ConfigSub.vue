@@ -19,20 +19,12 @@
                         <v-card-subtitle>Enter your server information to get started</v-card-subtitle>
                         <v-card-text>
                             <v-row>
-                                <v-col cols="3">
-                                    <v-text-field v-model="host" label="Server Host"
+                                <v-col cols="5">
+                                    <v-text-field v-model="serverLink" label="Server URL"
                                         :disabled="connectionStatus"></v-text-field>
                                 </v-col>
-                                <v-col cols="2">
-                                    <v-text-field v-model="port" label="Server Port"
-                                        :disabled="connectionStatus"></v-text-field>
-                                </v-col>
-                                <v-col cols="2">
-                                    <v-text-field v-model="username" label="Username"
-                                        :disabled="connectionStatus"></v-text-field>
-                                </v-col>
-                                <v-col cols="2">
-                                    <v-text-field v-model="password" label="Password"
+                                <v-col cols="4">
+                                    <v-text-field v-model="token" label="API Token"
                                         :disabled="connectionStatus"></v-text-field>
                                 </v-col>
                                 <v-col cols="3">
@@ -503,10 +495,8 @@ export default defineComponent({
         // Reactive variables
 
         // Server information
-        const host = ref('127.0.0.1');
-        const port = ref('8080');
-        const username = ref('');
-        const password = ref('');
+        const serverLink = ref('127.0.0.1:8080');
+        const token = ref('')
         const connectionStatus = ref(false);
 
         // The topics (as keys) and their associated targets (as values)
@@ -552,22 +542,12 @@ export default defineComponent({
         // Computed
         const settings = computed(() => {
             return {
-                host: host.value,
-                port: port.value,
-                username: username.value,
-                password: password.value,
+                serverLink: serverLink.value,
+                token: token.value,
                 connectionStatus: connectionStatus.value,
                 activeTopics: activeTopics.value,
                 pendingTopics: pendingTopics.value
             }
-        });
-
-        // Base URL to use with Flask endpoints (list, add, delete, etc.)
-        const serverLink = computed(() => {
-            if (port.value === '')
-                return `http://${host.value}`;
-            else
-                return `http://${host.value}:${port.value}`;
         });
 
         // Check if the topic has metrics to display
@@ -583,10 +563,8 @@ export default defineComponent({
             try {
                 const storedSettings = await window.electronAPI.loadSettings();
                 if (storedSettings) {
-                    host.value = storedSettings?.host || '127.0.0.1';
-                    port.value = storedSettings?.port || '8080';
-                    username.value = storedSettings?.username || '';
-                    password.value = storedSettings?.password || '';
+                    serverLink.value = storedSettings?.serverLink || '127.0.0.1:8080';
+                    token.value = storedSettings?.token || '';
                     connectionStatus.value = storedSettings?.connectionStatus || false;
                     activeTopics.value = storedSettings?.activeTopics || [];
                     pendingTopics.value = storedSettings?.pendingTopics || [];
@@ -623,13 +601,18 @@ export default defineComponent({
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token.value
                     }
                 });
 
                 if (!response.ok) {
                     // Show a readable error and disconnect
-                    const readableError = HTTP_CODES[response.status] || response.statusText;
-                    errorMessage.value = `There was a problem getting the subscribed topics: ${readableError}`;
+                    if (HTTP_CODES[response.status] == 'Unauthorized') {
+                        errorMessage.value = 'Unauthorized. Please check the API token.';
+                    } else {
+                        const readableError = HTTP_CODES[response.status] || response.statusText;
+                        errorMessage.value = `There was a problem getting the subscribed topics: ${readableError}`;
+                    }
                     errorTitle.value = "Error Listing Topics";
                     showErrorDialog.value = true;
                     connectionStatus.value = false;
@@ -664,6 +647,7 @@ export default defineComponent({
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token.value
                     },
                 });
 
@@ -729,6 +713,7 @@ export default defineComponent({
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token.value
                     },
                 });
 
@@ -781,6 +766,7 @@ export default defineComponent({
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token.value
                     },
                 });
 
@@ -1071,10 +1057,8 @@ export default defineComponent({
             chartOptions,
 
             // Reactive variables
-            host,
-            port,
-            username,
-            password,
+            serverLink,
+            token,
             connectionStatus,
             activeTopics,
             pendingTopics,
@@ -1099,7 +1083,6 @@ export default defineComponent({
 
             // Computed variables
             settings,
-            serverLink,
             topicHasMetrics,
 
             // Methods
