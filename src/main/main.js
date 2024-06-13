@@ -65,7 +65,7 @@ const createWindow = () => {
 
   // Restore application from the tray
   const contextMenu = Menu.buildFromTemplate([
-    { label: 'Show Downloader', click:  function(){
+    { label: 'Show Subscription Manager', click:  function(){
         mainWindow.show();
     } },
     { label: 'Quit', click:  function(){

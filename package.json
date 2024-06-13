@@ -1,8 +1,8 @@
 {
-  "name": "wis2-downloader",
-  "productName": "WIS2 Downloader",
+  "name": "wis2-subscription-manager",
+  "productName": "WIS2 Subscription Manager",
   "version": "0.2.dev1",
-  "description": "This standalone application allows you to connect to WIS2 global brokers, explore the Global Discovery Catalogues and download data from the WIS2 network.",
+  "description": "This standalone application allows you to browse a WIS2 Global Discovery Catalogue, configure WIS2 subscriptions, and view download metrics.",
   "main": ".vite/build/main.js",
   "scripts": {
     "start": "electron-forge start",

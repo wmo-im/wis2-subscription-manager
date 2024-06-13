@@ -1,13 +1,13 @@
 <a name="readme-top"></a>
 
-# The WIS2 Downloader GUI
-### The desktop application for managing your backend WIS2 Downloader
+# The WIS2 Subscription Manager
+### The desktop application for managing your WIS2 Downloader
 
-<a href="https://github.com/wmo-im/wis2-downloader-gui/blob/main/LICENSE" alt="License" ><img src="https://img.shields.io/badge/License-Apache_2.0-blue"></img></a>
+<a href="https://github.com/wmo-im/wis2-subscription-manager/blob/main/LICENSE" alt="License" ><img src="https://img.shields.io/badge/License-Apache_2.0-blue"></img></a>
 
-The WIS2 Downloader GUI is an Electron application that allows you to easily maintain your on-going subscriptions, as well as explore new topics of interest on a Global Discovery Catalogue.
+The WIS2 Subscription Manager is an Electron application that allows you to easily maintain your on-going subscriptions, as well as explore new topics of interest on a Global Discovery Catalogue.
 
-**Note**: This repository does *not* contain the backend which actually enables the subscription process. <a href="https://github.com/wmo-im/wis2-downloader">The WIS2 Downloader backend can be found here.</a>
+**Note**: This repository does *not* contain the downloader which actually enables the subscription process. <a href="https://github.com/wmo-im/wis2-downloader">The WIS2 Downloader can be found here.</a>
 
 <!-- TABLE OF CONTENTS -->
 <details>
@@ -59,37 +59,37 @@ The WIS2 Downloader GUI is an Electron application that allows you to easily mai
 
 ### Examples
 <div align="center">
-    <img src="https://github.com/wmo-im/wis2-downloader-gui/assets/47696929/7a1e5164-d49a-4ec3-9e8c-ba5822970e9d" style="width:400px"/>
-    <img src="https://github.com/wmo-im/wis2-downloader-gui/assets/47696929/81cc2def-0fce-4224-a961-290c2cbff31d" style="width:400px"/>
+    <img src="https://github.com/wmo-im/wis2-subscription-manager/assets/47696929/7a1e5164-d49a-4ec3-9e8c-ba5822970e9d" style="width:400px"/>
+    <img src="https://github.com/wmo-im/wis2-subscription-manager/assets/47696929/81cc2def-0fce-4224-a961-290c2cbff31d" style="width:400px"/>
 </div>
 
 <br/>
 
 <div align="center">
-    <img src="https://github.com/wmo-im/wis2-downloader-gui/assets/47696929/85ffd7ae-cf50-4bd0-87bd-450bd3e38247" style="width:400px"/>
-    <img src="https://github.com/wmo-im/wis2-downloader-gui/assets/47696929/f7972cb0-a2e1-4e3d-8c65-7ec5cb56f8e2" style="width:400px"/>
+    <img src="https://github.com/wmo-im/wis2-subscription-manager/assets/47696929/85ffd7ae-cf50-4bd0-87bd-450bd3e38247" style="width:400px"/>
+    <img src="https://github.com/wmo-im/wis2-subscription-manager/assets/47696929/f7972cb0-a2e1-4e3d-8c65-7ec5cb56f8e2" style="width:400px"/>
 </div>
 
 
 ## Demos
 ### Browsing a GDC
 <div align="center">
-    <img src="https://github.com/wmo-im/wis2-downloader-gui/assets/47696929/293f3baf-efca-4de9-b635-f13f97259f62" style="width:700px"/>
+    <img src="https://github.com/wmo-im/wis2-subscription-manager/assets/47696929/293f3baf-efca-4de9-b635-f13f97259f62" style="width:700px"/>
 </div>
 
 ### Adding and Configuring Topics
 <div align="center">
-   <img src="https://github.com/wmo-im/wis2-downloader-gui/assets/47696929/81d18cde-9014-482c-b8b1-5a82108b4e5e" style="width:700px"/>
+   <img src="https://github.com/wmo-im/wis2-subscription-manager/assets/47696929/81d18cde-9014-482c-b8b1-5a82108b4e5e" style="width:700px"/>
 </div>
 
 
 ## Getting Started
 
 ### 1. Download
-In the <a href="https://github.com/wmo-im/wis2-downloader-gui/releases">releases section</a>, expand the 'Assets' drop-down and download the zip file for your operating system.
+In the <a href="https://github.com/wmo-im/wis2-subscription-manager/releases">releases section</a>, expand the 'Assets' drop-down and download the zip file for your operating system.
 
 ### 2. Install
-Extract this folder and double click on the install file. This should open the GUI and you're ready to go.
+Extract this folder and double click on the install file. This should open the application and you're ready to go.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -101,7 +101,7 @@ Extract this folder and double click on the install file. This should open the G
 Firstly, clone this repository to your local directory
 
 ```
-git clone https://github.com/wmo-im/wis2-downloader
+git clone https://github.com/wmo-im/wis2-subscription-manager
 ```
 
 In this directory, install the required libraries with `npm`:
@@ -182,7 +182,7 @@ This is where the two key Electron files are stored: `main.js` and `preload.js`.
 
 ## Bugs and Issues
 
-All bugs, enhancements and issues are managed on [GitHub](https://github.com/wmo-im/wis2-downloader-gui/issues).
+All bugs, enhancements and issues are managed on [GitHub](https://github.com/wmo-im/wis2-subscription-manager/issues).
 
 ## Contact
 
