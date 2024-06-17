@@ -5,7 +5,8 @@
                 <v-toolbar dense>
                     <v-toolbar-title class="big-title">Search a WIS2 Global Discovery Catalogue</v-toolbar-title>
                 </v-toolbar>
-                <v-card-subtitle>Explore and find datasets to add to your list of pending subscriptions</v-card-subtitle>
+                <v-card-subtitle>Explore and find datasets to add to your list of pending
+                    subscriptions</v-card-subtitle>
 
                 <v-col cols="12" />
 
@@ -82,7 +83,8 @@
                                         <v-btn block v-if="topicFound(item.topic_hierarchy, activeTopics)" disabled
                                             color="#003DA5" append-icon="mdi-download-multiple" variant="flat">
                                             Active</v-btn>
-                                        <v-btn block v-if="!item.topic_hierarchy && connectionStatus" disabled variant="flat">
+                                        <v-btn block v-if="!item.topic_hierarchy && connectionStatus" disabled
+                                            variant="flat">
                                             No Topic</v-btn>
                                     </td>
                                 </tr>
@@ -361,10 +363,27 @@ export default defineComponent({
             // Enable the button loading animation
             loadingJsonBoolean.value = true;
 
-            const url = `${selectedCatalogue.value}/${id}?f=json`;
+            let url = id ? `${selectedCatalogue.value}/${id}?f=json` : null;
+
+            if (!url && selectedItem.value && selectedItem.value.title) {
+                url = `${selectedCatalogue.value}?title=${encodeURIComponent(selectedItem.value.title)}&f=json`;
+            }
+
+            if (!url) {
+                errorMessage.value = 'Cannot open JSON: Missing identifier (id) or title';
+                loadingJsonBoolean.value = false;
+                return;
+            }
 
             // Format the JSON content
             const response = await fetch(url);
+
+            if (!response.ok) {
+                errorMessage.value = `Error fetching JSON data: ${response.statusText}`;
+                loadingJsonBoolean.value = false;
+                return;
+            }
+            
             const data = await response.json();
             formattedJson.value = JSON.stringify(data, null, 2);
 
