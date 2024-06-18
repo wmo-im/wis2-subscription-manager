@@ -37,25 +37,23 @@
                                     <v-row v-if="connectedToDownloader" dense>
                                         <template v-if="lgAndUp">
                                             <v-col cols="5">
-                                                <v-btn color="#00ABC9" size="x-large" block
-                                                    append-icon="mdi-sync" @click="getServerData"
-                                                    :loading="connectingToServer">Sync</v-btn>
+                                                <v-btn color="#00ABC9" size="x-large" block append-icon="mdi-sync"
+                                                    @click="getServerData" :loading="connectingToServer">Sync</v-btn>
                                             </v-col>
                                             <v-col cols="7">
-                                                <v-btn color="#E09D00" size="x-large" block
-                                                    append-icon="mdi-link-off" @click="clearServerData"
+                                                <v-btn color="#E09D00" size="x-large" block append-icon="mdi-link-off"
+                                                    @click="clearServerData"
                                                     :loading="connectingToServer">Disconnect</v-btn>
                                             </v-col>
                                         </template>
                                         <template v-else>
                                             <v-col cols="12">
-                                                <v-btn color="#00ABC9" block
-                                                    append-icon="mdi-sync" @click="getServerData"
-                                                    :loading="connectingToServer">Sync</v-btn>
+                                                <v-btn color="#00ABC9" block append-icon="mdi-sync"
+                                                    @click="getServerData" :loading="connectingToServer">Sync</v-btn>
                                             </v-col>
                                             <v-col cols="12">
-                                                <v-btn color="#E09D00" block
-                                                    append-icon="mdi-link-off" @click="clearServerData"
+                                                <v-btn color="#E09D00" block append-icon="mdi-link-off"
+                                                    @click="clearServerData"
                                                     :loading="connectingToServer">Disconnect</v-btn>
                                             </v-col>
                                         </template>
@@ -119,12 +117,14 @@
                                                     {{ item.target }}
                                                 </td>
                                                 <td class="text-center">
-                                                    <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-chart-box' : ''" color="#00ABC9"
-                                                        variant="flat" @click.stop="monitorTopic(item.topic)">
+                                                    <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-chart-box' : ''"
+                                                        color="#00ABC9" variant="flat"
+                                                        @click.stop="monitorTopic(item.topic)">
                                                         <p v-if="mdAndUp">Monitor</p>
                                                         <v-icon v-if="!mdAndUp" icon="mdi-chart-box" />
                                                     </v-btn>
-                                                    <v-btn :append-icon="lgAndUp ? 'mdi-delete' : ''" color="error" variant="flat"
+                                                    <v-btn :append-icon="lgAndUp ? 'mdi-delete' : ''" color="error"
+                                                        variant="flat"
                                                         @click.stop="confirmRemoval(item.topic, 'active')">
                                                         <p v-if="mdAndUp">Remove</p>
                                                         <v-icon v-if="!mdAndUp" icon="mdi-chart-box" />
@@ -179,13 +179,15 @@
                                                     {{ item.target }}
                                                 </td>
                                                 <td class="text-center">
-                                                    <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-cloud-upload' : ''" color="#003DA5"
-                                                        variant="flat" @click.stop="addToSubscription(item)"
+                                                    <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-cloud-upload' : ''"
+                                                        color="#003DA5" variant="flat"
+                                                        @click.stop="addToSubscription(item)"
                                                         :loading="makingServerRequest[item.topic]">
                                                         <p v-if="mdAndUp">Activate</p>
                                                         <v-icon v-if="!mdAndUp" icon="mdi-cloud-upload" />
                                                     </v-btn>
-                                                    <v-btn :append-icon="lgAndUp ? 'mdi-delete' : ''" color="error" variant="flat"
+                                                    <v-btn :append-icon="lgAndUp ? 'mdi-delete' : ''" color="error"
+                                                        variant="flat"
                                                         @click.stop="confirmRemoval(item.topic, 'pending')">
                                                         <p v-if="mdAndUp">Remove</p>
                                                         <v-icon v-if="!mdAndUp" icon="mdi-delete" />
@@ -296,7 +298,7 @@
                 <v-btn icon="mdi-close" variant="text" size="small" @click="showTopicMonitorDialog = false" />
             </v-toolbar>
             <v-container v-if="topicHasMetrics">
-                <v-row  class="py-5">
+                <v-row class="py-5">
                     <v-col cols="6">
                         <v-card-title class="text-center">Downloaded Files
                         </v-card-title>
@@ -329,9 +331,11 @@
 
             <!-- If no metric data to present, show a message -->
             <v-container v-else>
-                <v-row >
+                <v-row>
                     <v-col cols="12">
-                        <p class="medium-title text-center">No metrics to display, as no notifications have been received yet from this topic.</p>
+                        <p class="medium-title text-center">No metrics to display, as no notifications have been
+                            received
+                            yet from this topic.</p>
                     </v-col>
                 </v-row>
             </v-container>
@@ -562,15 +566,22 @@ export default defineComponent({
         const loadSettings = async () => {
             try {
                 const storedSettings = await window.electronAPI.loadSettings();
-                if (storedSettings) {
-                    serverLink.value = storedSettings?.serverLink || '127.0.0.1:8080';
-                    token.value = storedSettings?.token || '';
-                    connectedToDownloader.value = storedSettings?.connectedToDownloader || false;
-                    activeTopics.value = storedSettings?.activeTopics || [];
-                    pendingTopics.value = storedSettings?.pendingTopics || [];
+                if (!storedSettings) {
+                    errorMessage.value = 'No settings found.';
+                    errorTitle.value = "Settings Load Error";
+                    showErrorDialog.value = true;
+                    return;
                 }
-            }
-            catch (error) {
+
+                serverLink.value = storedSettings.serverLink || '127.0.0.1:8080';
+                token.value = storedSettings.token || '';
+                connectedToDownloader.value = storedSettings.connectedToDownloader || false;
+                activeTopics.value = storedSettings.activeTopics || [];
+                pendingTopics.value = storedSettings.pendingTopics || [];
+            } catch (error) {
+                errorMessage.value = 'Error loading stored settings: ' + error.message;
+                errorTitle.value = "Settings Load Error";
+                showErrorDialog.value = true;
                 console.error('Error loading stored settings: ', error);
             }
         }
@@ -678,17 +689,29 @@ export default defineComponent({
             // Start the button loading animation
             connectingToServer.value = true;
 
-            // Use various endpoints to get the data
-            await getTopicList();
-            await getMetrics();
-
-            // If the connection is successful, update the last sync time
-            if (connectedToDownloader.value) {
-                lastSyncTime.value = new Date().toLocaleTimeString();
+            try {
+                // Use various endpoints to get the data
+                await getTopicList();
+                if (!connectedToDownloader.value) {
+                    connectingToServer.value = false;
+                    errorMessage.value = 'Failed to connect to the downloader.';
+                    errorTitle.value = "Connection Error";
+                    showErrorDialog.value = true;
+                    return;
+                }
+                await getMetrics();
+                // If the connection is successful, update the last sync time
+                if (connectedToDownloader.value) {
+                    lastSyncTime.value = new Date().toLocaleTimeString();
+                }
+            } catch (error) {
+                errorMessage.value = `There was a problem getting server data (${error.message}). Please check the server is running and the settings are correct.`;
+                errorTitle.value = "Server Error";
+                showErrorDialog.value = true;
+            } finally {
+                // Stop the button loading animation
+                connectingToServer.value = false;
             }
-
-            // Stop the button loading animation
-            connectingToServer.value = false;
         };
 
         // Clear the server data and reset the connection status
@@ -737,11 +760,11 @@ export default defineComponent({
 
                 // End the button loading animation for this topic
                 makingServerRequest.value[item.topic] = false;
-            }
-            catch (error) {
-                errorMessage.value = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
+            } catch (error) {
+                errorMessage.value = `There was a problem connecting to the server (${error.message}). Please check the server is running and the settings are correct.`;
                 errorTitle.value = "Server Error";
                 showErrorDialog.value = true;
+                makingServerRequest.value[item.topic] = false;
             }
         };
 
@@ -790,11 +813,11 @@ export default defineComponent({
 
                 // End the button loading animation for this topic
                 makingServerRequest.value[topic] = false;
-            }
-            catch (error) {
-                errorMessage.value = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
+            } catch (error) {
+                errorMessage.value = `There was a problem connecting to the server (${error.message}). Please check the server is running and the settings are correct.`;
                 errorTitle.value = "Server Error";
                 showErrorDialog.value = true;
+                makingServerRequest.value[topic] = false;
             }
         };
 
@@ -1109,10 +1132,11 @@ export default defineComponent({
 </script>
 
 <style scoped>
-
-.equal-width th, .equal-width td {
+.equal-width th,
+.equal-width td {
     width: 33%;
-    word-break: break-word; /* Ensure long words wrap */
+    word-break: break-word;
+    /* Ensure long words wrap */
 }
 
 /* Misc. */
