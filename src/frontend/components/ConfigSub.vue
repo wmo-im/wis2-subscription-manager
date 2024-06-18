@@ -37,23 +37,25 @@
                                     <v-row v-if="connectedToDownloader" dense>
                                         <template v-if="lgAndUp">
                                             <v-col cols="5">
-                                                <v-btn color="#00ABC9" size="x-large" block append-icon="mdi-sync"
-                                                    @click="getServerData" :loading="connectingToServer">Sync</v-btn>
+                                                <v-btn color="#00ABC9" size="x-large" block
+                                                    append-icon="mdi-sync" @click="getServerData"
+                                                    :loading="connectingToServer">Sync</v-btn>
                                             </v-col>
                                             <v-col cols="7">
-                                                <v-btn color="#E09D00" size="x-large" block append-icon="mdi-link-off"
-                                                    @click="clearServerData"
+                                                <v-btn color="#E09D00" size="x-large" block
+                                                    append-icon="mdi-link-off" @click="clearServerData"
                                                     :loading="connectingToServer">Disconnect</v-btn>
                                             </v-col>
                                         </template>
                                         <template v-else>
                                             <v-col cols="12">
-                                                <v-btn color="#00ABC9" block append-icon="mdi-sync"
-                                                    @click="getServerData" :loading="connectingToServer">Sync</v-btn>
+                                                <v-btn color="#00ABC9" block
+                                                    append-icon="mdi-sync" @click="getServerData"
+                                                    :loading="connectingToServer">Sync</v-btn>
                                             </v-col>
                                             <v-col cols="12">
-                                                <v-btn color="#E09D00" block append-icon="mdi-link-off"
-                                                    @click="clearServerData"
+                                                <v-btn color="#E09D00" block
+                                                    append-icon="mdi-link-off" @click="clearServerData"
                                                     :loading="connectingToServer">Disconnect</v-btn>
                                             </v-col>
                                         </template>
@@ -117,8 +119,7 @@
                                                     {{ item.target }}
                                                 </td>
                                                 <td class="text-center">
-                                                    <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-chart-box' : ''"
-                                                        color="#00ABC9" variant="flat"
+                                                    <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-chart-box' : ''" color="#00ABC9" variant="flat"
                                                         @click.stop="monitorTopic(item.topic)">
                                                         <p v-if="mdAndUp">Monitor</p>
                                                         <v-icon v-if="!mdAndUp" icon="mdi-chart-box" />
@@ -179,15 +180,13 @@
                                                     {{ item.target }}
                                                 </td>
                                                 <td class="text-center">
-                                                    <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-cloud-upload' : ''"
-                                                        color="#003DA5" variant="flat"
+                                                    <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-cloud-upload' : ''" color="#003DA5" variant="flat"
                                                         @click.stop="addToSubscription(item)"
                                                         :loading="makingServerRequest[item.topic]">
                                                         <p v-if="mdAndUp">Activate</p>
                                                         <v-icon v-if="!mdAndUp" icon="mdi-cloud-upload" />
                                                     </v-btn>
-                                                    <v-btn :append-icon="lgAndUp ? 'mdi-delete' : ''" color="error"
-                                                        variant="flat"
+                                                    <v-btn :append-icon="lgAndUp ? 'mdi-delete' : ''" color="error" variant="flat"
                                                         @click.stop="confirmRemoval(item.topic, 'pending')">
                                                         <p v-if="mdAndUp">Remove</p>
                                                         <v-icon v-if="!mdAndUp" icon="mdi-delete" />
@@ -333,9 +332,7 @@
             <v-container v-else>
                 <v-row>
                     <v-col cols="12">
-                        <p class="medium-title text-center">No metrics to display, as no notifications have been
-                            received
-                            yet from this topic.</p>
+                        <p class="medium-title text-center">No metrics to display, as no notifications have been received yet from this topic.</p>
                     </v-col>
                 </v-row>
             </v-container>
@@ -1132,11 +1129,9 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.equal-width th,
-.equal-width td {
+.equal-width th, .equal-width td {
     width: 33%;
-    word-break: break-word;
-    /* Ensure long words wrap */
+    word-break: break-word; /* Ensure long words wrap */
 }
 
 /* Misc. */
