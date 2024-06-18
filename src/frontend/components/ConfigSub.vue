@@ -119,13 +119,12 @@
                                                     {{ item.target }}
                                                 </td>
                                                 <td class="text-center">
-                                                    <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-chart-box' : ''" color="#00ABC9" variant="flat"
-                                                        @click.stop="monitorTopic(item.topic)">
+                                                    <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-chart-box' : ''" color="#00ABC9" 
+                                                        variant="flat" @click.stop="monitorTopic(item.topic)">
                                                         <p v-if="mdAndUp">Monitor</p>
                                                         <v-icon v-if="!mdAndUp" icon="mdi-chart-box" />
                                                     </v-btn>
-                                                    <v-btn :append-icon="lgAndUp ? 'mdi-delete' : ''" color="error"
-                                                        variant="flat"
+                                                    <v-btn :append-icon="lgAndUp ? 'mdi-delete' : ''" color="error" variant="flat"
                                                         @click.stop="confirmRemoval(item.topic, 'active')">
                                                         <p v-if="mdAndUp">Remove</p>
                                                         <v-icon v-if="!mdAndUp" icon="mdi-chart-box" />
@@ -180,8 +179,8 @@
                                                     {{ item.target }}
                                                 </td>
                                                 <td class="text-center">
-                                                    <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-cloud-upload' : ''" color="#003DA5" variant="flat"
-                                                        @click.stop="addToSubscription(item)"
+                                                    <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-cloud-upload' : ''" color="#003DA5" 
+                                                        variant="flat" @click.stop="addToSubscription(item)"
                                                         :loading="makingServerRequest[item.topic]">
                                                         <p v-if="mdAndUp">Activate</p>
                                                         <v-icon v-if="!mdAndUp" icon="mdi-cloud-upload" />
@@ -1129,6 +1128,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
+
 .equal-width th, .equal-width td {
     width: 33%;
     word-break: break-word; /* Ensure long words wrap */
