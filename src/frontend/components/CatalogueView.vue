@@ -27,15 +27,15 @@
                 </v-card-item>
 
                 <!-- Dialog to display typical error messages -->
-                <v-dialog v-model="openErrorMessageDialog" max-width="600px" persistent>
+                <v-dialog v-model="showErrorDialog" max-width="600px" persistent>
                     <v-card>
-                        <v-toolbar title="Error" color="#003DA5">
+                        <v-toolbar :title="errorTitle" color="#003DA5">
                         </v-toolbar>
                         <v-card-text>
                             {{ errorMessage }}
                         </v-card-text>
                         <v-card-actions>
-                            <v-btn color="#003DA5" block @click="openErrorMessageDialog = false">
+                            <v-btn color="#003DA5" block @click="showErrorDialog = false">
                                 OK
                             </v-btn>
                         </v-card-actions>
@@ -110,7 +110,7 @@
                                 <v-row>
                                     <v-col cols="12">
                                         <v-btn color="#E09D00" append-icon="mdi-code-json" variant="flat" block
-                                            @click="openJSON(selectedItem.identifier)" :loading="loadingJsonBoolean">
+                                            @click="openJSON(selectedItem.identifier, selectedItem.title)" :loading="loadingJsonBoolean">
                                             View JSON
                                         </v-btn>
                                     </v-col>
@@ -193,7 +193,7 @@ export default defineComponent({
 
         // Error from the catalogue
         const errorMessage = ref('');
-        const openErrorMessageDialog = ref(false);
+        const showErrorDialog = ref(false);
 
         // Computed properties
 
@@ -220,20 +220,29 @@ export default defineComponent({
 
         // Methods
 
+        // Handle errors displayed to user
+        const handleError = (title, message) => {
+            errorTitle.value = title;
+            errorMessage.value = message;
+            showErrorDialog.value = true;
+        };
+
         // Load the saved information from the electron API
         const loadSettings = async () => {
             try {
                 const storedSettings = await window.electronAPI.loadSettings();
-                if (storedSettings) {
-                    serverLink.value = storedSettings?.serverLink || '';
-                    token.value = storedSettings?.token || '';
-                    connectionStatus.value = storedSettings?.connectionStatus || false;
-                    activeTopics.value = storedSettings?.activeTopics || [];
-                    pendingTopics.value = storedSettings?.pendingTopics || [];
+                if (!storedSettings) {
+                    handleError('Error Loading Settings', 'There was an issue loading the settings or topics you selected. Please try reloading the application.');
+                    return;
                 }
+                serverLink.value = storedSettings?.serverLink || '';
+                token.value = storedSettings?.token || '';
+                connectionStatus.value = storedSettings?.connectionStatus || false;
+                activeTopics.value = storedSettings?.activeTopics || [];
+                pendingTopics.value = storedSettings?.pendingTopics || [];
             }
             catch (error) {
-                console.error('Error loading settings: ', error);
+                handleError('Error Loading Settings', `There was an issue loading the settings or topics you selected (${error.message}). Please try reloading the application.`);
             }
         }
 
@@ -243,11 +252,11 @@ export default defineComponent({
                 const response = await fetch(`${url}?${params}`);
                 if (!response.ok) {
                     const readableError = HTTP_CODES[response.status] || response.statusText;
-                    throw new Error(`Error connecting to catalogue: ${readableError}`);
+                    throw new Error(`There was an error connecting to the catalogue: ${readableError}`);
                 }
                 return await response.json();
             } catch (error) {
-                throw new Error('Error fetching API data: ' + error.message);
+            throw new Error(`There was an error connecting to the catalogue: ${error.message}`);
             }
         };
 
@@ -269,9 +278,7 @@ export default defineComponent({
             try {
                 items = await fetchAPI(selectedCatalogue.value, params);
             } catch (error) {
-                console.error('Error searching catalogue: ', error);
-                errorMessage.value = 'Error searching catalogue. Please try again later.';
-                openErrorMessageDialog.value = true;
+                handleError('Error Searching Catalogue', error.message);
                 loadingBoolean.value = false; // Disable loading animation of button
                 return;
             }
@@ -279,7 +286,7 @@ export default defineComponent({
             // check if items exists before trying to retrieve features
             const features = items?.features;
             if (!features) {
-                console.log("No features were found");
+                handleError('No Datasets Found', 'No features were found under this search. Please try a different search or catalogue.')
                 loadingBoolean.value = false;
                 return;
             }
@@ -357,14 +364,34 @@ export default defineComponent({
         }
 
         // Opens JSON of dataset metadata
-        const openJSON = async (id) => {
+        const openJSON = async (id, title) => {
             // Enable the button loading animation
             loadingJsonBoolean.value = true;
 
-            const url = `${selectedCatalogue.value}/${id}?f=json`;
+            let url;
+
+            // Try to get the JSON url by ID or title
+            if (id) {
+                url = `${selectedCatalogue.value}/${id}?f=json`;
+            }
+            else if (selectedItem.value && selectedItem.value.title) {
+                url = `${selectedCatalogue.value}?title=${encodeURIComponent(selectedItem.value.title)}&f=json`;
+            }
+            else {
+                handleError('Error Opening JSON', 'There was a problem viewing the JSON: Missing identifier or title');
+                loadingJsonBoolean.value = false;
+                return;
+            }
 
             // Format the JSON content
             const response = await fetch(url);
+
+            if (!response.ok) {
+                handleError('Error Opening JSON', `Error fetching JSON data: ${response.statusText}`);
+                loadingJsonBoolean.value = false;
+                return;
+            }
+
             const data = await response.json();
             formattedJson.value = JSON.stringify(data, null, 2);
 
@@ -404,8 +431,6 @@ export default defineComponent({
                 return;
             }
 
-            console.log("Adding topic to subscription: " + topicToAdd)
-
             const toAdd = {
                 topic: topicToAdd,
                 target: "$TOPIC"
@@ -414,7 +439,7 @@ export default defineComponent({
             // Make sure there are no duplicates before adding
             const isDuplicate = topicFound(topicToAdd, selectedTopics.value);
             if (isDuplicate) {
-                console.log("Topic already added to subscription");
+                handleError('Error Adding Topic', 'The topic has already been added to subscription');
                 return;
             }
 
@@ -435,13 +460,11 @@ export default defineComponent({
                 return;
             }
 
-            console.log("Removing topic from subscription: " + topicToRemove)
-
             // Remove it from the array if it can be found
             const topicCanBeRemoved = topicFound(topicToRemove, pendingTopics.value);
 
             if (!topicCanBeRemoved) {
-                errorMessage.value = "Topic not found in subscription";
+                handleError('Error Removing Topic', 'The topic was not found in the subscription');
                 return;
             }
 
@@ -471,7 +494,6 @@ export default defineComponent({
         watch(settings, () => {
             // As reactive objects aren't serialisable, we must deep copy it
             const settingsToStore = deepClone(settings.value);
-            console.log("Storing settings:", settingsToStore);
             // Store the information in the electron API
             window.electronAPI.storeSettings(settingsToStore);
         }, { deep: true }); // Use deep watch to track nested array
@@ -501,7 +523,7 @@ export default defineComponent({
             activeTopics,
             pendingTopics,
             errorMessage,
-            openErrorMessageDialog,
+            showErrorDialog,
 
             // Computed variables
             catalogueBoolean,

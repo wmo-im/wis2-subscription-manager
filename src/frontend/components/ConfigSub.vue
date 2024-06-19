@@ -296,7 +296,7 @@
                 <v-btn icon="mdi-close" variant="text" size="small" @click="showTopicMonitorDialog = false" />
             </v-toolbar>
             <v-container v-if="topicHasMetrics">
-                <v-row  class="py-5">
+                <v-row class="py-5">
                     <v-col cols="6">
                         <v-card-title class="text-center">Downloaded Files
                         </v-card-title>
@@ -329,7 +329,7 @@
 
             <!-- If no metric data to present, show a message -->
             <v-container v-else>
-                <v-row >
+                <v-row>
                     <v-col cols="12">
                         <p class="medium-title text-center">No metrics to display, as no notifications have been received yet from this topic.</p>
                     </v-col>
@@ -558,20 +558,28 @@ export default defineComponent({
 
         // Methods
 
+        // Handle errors displayed to user
+        const handleError = (title, message) => {
+            errorTitle.value = title;
+            errorMessage.value = message;
+            showErrorDialog.value = true;
+        };
+
         // Load the saved information from the electron API
         const loadSettings = async () => {
             try {
                 const storedSettings = await window.electronAPI.loadSettings();
-                if (storedSettings) {
-                    serverLink.value = storedSettings?.serverLink || '127.0.0.1:8080';
-                    token.value = storedSettings?.token || '';
-                    connectedToDownloader.value = storedSettings?.connectedToDownloader || false;
-                    activeTopics.value = storedSettings?.activeTopics || [];
-                    pendingTopics.value = storedSettings?.pendingTopics || [];
+                if (!storedSettings) {
+                    handleError('Error Loading Settings', 'There was an issue loading the settings or topics you selected. Please try reloading the application.');
+                    return;
                 }
-            }
-            catch (error) {
-                console.error('Error loading stored settings: ', error);
+                serverLink.value = storedSettings.serverLink || '127.0.0.1:8080';
+                token.value = storedSettings.token || '';
+                connectedToDownloader.value = storedSettings.connectedToDownloader || false;
+                activeTopics.value = storedSettings.activeTopics || [];
+                pendingTopics.value = storedSettings.pendingTopics || [];
+            } catch (error) {
+                handleError('Error Loading Settings', `There was an issue loading the settings or topics you selected (${error.message}). Please try reloading the application.`);
             }
         }
 
@@ -607,20 +615,19 @@ export default defineComponent({
 
                 if (!response.ok) {
                     // Show a readable error and disconnect
+                    let message;
                     if (HTTP_CODES[response.status] == 'Unauthorized') {
-                        errorMessage.value = 'Unauthorized. Please check the API token.';
+                        message = 'Unauthorized. Please check the API token.';
                     } else {
                         const readableError = HTTP_CODES[response.status] || response.statusText;
-                        errorMessage.value = `There was a problem getting the subscribed topics: ${readableError}`;
+                        message = `There was a problem getting the subscribed topics: ${readableError}`;
                     }
-                    errorTitle.value = "Error Listing Topics";
-                    showErrorDialog.value = true;
+                    handleError('Error Listing Topics', message);
                     connectedToDownloader.value = false;
                     return;
                 }
 
                 const data = await response.json();
-                console.log('Server topic data:', data);
 
                 // Process the data before displaying the table
                 activeTopics.value = processTopicData(data);
@@ -629,9 +636,7 @@ export default defineComponent({
                 connectedToDownloader.value = true;
             }
             catch (error) {
-                errorMessage.value = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
-                errorTitle.value = "Server Error";
-                showErrorDialog.value = true;
+                handleError('Server Error', `There was a problem connecting to the server (${error.message}). Please check the server is running and the settings are correct.`);
                 connectedToDownloader.value = false;
             }
         };
@@ -654,9 +659,7 @@ export default defineComponent({
                 if (!response.ok) {
                     const readableError = HTTP_CODES[response.status] || response.statusText;
                     // Display the error message from server response, if available
-                    errorMessage.value = readableError;
-                    errorTitle.value = "Error Fetching Metrics";
-                    showErrorDialog.value = true;
+                    handleError('Error Fetching Metrics', `There was a problem fetching the metrics of this topic: ${readableError}`);
                     return;
                 }
 
@@ -666,9 +669,7 @@ export default defineComponent({
                 metrics.value = parsePrometheusText(data);
             }
             catch (error) {
-                errorMessage.value = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
-                errorTitle.value = "Server Error";
-                showErrorDialog.value = true;
+                handleError('Error Fetching Metrics', `There was a problem connecting to the server (${error.message}). Please check the server is running and the settings are correct.`);
             }
         };
 
@@ -678,17 +679,25 @@ export default defineComponent({
             // Start the button loading animation
             connectingToServer.value = true;
 
-            // Use various endpoints to get the data
-            await getTopicList();
-            await getMetrics();
-
-            // If the connection is successful, update the last sync time
-            if (connectedToDownloader.value) {
-                lastSyncTime.value = new Date().toLocaleTimeString();
+            try {
+                // Use various endpoints to get the data
+                await getTopicList();
+                if (!connectedToDownloader.value) {
+                    handleError('Connection Error', 'Failed to connect to the downloader. Please verify the server link and token are correct.');
+                    connectingToServer.value = false;
+                    return;
+                }
+                await getMetrics();
+                // If the connection is successful, update the last sync time
+                if (connectedToDownloader.value) {
+                    lastSyncTime.value = new Date().toLocaleTimeString();
+                }
+            } catch (error) {
+                handleError('Server Error', `There was a problem getting server data (${error.message}). Please check the server is running and the settings are correct.`);
+            } finally {
+                // Stop the button loading animation
+                connectingToServer.value = false;
             }
-
-            // Stop the button loading animation
-            connectingToServer.value = false;
         };
 
         // Clear the server data and reset the connection status
@@ -721,9 +730,8 @@ export default defineComponent({
                     const errorData = await response.json();
                     const readableError = HTTP_CODES[response.status] || response.statusText;
                     // Display the error message from server response, if available
-                    errorMessage.value = errorData.error ? errorData.error : readableError;
-                    errorTitle.value = "Error Adding Topic";
-                    showErrorDialog.value = true;
+                    const message = errorData.error ? errorData.error : readableError;
+                    handleError('Error Adding Topic', message);
                     // End the button loading animation for this topic
                     makingServerRequest.value[item.topic] = false;
                     return;
@@ -737,11 +745,10 @@ export default defineComponent({
 
                 // End the button loading animation for this topic
                 makingServerRequest.value[item.topic] = false;
-            }
-            catch (error) {
-                errorMessage.value = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
-                errorTitle.value = "Server Error";
-                showErrorDialog.value = true;
+            } catch (error) {
+                const message = `There was a problem connecting to the server (${error.message}). Please check the server is running and the settings are correct.`;
+                handleError('Server Error', message);
+                makingServerRequest.value[item.topic] = false;
             }
         };
 
@@ -774,9 +781,8 @@ export default defineComponent({
                     const errorData = await response.json();
                     const readableError = HTTP_CODES[response.status] || response.statusText;
                     // Display the error message from server response, if available
-                    errorMessage.value = errorData.error ? errorData.error : readableError;
-                    errorTitle.value = "Error Removing Topic";
-                    showErrorDialog.value = true;
+                    const message = errorData.error ? errorData.error : readableError;
+                    handleError('Error Removing Topic', message);
                     // End the button loading animation for this topic
                     makingServerRequest.value[topic] = false;
                     return;
@@ -790,11 +796,9 @@ export default defineComponent({
 
                 // End the button loading animation for this topic
                 makingServerRequest.value[topic] = false;
-            }
-            catch (error) {
-                errorMessage.value = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
-                errorTitle.value = "Server Error";
-                showErrorDialog.value = true;
+            } catch (error) {
+                handleError('Server Error', `There was a problem connecting to the server (${error.message}). Please check the server is running and the settings are correct.`);
+                makingServerRequest.value[topic] = false;
             }
         };
 
@@ -981,7 +985,7 @@ export default defineComponent({
             const topicIsDuplicate = topicFound(toAdd.topic, activeTopics.value);
 
             if (topicIsDuplicate) {
-                errorMessage.value = 'Topic is already subscribed to';
+                handleError('Error Adding Topic', `Topic ${toAdd.topic} is already subscribed to`);
                 return;
             }
 
@@ -1000,7 +1004,7 @@ export default defineComponent({
             const topicCanBeRemoved = topicFound(topicToRemove.value, pendingTopics.value);
 
             if (!topicCanBeRemoved) {
-                console.log(`Topic ${topicToRemove.value} not found in subscription, nothing to remove`);
+                handleError('Error Removing Topic', `Topic ${topicToRemove.value} not found in pending topics, nothing to remove`);
                 return;
             }
 
@@ -1043,7 +1047,6 @@ export default defineComponent({
         watch(settings, () => {
             // As reactive objects aren't serialisable, we must deep copy it
             const settingsToStore = deepClone(settings.value);
-            console.log("Storing settings:", settingsToStore);
             // Store the information in the electron API
             window.electronAPI.storeSettings(settingsToStore);
         }, { deep: true }); // Use deep watch to track nested array
