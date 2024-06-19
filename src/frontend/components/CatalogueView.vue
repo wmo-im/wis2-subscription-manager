@@ -110,7 +110,7 @@
                                 <v-row>
                                     <v-col cols="12">
                                         <v-btn color="#E09D00" append-icon="mdi-code-json" variant="flat" block
-                                            @click="openJSON(selectedItem.identifier)" :loading="loadingJsonBoolean">
+                                            @click="openJSON(selectedItem.identifier, selectedItem.title)" :loading="loadingJsonBoolean">
                                             View JSON
                                         </v-btn>
                                     </v-col>
@@ -357,17 +357,20 @@ export default defineComponent({
         }
 
         // Opens JSON of dataset metadata
-        const openJSON = async (id) => {
+        const openJSON = async (id, title) => {
             // Enable the button loading animation
             loadingJsonBoolean.value = true;
 
-            let url = id ? `${selectedCatalogue.value}/${id}?f=json` : null;
+            let url;
 
-            if (!url && selectedItem.value && selectedItem.value.title) {
+            // Try to get the JSON url by ID or title
+            if (id) {
+                url = `${selectedCatalogue.value}/${id}?f=json`;
+            }
+            else if (selectedItem.value && selectedItem.value.title) {
                 url = `${selectedCatalogue.value}?title=${encodeURIComponent(selectedItem.value.title)}&f=json`;
             }
-
-            if (!url) {
+            else {
                 errorMessage.value = 'Cannot open JSON: Missing identifier (id) or title';
                 loadingJsonBoolean.value = false;
                 return;

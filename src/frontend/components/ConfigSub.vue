@@ -558,26 +558,29 @@ export default defineComponent({
 
         // Methods
 
+        // Handle errors displayed to user
+        const handleError = (title, message) => {
+            errorTitle.value = title;
+            errorMessage.value = message;
+            showErrorDialog.value = true;
+        };
+
         // Load the saved information from the electron API
         const loadSettings = async () => {
             try {
                 const storedSettings = await window.electronAPI.loadSettings();
                 if (!storedSettings) {
-                    errorMessage.value = 'No settings found.';
-                    errorTitle.value = "Settings Load Error";
-                    showErrorDialog.value = true;
+                    handleError('Error Loading Settings', 'There was an issue loading the settings or topics you selected. Please try reloading the application.');
                     return;
                 }
-
                 serverLink.value = storedSettings.serverLink || '127.0.0.1:8080';
                 token.value = storedSettings.token || '';
                 connectedToDownloader.value = storedSettings.connectedToDownloader || false;
                 activeTopics.value = storedSettings.activeTopics || [];
                 pendingTopics.value = storedSettings.pendingTopics || [];
             } catch (error) {
-                errorMessage.value = 'Error loading stored settings: ' + error.message;
-                errorTitle.value = "Settings Load Error";
-                showErrorDialog.value = true;
+                const message = 'Error loading stored settings: ' + error.message;
+                handleError('Error Loading Settings', message);
                 console.error('Error loading stored settings: ', error);
             }
         }
@@ -614,14 +617,14 @@ export default defineComponent({
 
                 if (!response.ok) {
                     // Show a readable error and disconnect
+                    let message;
                     if (HTTP_CODES[response.status] == 'Unauthorized') {
-                        errorMessage.value = 'Unauthorized. Please check the API token.';
+                        message = 'Unauthorized. Please check the API token.';
                     } else {
                         const readableError = HTTP_CODES[response.status] || response.statusText;
-                        errorMessage.value = `There was a problem getting the subscribed topics: ${readableError}`;
+                        message = `There was a problem getting the subscribed topics: ${readableError}`;
                     }
-                    errorTitle.value = "Error Listing Topics";
-                    showErrorDialog.value = true;
+                    handleError('Error Listing Topics', message);
                     connectedToDownloader.value = false;
                     return;
                 }
@@ -636,9 +639,8 @@ export default defineComponent({
                 connectedToDownloader.value = true;
             }
             catch (error) {
-                errorMessage.value = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
-                errorTitle.value = "Server Error";
-                showErrorDialog.value = true;
+                const message = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
+                handleError('Server Error', message);
                 connectedToDownloader.value = false;
             }
         };
@@ -661,9 +663,7 @@ export default defineComponent({
                 if (!response.ok) {
                     const readableError = HTTP_CODES[response.status] || response.statusText;
                     // Display the error message from server response, if available
-                    errorMessage.value = readableError;
-                    errorTitle.value = "Error Fetching Metrics";
-                    showErrorDialog.value = true;
+                    handleError('Error Fetching Metrics', readableError);
                     return;
                 }
 
@@ -673,9 +673,8 @@ export default defineComponent({
                 metrics.value = parsePrometheusText(data);
             }
             catch (error) {
-                errorMessage.value = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
-                errorTitle.value = "Server Error";
-                showErrorDialog.value = true;
+                const message = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
+                handleError('Error Fetching Metrics', message);
             }
         };
 
@@ -689,10 +688,8 @@ export default defineComponent({
                 // Use various endpoints to get the data
                 await getTopicList();
                 if (!connectedToDownloader.value) {
+                    handleError('Connection Error', 'Failed to connect to the downloader.');
                     connectingToServer.value = false;
-                    errorMessage.value = 'Failed to connect to the downloader.';
-                    errorTitle.value = "Connection Error";
-                    showErrorDialog.value = true;
                     return;
                 }
                 await getMetrics();
@@ -701,9 +698,8 @@ export default defineComponent({
                     lastSyncTime.value = new Date().toLocaleTimeString();
                 }
             } catch (error) {
-                errorMessage.value = `There was a problem getting server data (${error.message}). Please check the server is running and the settings are correct.`;
-                errorTitle.value = "Server Error";
-                showErrorDialog.value = true;
+                const message = `There was a problem getting server data (${error.message}). Please check the server is running and the settings are correct.`;
+                handleError('Server Error', message);
             } finally {
                 // Stop the button loading animation
                 connectingToServer.value = false;
@@ -740,9 +736,8 @@ export default defineComponent({
                     const errorData = await response.json();
                     const readableError = HTTP_CODES[response.status] || response.statusText;
                     // Display the error message from server response, if available
-                    errorMessage.value = errorData.error ? errorData.error : readableError;
-                    errorTitle.value = "Error Adding Topic";
-                    showErrorDialog.value = true;
+                    const message = errorData.error ? errorData.error : readableError;
+                    handleError('Error Adding Topic', message);
                     // End the button loading animation for this topic
                     makingServerRequest.value[item.topic] = false;
                     return;
@@ -757,9 +752,8 @@ export default defineComponent({
                 // End the button loading animation for this topic
                 makingServerRequest.value[item.topic] = false;
             } catch (error) {
-                errorMessage.value = `There was a problem connecting to the server (${error.message}). Please check the server is running and the settings are correct.`;
-                errorTitle.value = "Server Error";
-                showErrorDialog.value = true;
+                const message = `There was a problem connecting to the server (${error.message}). Please check the server is running and the settings are correct.`;
+                handleError('Server Error', message);
                 makingServerRequest.value[item.topic] = false;
             }
         };
@@ -793,9 +787,8 @@ export default defineComponent({
                     const errorData = await response.json();
                     const readableError = HTTP_CODES[response.status] || response.statusText;
                     // Display the error message from server response, if available
-                    errorMessage.value = errorData.error ? errorData.error : readableError;
-                    errorTitle.value = "Error Removing Topic";
-                    showErrorDialog.value = true;
+                    const message = errorData.error ? errorData.error : readableError;
+                    handleError('Error Removing Topic', message);
                     // End the button loading animation for this topic
                     makingServerRequest.value[topic] = false;
                     return;
@@ -810,9 +803,8 @@ export default defineComponent({
                 // End the button loading animation for this topic
                 makingServerRequest.value[topic] = false;
             } catch (error) {
-                errorMessage.value = `There was a problem connecting to the server (${error.message}). Please check the server is running and the settings are correct.`;
-                errorTitle.value = "Server Error";
-                showErrorDialog.value = true;
+                const message = `There was a problem connecting to the server (${error.message}). Please check the server is running and the settings are correct.`;
+                handleError('Server Error', message);
                 makingServerRequest.value[topic] = false;
             }
         };
