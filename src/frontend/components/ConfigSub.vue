@@ -683,7 +683,7 @@ export default defineComponent({
                 // Use various endpoints to get the data
                 await getTopicList();
                 if (!connectedToDownloader.value) {
-                    handleError('Connection Error', 'Failed to connect to the downloader.');
+                    handleError('Connection Error', 'Failed to connect to the downloader. Please verify the server link and token are correct.');
                     connectingToServer.value = false;
                     return;
                 }
