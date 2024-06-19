@@ -579,9 +579,7 @@ export default defineComponent({
                 activeTopics.value = storedSettings.activeTopics || [];
                 pendingTopics.value = storedSettings.pendingTopics || [];
             } catch (error) {
-                const message = 'Error loading stored settings: ' + error.message;
-                handleError('Error Loading Settings', message);
-                console.error(message);
+                handleError('Error Loading Settings', `There was an issue loading the settings or topics you selected (${error.message}). Please try reloading the application.`);
             }
         }
 
@@ -630,7 +628,6 @@ export default defineComponent({
                 }
 
                 const data = await response.json();
-                console.log('Server topic data:', data);
 
                 // Process the data before displaying the table
                 activeTopics.value = processTopicData(data);
@@ -639,8 +636,7 @@ export default defineComponent({
                 connectedToDownloader.value = true;
             }
             catch (error) {
-                const message = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
-                handleError('Server Error', message);
+                handleError('Server Error', `There was a problem connecting to the server (${error.message}). Please check the server is running and the settings are correct.`);
                 connectedToDownloader.value = false;
             }
         };
@@ -663,7 +659,7 @@ export default defineComponent({
                 if (!response.ok) {
                     const readableError = HTTP_CODES[response.status] || response.statusText;
                     // Display the error message from server response, if available
-                    handleError('Error Fetching Metrics', readableError);
+                    handleError('Error Fetching Metrics', `There was a problem fetching the metrics of this topic: ${readableError}`);
                     return;
                 }
 
@@ -673,8 +669,7 @@ export default defineComponent({
                 metrics.value = parsePrometheusText(data);
             }
             catch (error) {
-                const message = `There was a problem connecting to the server (${error}). Please check the server is running and the settings are correct.`;
-                handleError('Error Fetching Metrics', message);
+                handleError('Error Fetching Metrics', `There was a problem connecting to the server (${error.message}). Please check the server is running and the settings are correct.`);
             }
         };
 
@@ -698,8 +693,7 @@ export default defineComponent({
                     lastSyncTime.value = new Date().toLocaleTimeString();
                 }
             } catch (error) {
-                const message = `There was a problem getting server data (${error.message}). Please check the server is running and the settings are correct.`;
-                handleError('Server Error', message);
+                handleError('Server Error', `There was a problem getting server data (${error.message}). Please check the server is running and the settings are correct.`);
             } finally {
                 // Stop the button loading animation
                 connectingToServer.value = false;
@@ -803,8 +797,7 @@ export default defineComponent({
                 // End the button loading animation for this topic
                 makingServerRequest.value[topic] = false;
             } catch (error) {
-                const message = `There was a problem connecting to the server (${error.message}). Please check the server is running and the settings are correct.`;
-                handleError('Server Error', message);
+                handleError('Server Error', `There was a problem connecting to the server (${error.message}). Please check the server is running and the settings are correct.`);
                 makingServerRequest.value[topic] = false;
             }
         };
@@ -992,7 +985,7 @@ export default defineComponent({
             const topicIsDuplicate = topicFound(toAdd.topic, activeTopics.value);
 
             if (topicIsDuplicate) {
-                errorMessage.value = 'Topic is already subscribed to';
+                handleError('Error Adding Topic', `Topic ${toAdd.topic} is already subscribed to`);
                 return;
             }
 
@@ -1011,7 +1004,7 @@ export default defineComponent({
             const topicCanBeRemoved = topicFound(topicToRemove.value, pendingTopics.value);
 
             if (!topicCanBeRemoved) {
-                console.log(`Topic ${topicToRemove.value} not found in subscription, nothing to remove`);
+                handleError('Error Removing Topic', `Topic ${topicToRemove.value} not found in pending topics, nothing to remove`);
                 return;
             }
 
@@ -1054,7 +1047,6 @@ export default defineComponent({
         watch(settings, () => {
             // As reactive objects aren't serialisable, we must deep copy it
             const settingsToStore = deepClone(settings.value);
-            console.log("Storing settings:", settingsToStore);
             // Store the information in the electron API
             window.electronAPI.storeSettings(settingsToStore);
         }, { deep: true }); // Use deep watch to track nested array

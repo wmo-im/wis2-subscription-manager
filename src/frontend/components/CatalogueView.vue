@@ -242,7 +242,7 @@ export default defineComponent({
                 pendingTopics.value = storedSettings?.pendingTopics || [];
             }
             catch (error) {
-                handleError('Error Loading Settings', `There was an issue loading the settings or topics you selected: ${error.message}`);
+                handleError('Error Loading Settings', `There was an issue loading the settings or topics you selected (${error.message}). Please try reloading the application.`);
             }
         }
 
@@ -494,7 +494,6 @@ export default defineComponent({
         watch(settings, () => {
             // As reactive objects aren't serialisable, we must deep copy it
             const settingsToStore = deepClone(settings.value);
-            console.log("Storing settings:", settingsToStore);
             // Store the information in the electron API
             window.electronAPI.storeSettings(settingsToStore);
         }, { deep: true }); // Use deep watch to track nested array
