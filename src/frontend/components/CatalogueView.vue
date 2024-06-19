@@ -296,7 +296,7 @@ export default defineComponent({
 
                 // Initialise other features we want to extract
                 let topic_hierarchy = null;
-                let center_id = null;
+                let centre_id = null;
 
                 // The topic hierarchy is found in the 'channel'
                 // property in 'links' where the 'rel' is 'items'
@@ -316,21 +316,23 @@ export default defineComponent({
                 if (identifier) {
                     if (identifier.includes(':')) {
                         const tokens = identifier.split(':');
-                        center_id = tokens.length < 5 ? tokens[1] : tokens[3];
+                        centre_id = tokens.length < 5 ? tokens[1] : tokens[3];
                     }
 
                     else {
                         const tokens = identifier.split('.');
-                        center_id = tokens[1];
+                        centre_id = tokens[1];
                     }
                 }
+
                 return {
-                    identifier: identifier,
-                    center_identifier: center_id,
-                    title: properties?.title,
-                    creation_date: properties?.created,
-                    topic_hierarchy: topic_hierarchy,
-                    data_policy: properties?.['wmo:dataPolicy'],
+                    identifier: identifier || 'No identifier found',
+                    centre_identifier: centre_id || 'No centre identifier found',
+                    title: properties?.title || 'No title found',
+                    creation_date: properties?.created || 'No creation date found',
+                    topic_hierarchy: topic_hierarchy || 'No topic hierarchy found',
+                    data_policy: properties?.['wmo:dataPolicy'] || 'No data policy found',
+                    description: properties.description.substring(0, 100) + '...' || 'No description found'
                 }
             });
 
