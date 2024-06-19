@@ -581,7 +581,7 @@ export default defineComponent({
             } catch (error) {
                 const message = 'Error loading stored settings: ' + error.message;
                 handleError('Error Loading Settings', message);
-                console.error('Error loading stored settings: ', error);
+                console.error(message);
             }
         }
 
