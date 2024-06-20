@@ -20,6 +20,10 @@
     max-width: 1000px;
 }
 
+.max-dataset-width {
+    max-width: 1200px;
+}
+
 .max-error-width {
     max-width: 800px;
 }
@@ -121,4 +125,8 @@
     font-weight: 800;
     font-size: 1.5rem;
     margin-left: 1rem;
+}
+
+.align-top {
+    vertical-align: top;
 }

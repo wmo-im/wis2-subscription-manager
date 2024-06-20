@@ -67,17 +67,17 @@
                                     class="clickable-row">
                                     <td class="small-title py-3">
                                         <div class="title-section">
-                                            <span><b>{{ item.centre_identifier }}:</b> {{ item.title }}</span>
+                                            <span><b v-if="centreFound(item)">{{ item.centre_identifier }}:</b> {{ item.title }}</span>
                                             <span class="policy-section">({{ item.data_policy }})</span>
+                                        </div>
+                                        <div class="description-section">
+                                            <p>{{ item.description.substring(0, 120) + '...' }}</p>
                                         </div>
                                         <div class="keywords-section">
                                             <p><b>Keywords:</b> {{ item.keywords }}</p>
                                         </div>
                                         <div class="date-section">
                                             <p><b>Creation Date:</b> {{ item.creation_date }}</p>
-                                        </div>
-                                        <div class="description-section">
-                                            <p>{{ item.description }}</p>
                                         </div>
                                     </td>
                                     <td>
@@ -105,16 +105,17 @@
                     </v-table>
 
                     <!-- Dialog to display dataset metadata -->
-                    <v-dialog v-model="dialog" transition="scroll-y-transition" class="max-dialog-width">
+                    <v-dialog v-model="dialog" transition="scroll-y-transition" class="max-dataset-width">
                         <v-card class="overflow-hidden">
                             <v-toolbar :title="selectedItem.title" color="#003DA5">
                                 <v-btn icon="mdi-close" variant="text" @click="dialog = false" />
                             </v-toolbar>
-                            <v-table density="comfortable" class="my-4">
+                            <v-table class="px-4 py-7">
                                 <template v-for="(value, key) in selectedItem">
                                     <tbody>
-                                        <tr v-if="key !== 'title'">
-                                            <td><b>{{ formatKey(key) }}</b></td>
+                                        <tr v-if="key !== 'title'" class="align-top">
+                                            <td class="feature-column"><b>{{ formatKey(key) }}</b></td>
+                                            <td><v-divider vertical/></td>
                                             <td>{{ value }}</td>
                                         </tr>
                                     </tbody>
@@ -233,6 +234,11 @@ export default defineComponent({
             return [...activeTopics.value, ...pendingTopics.value];
         });
 
+        // Check a dataset's centre identifier is found
+        const centreFound = (item) => {
+            return item.centre_identifier !== 'No centre identifier found';
+        }
+
         // Methods
 
         // Handle errors displayed to user
@@ -273,6 +279,11 @@ export default defineComponent({
             } catch (error) {
                 throw new Error(`There was an error connecting to the catalogue: ${error.message}`);
             }
+        };
+
+        // Helper function to capitalise the first letter of a string
+        const capitalizeFirstLetter = (string) => {
+            return string.charAt(0).toUpperCase() + string.slice(1);
         };
 
         // Search the catalogue
@@ -340,10 +351,9 @@ export default defineComponent({
                     }
                 }
 
-                // Format data policy to begin with a captial
                 let data_policy;
                 if (properties?.['wmo:dataPolicy']) {
-                    data_policy = properties['wmo:dataPolicy'].charAt(0).toUpperCase() + properties['wmo:dataPolicy'].slice(1);
+                    data_policy = capitalizeFirstLetter(properties['wmo:dataPolicy']);
                 }
 
                 // Earth system discipline is the id item of concept whose scheme is
@@ -353,14 +363,8 @@ export default defineComponent({
                     const earthSystemDiscipline = properties.themes.find(theme => theme.scheme === 'https://codes.wmo.int/wis/topic-hierarchy/earth-system-discipline');
                     if (earthSystemDiscipline) {
                         discipline = earthSystemDiscipline.concepts[0]?.id;
+                        discipline = capitalizeFirstLetter(discipline);
                     }
-                }
-
-
-                // Truncate description to 120 characters
-                let description;
-                if (properties?.description) {
-                    description = properties.description.substring(0, 120) + '...';
                 }
 
                 return {
@@ -373,7 +377,7 @@ export default defineComponent({
                     data_policy: data_policy || 'No data policy found',
                     keywords: properties?.keywords?.join(', ') || 'None found',
                     earth_system_discipline: discipline || 'No discipline found',
-                    description: description || 'No description found'
+                    description: properties.description || 'No description found'
                 }
             });
 
@@ -571,6 +575,7 @@ export default defineComponent({
             // Computed variables
             catalogueBoolean,
             selectedTopics,
+            centreFound,
 
             // Methods
             searchCatalogue,
@@ -623,4 +628,9 @@ export default defineComponent({
     font-size: 0.75rem;
     color: #888;
 }
+
+.feature-column {
+    width: 15%
+}
+
 </style>
