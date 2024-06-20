@@ -5,7 +5,8 @@
                 <v-toolbar dense>
                     <v-toolbar-title class="big-title">Search a WIS2 Global Discovery Catalogue</v-toolbar-title>
                 </v-toolbar>
-                <v-card-subtitle>Explore and find datasets to add to your list of pending subscriptions</v-card-subtitle>
+                <v-card-subtitle>Explore and find datasets to add to your list of pending
+                    subscriptions</v-card-subtitle>
 
                 <v-col cols="12" />
 
@@ -64,8 +65,20 @@
                             <tbody v-show="tableBoolean === true">
                                 <tr v-for="item in datasets" :key="item.title" @click="openDialog(item)"
                                     class="clickable-row">
-                                    <td class="small-title">
-                                        {{ item.title }}
+                                    <td class="small-title py-3">
+                                        <div class="title-section">
+                                            <span><b v-if="centreFound(item)">{{ item.centre_identifier }}:</b> {{ item.title }}</span>
+                                            <span class="policy-section">({{ item.data_policy }})</span>
+                                        </div>
+                                        <div class="description-section">
+                                            <p>{{ item.description.substring(0, 120) + '...' }}</p>
+                                        </div>
+                                        <div class="keywords-section">
+                                            <p><b>Keywords:</b> {{ item.keywords }}</p>
+                                        </div>
+                                        <div class="date-section">
+                                            <p><b>Creation Date:</b> {{ item.creation_date }}</p>
+                                        </div>
                                     </td>
                                     <td>
                                         <!-- If topic not added, allow them to add -->
@@ -82,7 +95,8 @@
                                         <v-btn block v-if="topicFound(item.topic_hierarchy, activeTopics)" disabled
                                             color="#003DA5" append-icon="mdi-download-multiple" variant="flat">
                                             Active</v-btn>
-                                        <v-btn block v-if="!item.topic_hierarchy && connectionStatus" disabled variant="flat">
+                                        <v-btn block v-if="!item.topic_hierarchy && connectionStatus" disabled
+                                            variant="flat">
                                             No Topic</v-btn>
                                     </td>
                                 </tr>
@@ -91,16 +105,17 @@
                     </v-table>
 
                     <!-- Dialog to display dataset metadata -->
-                    <v-dialog v-model="dialog" transition="scroll-y-transition" class="max-dialog-width">
+                    <v-dialog v-model="dialog" transition="scroll-y-transition" class="max-dataset-width">
                         <v-card class="overflow-hidden">
                             <v-toolbar :title="selectedItem.title" color="#003DA5">
                                 <v-btn icon="mdi-close" variant="text" @click="dialog = false" />
                             </v-toolbar>
-                            <v-table density="comfortable" class="my-4">
+                            <v-table class="px-4 py-7">
                                 <template v-for="(value, key) in selectedItem">
                                     <tbody>
-                                        <tr v-if="key !== 'title'">
-                                            <td><b>{{ formatKey(key) }}</b></td>
+                                        <tr v-if="key !== 'title'" class="align-top">
+                                            <td class="feature-column"><b>{{ formatKey(key) }}</b></td>
+                                            <td><v-divider vertical/></td>
                                             <td>{{ value }}</td>
                                         </tr>
                                     </tbody>
@@ -110,7 +125,8 @@
                                 <v-row>
                                     <v-col cols="12">
                                         <v-btn color="#E09D00" append-icon="mdi-code-json" variant="flat" block
-                                            @click="openJSON(selectedItem.identifier, selectedItem.title)" :loading="loadingJsonBoolean">
+                                            @click="openJSON(selectedItem.identifier, selectedItem.title)"
+                                            :loading="loadingJsonBoolean">
                                             View JSON
                                         </v-btn>
                                     </v-col>
@@ -218,6 +234,11 @@ export default defineComponent({
             return [...activeTopics.value, ...pendingTopics.value];
         });
 
+        // Check a dataset's centre identifier is found
+        const centreFound = (item) => {
+            return item.centre_identifier !== 'No centre identifier found';
+        }
+
         // Methods
 
         // Handle errors displayed to user
@@ -256,8 +277,13 @@ export default defineComponent({
                 }
                 return await response.json();
             } catch (error) {
-            throw new Error(`There was an error connecting to the catalogue: ${error.message}`);
+                throw new Error(`There was an error connecting to the catalogue: ${error.message}`);
             }
+        };
+
+        // Helper function to capitalise the first letter of a string
+        const capitalizeFirstLetter = (string) => {
+            return string.charAt(0).toUpperCase() + string.slice(1);
         };
 
         // Search the catalogue
@@ -296,7 +322,7 @@ export default defineComponent({
 
                 // Initialise other features we want to extract
                 let topic_hierarchy = null;
-                let center_id = null;
+                let centre_id = null;
 
                 // The topic hierarchy is found in the 'channel'
                 // property in 'links' where the 'rel' is 'items'
@@ -316,21 +342,42 @@ export default defineComponent({
                 if (identifier) {
                     if (identifier.includes(':')) {
                         const tokens = identifier.split(':');
-                        center_id = tokens.length < 5 ? tokens[1] : tokens[3];
+                        centre_id = tokens.length < 5 ? tokens[1] : tokens[3];
                     }
 
                     else {
                         const tokens = identifier.split('.');
-                        center_id = tokens[1];
+                        centre_id = tokens[1];
                     }
                 }
+
+                let data_policy;
+                if (properties?.['wmo:dataPolicy']) {
+                    data_policy = capitalizeFirstLetter(properties['wmo:dataPolicy']);
+                }
+
+                // Earth system discipline is the id item of concept whose scheme is
+                // "https://codes.wmo.int/wis/topic-hierarchy/earth-system-discipline"
+                let discipline;
+                if (properties?.themes) {
+                    const earthSystemDiscipline = properties.themes.find(theme => theme.scheme === 'https://codes.wmo.int/wis/topic-hierarchy/earth-system-discipline');
+                    if (earthSystemDiscipline) {
+                        discipline = earthSystemDiscipline.concepts[0]?.id;
+                        discipline = capitalizeFirstLetter(discipline);
+                    }
+                }
+
                 return {
-                    identifier: identifier,
-                    center_identifier: center_id,
-                    title: properties?.title,
-                    creation_date: properties?.created,
-                    topic_hierarchy: topic_hierarchy,
-                    data_policy: properties?.['wmo:dataPolicy'],
+                    identifier: identifier || 'No identifier found',
+                    centre_identifier: centre_id || 'No centre identifier found',
+                    title: properties?.title || 'No title found',
+                    creation_date: properties?.created || 'No creation date found',
+                    last_update: properties?.updated || 'No updates',
+                    topic_hierarchy: topic_hierarchy || 'No topic hierarchy found',
+                    data_policy: data_policy || 'No data policy found',
+                    keywords: properties?.keywords?.join(', ') || 'None found',
+                    earth_system_discipline: discipline || 'No discipline found',
+                    description: properties.description || 'No description found'
                 }
             });
 
@@ -528,6 +575,7 @@ export default defineComponent({
             // Computed variables
             catalogueBoolean,
             selectedTopics,
+            centreFound,
 
             // Methods
             searchCatalogue,
@@ -552,4 +600,37 @@ export default defineComponent({
 .button-column {
     width: 17%;
 }
+
+.title-section {
+    font-size: 1rem;
+}
+
+.policy-section {
+    margin-left: 0.5rem;
+    color: #888;
+}
+
+.keywords-section {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: #555;
+    font-style: italic;
+}
+
+.date-section {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: #555;
+}
+
+.description-section {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.feature-column {
+    width: 15%
+}
+
 </style>

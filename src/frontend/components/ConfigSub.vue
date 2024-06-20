@@ -730,7 +730,7 @@ export default defineComponent({
                     const errorData = await response.json();
                     const readableError = HTTP_CODES[response.status] || response.statusText;
                     // Display the error message from server response, if available
-                    const message = errorData.error ? errorData.error : readableError;
+                    const message = errorData.error || readableError;
                     handleError('Error Adding Topic', message);
                     // End the button loading animation for this topic
                     makingServerRequest.value[item.topic] = false;
@@ -781,7 +781,7 @@ export default defineComponent({
                     const errorData = await response.json();
                     const readableError = HTTP_CODES[response.status] || response.statusText;
                     // Display the error message from server response, if available
-                    const message = errorData.error ? errorData.error : readableError;
+                    const message = errorData.error || readableError;
                     handleError('Error Removing Topic', message);
                     // End the button loading animation for this topic
                     makingServerRequest.value[topic] = false;
