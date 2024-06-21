@@ -550,6 +550,11 @@ export default defineComponent({
             }
         });
 
+        // Build subscription URL from the server link
+        const subscribeLink = computed(() => {
+            return `${serverLink.value}/subscriptions`;
+        });
+
         // Check if the topic has metrics to display
         // (If there are no keys, there is no Prometheus data for the topic)
         const topicHasMetrics = computed(() => {
@@ -601,14 +606,11 @@ export default defineComponent({
 
         // Get the topics and their associated targets from the /list endpoint
         const getTopicList = async () => {
-            // Build the full URL for listing subscriptions
-            const url = `${serverLink.value}/list`;
-
             try {
-                const response = await fetch(url, {
+                const response = await fetch(subscribeLink, {
                     method: 'GET',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'accept': 'application/json',
                         'Authorization': 'Bearer ' + token.value
                     }
                 });
@@ -645,13 +647,13 @@ export default defineComponent({
         const getMetrics = async () => {
 
             // Build the full URL for Prometheus metrics
-            const url = `${serverLink.value}/metrics`;
+            const metricsLink = `${serverLink.value}/metrics`;
 
             try {
-                const response = await fetch(url, {
+                const response = await fetch(metricsLink, {
                     method: 'GET',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'accept': 'text/plain',
                         'Authorization': 'Bearer ' + token.value
                     },
                 });
@@ -714,16 +716,21 @@ export default defineComponent({
             // The topic, in particular the wildcards (+,#), must be URI encoded
             const encodedTopic = encodeURIComponent(item.topic);
 
-            // Build the full URL for adding a subscription
-            const url = `${serverLink.value}/add?topic=${encodedTopic}&target=${item.target}`;
+            // Build the request body
+            const data = {
+                topic: encodedTopic,
+                target: item.target
+            };
 
             try {
-                const response = await fetch(url, {
-                    method: 'GET',
+                const response = await fetch(subscribeLink, {
+                    method: 'POST',
                     headers: {
+                        'accept': 'application/json',
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + token.value
                     },
+                    body: JSON.stringify(data)
                 });
 
                 if (!response.ok) {
@@ -766,13 +773,12 @@ export default defineComponent({
             const encodedTopic = encodeURIComponent(topic);
 
             // Build the full URL for deleting a subscription
-            const url = `${serverLink.value}/delete?topic=${encodedTopic}`;
+            const deleteLink = `${subscribeLink}/${encodedTopic}`;
 
             try {
-                const response = await fetch(url, {
-                    method: 'GET',
+                const response = await fetch(deleteLink, {
+                    method: 'DELETE',
                     headers: {
-                        'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + token.value
                     },
                 });
