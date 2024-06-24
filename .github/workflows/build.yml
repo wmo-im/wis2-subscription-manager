@@ -16,12 +16,7 @@ jobs:
     # Run this job on the following operating systems
     strategy:
       matrix:
-        os:
-          [
-            { name: "linux", image: "ubuntu-latest" },
-            { name: "windows", image: "windows-latest" },
-            { name: "macos", image: "macos-latest" },
-          ]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os.image }}
     steps:
       - name: Github checkout
