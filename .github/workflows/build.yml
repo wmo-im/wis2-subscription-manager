@@ -32,7 +32,14 @@ jobs:
       - name: Build Vue front end
         run: npm run build
 
-      - name: Build Electron app
+      - name: Build Electron app on MacOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          npm install appdmg --save-dev
+          npm run make -- --arch=universal --platform=darwin
+
+      - name: Build Electron app on Windows and Linux
+        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
         run: npm run make
 
       - name: Publish app
