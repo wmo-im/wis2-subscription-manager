@@ -55,6 +55,7 @@ module.exports = {
           owner: 'wmo-im',
           name: 'wis2-subscription-manager'
         },
+        authToken: process.env.GITHUB_TOKEN,
         prerelease: true
       }
     }
