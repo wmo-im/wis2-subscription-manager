@@ -256,7 +256,7 @@ export default defineComponent({
                     handleError('Error Loading Settings', 'There was an issue loading the settings or topics you selected. Please try reloading the application.');
                     return;
                 }
-                serverLink.value = storedSettings?.serverLink || '';
+                serverLink.value = storedSettings?.serverLink || 'http://localhost:5050';
                 token.value = storedSettings?.token || '';
                 connectionStatus.value = storedSettings?.connectionStatus || false;
                 activeTopics.value = storedSettings?.activeTopics || [];

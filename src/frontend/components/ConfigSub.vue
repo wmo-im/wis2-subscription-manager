@@ -495,7 +495,7 @@ export default defineComponent({
         // Reactive variables
 
         // Server information
-        const serverLink = ref('127.0.0.1:8080');
+        const serverLink = ref('http://localhost:5050');
         const token = ref('')
         const connectedToDownloader = ref(false);
 
@@ -578,7 +578,7 @@ export default defineComponent({
                     handleError('Error Loading Settings', 'There was an issue loading the settings or topics you selected. Please try reloading the application.');
                     return;
                 }
-                serverLink.value = storedSettings.serverLink || '127.0.0.1:8080';
+                serverLink.value = storedSettings.serverLink || 'http://localhost:5050';
                 token.value = storedSettings.token || '';
                 connectedToDownloader.value = storedSettings.connectedToDownloader || false;
                 activeTopics.value = storedSettings.activeTopics || [];
@@ -607,10 +607,10 @@ export default defineComponent({
         // Get the topics and their associated targets from the /list endpoint
         const getTopicList = async () => {
             try {
-                const response = await fetch(subscribeLink, {
+                const response = await fetch(subscribeLink.value, {
                     method: 'GET',
                     headers: {
-                        'accept': 'application/json',
+                        'Accept': 'application/json',
                         'Authorization': 'Bearer ' + token.value
                     }
                 });
@@ -653,7 +653,7 @@ export default defineComponent({
                 const response = await fetch(metricsLink, {
                     method: 'GET',
                     headers: {
-                        'accept': 'text/plain',
+                        'Accept': 'text/plain',
                         'Authorization': 'Bearer ' + token.value
                     },
                 });
@@ -723,10 +723,10 @@ export default defineComponent({
             };
 
             try {
-                const response = await fetch(subscribeLink, {
+                const response = await fetch(subscribeLink.value, {
                     method: 'POST',
                     headers: {
-                        'accept': 'application/json',
+                        'Accept': 'application/json',
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + token.value
                     },
@@ -773,7 +773,7 @@ export default defineComponent({
             const encodedTopic = encodeURIComponent(topic);
 
             // Build the full URL for deleting a subscription
-            const deleteLink = `${subscribeLink}/${encodedTopic}`;
+            const deleteLink = `${subscribeLink.value}/${encodedTopic}`;
 
             try {
                 const response = await fetch(deleteLink, {
@@ -1093,6 +1093,7 @@ export default defineComponent({
             // Computed variables
             settings,
             topicHasMetrics,
+            subscribeLink,
 
             // Methods
             processTopicData,
