@@ -1,0 +1,48 @@
+name: Release app
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    # Run this job on the following operating systems
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: GitHub checkout
+        uses: actions/checkout@v4
+
+      # To make the app correctly on MacOS, the Python version must be < 3.12
+      - name: Install Python 3.11.9
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.9'
+
+      - name: Use Node.js and install dependencies
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+
+      - name: Build Vue front end
+        run: npm run build
+
+      - name: Build Electron app on Windows and Linux
+        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
+        run: npm run make
+
+      - name: Build Electron app on MacOS
+        if: matrix.os == 'macos-latest'
+        run: npm run make -- --arch=universal --platform=darwin
+
+      - name: Publish Electron app to GitHub Releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run publish

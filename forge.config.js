@@ -18,6 +18,11 @@ module.exports = {
   },
   rebuildConfig: {},
   makers: [
+    // Common maker
+    {
+      name: '@electron-forge/maker-zip',
+      platforms: ['win32', 'darwin', 'linux']
+    },
     // Windows maker
     {
       name: '@electron-forge/maker-squirrel',
@@ -46,6 +51,21 @@ module.exports = {
         icon: 'public/assets/app-icon.icns',
       },
     },
+  ],
+  publishers: [
+    {
+      name: '@electron-forge/publisher-github',
+      config: {
+        repository: {
+          owner: 'wmo-im',
+          name: 'wis2-subscription-manager'
+        },
+        authToken: process.env.GITHUB_TOKEN,
+        prerelease: true,
+        draft: true,
+        generateReleaseNotes: true
+      }
+    }
   ],
   plugins: [
     {
