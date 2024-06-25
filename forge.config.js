@@ -18,6 +18,11 @@ module.exports = {
   },
   rebuildConfig: {},
   makers: [
+    // Common maker
+    {
+      name: '@electron-forge/maker-zip',
+      platforms: ['win32', 'darwin', 'linux']
+    },
     // Windows maker
     {
       name: '@electron-forge/maker-squirrel',
