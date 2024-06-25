@@ -20,7 +20,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Github checkout
+      - name: GitHub checkout
         uses: actions/checkout@v4
 
       - name: Use Node.js and install dependencies
@@ -32,11 +32,15 @@ jobs:
       - name: Build Vue front end
         run: npm run build
 
-      - name: Build Electron app on MacOS
+      - name: Install MacOS dependencies
         if: matrix.os == 'macos-latest'
         run: |
-          npm install appdmg --save-dev
-          npm run make -- --arch=universal --platform=darwin
+          python3 -m pip install setuptools
+          npm install appdmg
+
+      - name: Build Electron app on MacOS
+        if: matrix.os == 'macos-latest'
+        run: npm run make -- --arch=universal --platform=darwin
 
       - name: Build Electron app on Windows and Linux
         if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
