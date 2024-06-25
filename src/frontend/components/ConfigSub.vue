@@ -423,20 +423,21 @@ export default defineComponent({
 
         // Static variables
         const rules = {
-            required: value => !!value || 'Field is required.',
-            topic: value => {
-                if (topicFound(value, activeTopics.value) || topicFound(value, pendingTopics.value)) {
+            required: input => !!input || 'Field is required.',
+            topic: input => {
+                if (topicFound(input, activeTopics.value) || 
+                    (topicFound(input, pendingTopics.value) && isTopicNew.value)) {
                     return 'This topic is already added to or overlaps with an existing topic';
                 }
             },
-            target: value => {
+            target: input => {
                 // Check if the target is exactly "$TOPIC"
-                if (value === "$TOPIC") {
+                if (input === "$TOPIC") {
                     return true;
                 }
                 // Regular expression for whitelisted characters
                 const validPattern = /^[A-Za-z0-9/_-]+$/;
-                return validPattern.test(value) || 'Invalid target';
+                return validPattern.test(input) || 'Invalid target';
             }
         };
 
@@ -521,6 +522,7 @@ export default defineComponent({
         // Topic configuration dialog
         const showTopicConfigDialog = ref(false);
         const topicDialogTitle = ref('Create New Topic');
+        const isTopicNew = ref(true);
         const previousTopic = ref('');
         const previousTarget = ref('');
         const editActiveTarget = ref(false);
@@ -833,9 +835,11 @@ export default defineComponent({
             showTopicConfigDialog.value = true;
 
             if (!item) {
+                isTopicNew.value = true;
                 topicDialogTitle.value = 'Create New Topic';
             }
             else {
+                isTopicNew.value = false;
                 topicDialogTitle.value = 'Edit Topic';
             }
 
@@ -1093,7 +1097,6 @@ export default defineComponent({
             // Computed variables
             settings,
             topicHasMetrics,
-            subscribeLink,
 
             // Methods
             processTopicData,
