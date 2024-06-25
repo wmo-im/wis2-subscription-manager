@@ -49,4 +49,4 @@ jobs:
       - name: Publish Electron app
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run publish-app
+        run: npm run publish
