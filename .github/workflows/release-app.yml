@@ -19,6 +19,7 @@ jobs:
       - name: GitHub checkout
         uses: actions/checkout@v4
 
+      # To make the app correctly on MacOS, the Python version must be < 3.12
       - name: Install Python 3.11.9
         uses: actions/setup-python@v5
         with:
