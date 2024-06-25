@@ -56,7 +56,8 @@ module.exports = {
           name: 'wis2-subscription-manager'
         },
         authToken: process.env.GITHUB_TOKEN,
-        prerelease: true
+        prerelease: true,
+        generateReleaseNotes: trues
       }
     }
   ],
