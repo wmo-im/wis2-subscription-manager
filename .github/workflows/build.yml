@@ -20,10 +20,10 @@ jobs:
       - name: GitHub checkout
         uses: actions/checkout@v4
 
-      - name: Install Python 3.11.4
-        uses: actions/setup-python@v4
+      - name: Install Python 3.11.9
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11.4'
+          python-version: '3.11.9'
 
       - name: Use Node.js and install dependencies
         uses: actions/setup-node@v4
