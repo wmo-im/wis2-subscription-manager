@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - main
-      - feature/matrix-actions
   pull_request:
     branches:
       - main
