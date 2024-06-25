@@ -35,7 +35,7 @@ jobs:
       - name: Install MacOS dependencies
         if: matrix.os == 'macos-latest'
         run: |
-          python3 -m pip install setuptools
+          brew install setuptools
           npm install appdmg
 
       - name: Build Electron app on MacOS
