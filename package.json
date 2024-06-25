@@ -8,7 +8,7 @@
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
-    "publish": "electron-forge publish",
+    "publish-app": "electron-forge publish",
     "lint": "echo \"No linting configured\"",
     "build:main": "vite build --config vite.main.config.mjs",
     "build:preload": "vite build --config vite.preload.config.mjs",
