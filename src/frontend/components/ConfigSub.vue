@@ -37,26 +37,22 @@
                                     <v-row v-if="connectedToDownloader" dense>
                                         <template v-if="lgAndUp">
                                             <v-col cols="5">
-                                                <v-btn color="#00ABC9" size="x-large" block
-                                                    append-icon="mdi-sync" @click="getServerData"
-                                                    :loading="connectingToServer">Sync</v-btn>
+                                                <v-btn color="#00ABC9" size="x-large" block append-icon="mdi-sync"
+                                                    @click="getServerData" :loading="connectingToServer">Sync</v-btn>
                                             </v-col>
                                             <v-col cols="7">
-                                                <v-btn color="#E09D00" size="x-large" block
-                                                    append-icon="mdi-link-off" @click="clearServerData"
-                                                    :loading="connectingToServer">Disconnect</v-btn>
+                                                <v-btn color="#E09D00" size="x-large" block append-icon="mdi-link-off"
+                                                    @click="clearServerData">Disconnect</v-btn>
                                             </v-col>
                                         </template>
                                         <template v-else>
                                             <v-col cols="12">
-                                                <v-btn color="#00ABC9" block
-                                                    append-icon="mdi-sync" @click="getServerData"
-                                                    :loading="connectingToServer">Sync</v-btn>
+                                                <v-btn color="#00ABC9" block append-icon="mdi-sync"
+                                                    @click="getServerData" :loading="connectingToServer">Sync</v-btn>
                                             </v-col>
                                             <v-col cols="12">
-                                                <v-btn color="#E09D00" block
-                                                    append-icon="mdi-link-off" @click="clearServerData"
-                                                    :loading="connectingToServer">Disconnect</v-btn>
+                                                <v-btn color="#E09D00" block append-icon="mdi-link-off"
+                                                    @click="clearServerData">Disconnect</v-btn>
                                             </v-col>
                                         </template>
                                     </v-row>
@@ -111,7 +107,7 @@
                                         </thead>
                                         <tbody>
                                             <tr v-for="item in activeTopics" :key="item.topic"
-                                                @click="configureTopic(item)" class="clickable-row">
+                                                @click="configureTopic('active', item)" class="clickable-row">
                                                 <td class="small-title">
                                                     {{ item.topic }}
                                                 </td>
@@ -119,12 +115,14 @@
                                                     {{ item.target }}
                                                 </td>
                                                 <td class="text-center">
-                                                    <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-chart-box' : ''" color="#00ABC9"
-                                                        variant="flat" @click.stop="monitorTopic(item.topic)">
+                                                    <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-chart-box' : ''"
+                                                        color="#00ABC9" variant="flat"
+                                                        @click.stop="monitorTopic(item.topic)">
                                                         <p v-if="mdAndUp">Monitor</p>
                                                         <v-icon v-if="!mdAndUp" icon="mdi-chart-box" />
                                                     </v-btn>
-                                                    <v-btn :append-icon="lgAndUp ? 'mdi-delete' : ''" color="error" variant="flat"
+                                                    <v-btn :append-icon="lgAndUp ? 'mdi-delete' : ''" color="error"
+                                                        variant="flat"
                                                         @click.stop="confirmRemoval(item.topic, 'active')">
                                                         <p v-if="mdAndUp">Remove</p>
                                                         <v-icon v-if="!mdAndUp" icon="mdi-chart-box" />
@@ -164,14 +162,14 @@
                                                         Actions
                                                     </p>
                                                     <v-btn v-else block color="#64BF40" append-icon="mdi-plus"
-                                                        @click="configureTopic()">Add A
+                                                        @click="configureTopic('pending')">Add A
                                                         Topic</v-btn>
                                                 </th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <tr v-for="item in pendingTopics" :key="item.topic"
-                                                @click="configureTopic(item)" class="clickable-row">
+                                                @click="configureTopic('pending', item)" class="clickable-row">
                                                 <td class="small-title">
                                                     {{ item.topic }}
                                                 </td>
@@ -179,13 +177,15 @@
                                                     {{ item.target }}
                                                 </td>
                                                 <td class="text-center">
-                                                    <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-cloud-upload' : ''" color="#003DA5"
-                                                        variant="flat" @click.stop="addToSubscription(item)"
+                                                    <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-cloud-upload' : ''"
+                                                        color="#003DA5" variant="flat"
+                                                        @click.stop="addToSubscription(item)"
                                                         :loading="makingServerRequest[item.topic]">
                                                         <p v-if="mdAndUp">Activate</p>
                                                         <v-icon v-if="!mdAndUp" icon="mdi-cloud-upload" />
                                                     </v-btn>
-                                                    <v-btn :append-icon="lgAndUp ? 'mdi-delete' : ''" color="error" variant="flat"
+                                                    <v-btn :append-icon="lgAndUp ? 'mdi-delete' : ''" color="error"
+                                                        variant="flat"
                                                         @click.stop="confirmRemoval(item.topic, 'pending')">
                                                         <p v-if="mdAndUp">Remove</p>
                                                         <v-icon v-if="!mdAndUp" icon="mdi-delete" />
@@ -200,7 +200,7 @@
                                         <v-row>
                                             <v-col cols="6">
                                                 <v-btn v-if="pendingTopics.length > 0" block color="#64BF40"
-                                                    append-icon="mdi-plus" @click="configureTopic()">Add A
+                                                    append-icon="mdi-plus" @click="configureTopic('pending')">Add A
                                                     New Topic</v-btn>
                                             </v-col>
                                             <v-col cols="6">
@@ -227,65 +227,58 @@
             <v-toolbar :title="topicDialogTitle" color="#003DA5">
                 <v-btn icon="mdi-close" variant="text" size="small" @click="showTopicConfigDialog = false" />
             </v-toolbar>
-            <v-container>
-                <v-form @submit.prevent="saveTopic">
-                    <v-col cols="12">
-                        <v-row>
-                            <v-col cols="12">
+            <v-sheet class="mx-auto py-5" width="95%">
+                <!-- Pending topics -->
+                <v-form ref="form" v-if="configuredTopicIsPending">
+                    <v-text-field v-model="topicToAdd" label="Topic" :rules="[rules.required, rules.topic]" />
 
-                                <!-- If active topic -->
-                                <v-row v-if="topicFound(topicToAdd, activeTopics)" class="pb-5">
-                                    <v-col cols="2">
-                                        <p class="medium-title"><b>Topic:</b></p>
-                                    </v-col>
-                                    <v-col cols="10">
-                                        <p class="medium-title">{{ topicToAdd }}</p>
-                                    </v-col>
-                                </v-row>
+                    <v-text-field v-model="targetToAdd" label="Associated Sub-Directory"
+                        :rules="[rules.required, rules.target]" />
 
-                                <v-divider />
-
-                                <v-row v-if="topicFound(topicToAdd, activeTopics)" class="pt-5">
-                                    <v-col cols="2">
-                                        <p class="medium-title"><b>Target:</b></p>
-                                    </v-col>
-                                    <v-col cols="8">
-                                        <!-- Target switches between read-only and editable -->
-                                        <p v-if="!editActiveTarget" class="medium-title">{{ targetToAdd }}</p>
-                                        <v-text-field v-else v-model="targetToAdd" density="comfortable"
-                                            variant="outlined" clearable :rules="[rules.required, rules.target]" />
-                                    </v-col>
-                                    <v-col cols="2">
-                                        <v-btn v-if="!editActiveTarget" variant="flat" color="#E09D00" block
-                                            size="large" @click.stop="editActiveTarget = true">Edit</v-btn>
-                                        <v-btn v-if="editActiveTarget" variant="flat" color="#00ABC9" block size="large"
-                                            @click.stop="editActiveTarget = false">Confirm</v-btn>
-                                    </v-col>
-                                </v-row>
-
-                                <!-- If pending topic -->
-                                <v-text-field v-if="!topicFound(topicToAdd, activeTopics)" v-model="topicToAdd"
-                                    label="Topic" :rules="[rules.required, rules.topic]" />
-                            </v-col>
-                        </v-row>
-
-                        <v-row>
-                            <v-col cols="12">
-                                <v-text-field v-if="!topicFound(topicToAdd, activeTopics)" v-model="targetToAdd"
-                                    label="Associated Sub-Directory" :rules="[rules.required, rules.target]" />
-                            </v-col>
-                        </v-row>
-
-                        <v-row>
-                            <v-col cols="12">
-                                <!-- If an active target is being edited, you can't save -->
-                                <v-btn :disabled="editActiveTarget" type="submit" color="#003DA5" variant="flat" block
-                                    @click="saveTopic" :loading="makingServerRequest[topicToAdd]">Save</v-btn>
-                            </v-col>
-                        </v-row>
-                    </v-col>
+                    <v-btn type="submit" color="#003DA5" variant="flat" block @click="saveTopic"
+                        :loading="makingServerRequest[topicToAdd]">Save</v-btn>
                 </v-form>
-            </v-container>
+
+                <!-- Active topics -->
+                <v-form ref="form" v-if="!configuredTopicIsPending">
+                    <v-row v-if="topicFound(topicToAdd, activeTopics)" class="pb-5">
+                        <v-col cols="2">
+                            <p class="medium-title"><b>Topic:</b></p>
+                        </v-col>
+                        <v-col cols="10">
+                            <p class="medium-title">{{ topicToAdd }}</p>
+                        </v-col>
+                    </v-row>
+
+                    <v-divider />
+
+                    <v-row v-if="topicFound(topicToAdd, activeTopics)" class="pt-5">
+                        <v-col cols="2">
+                            <p class="medium-title"><b>Target:</b></p>
+                        </v-col>
+                        <v-col cols="8">
+                            <!-- Target switches between read-only and editable -->
+                            <p v-if="!editActiveTarget" class="medium-title">{{ targetToAdd }}</p>
+                            <v-text-field v-else v-model="targetToAdd" density="comfortable" variant="outlined"
+                                clearable :rules="[rules.required, rules.target]" />
+                        </v-col>
+                        <v-col cols="2">
+                            <v-btn v-if="!editActiveTarget" variant="flat" color="#E09D00" block size="large"
+                                @click.stop="editActiveTarget = true">Edit</v-btn>
+                            <v-btn v-if="editActiveTarget" variant="flat" color="#00ABC9" block size="large"
+                                @click.stop="configureActiveTarget">Confirm</v-btn>
+                        </v-col>
+                    </v-row>
+
+                    <v-row>
+                        <v-col cols="12">
+                            <!-- If an active target is being edited, you can't save -->
+                            <v-btn :disabled="editActiveTarget" type="submit" color="#003DA5" variant="flat" block
+                                @click="saveTopic" :loading="makingServerRequest[topicToAdd]">Save</v-btn>
+                        </v-col>
+                    </v-row>
+                </v-form>
+            </v-sheet>
         </v-card>
     </v-dialog>
 
@@ -331,7 +324,9 @@
             <v-container v-else>
                 <v-row>
                     <v-col cols="12">
-                        <p class="medium-title text-center">No metrics to display, as no notifications have been received yet from this topic.</p>
+                        <p class="medium-title text-center">No metrics to display, as no notifications have been
+                            received
+                            yet from this topic.</p>
                     </v-col>
                 </v-row>
             </v-container>
@@ -425,7 +420,7 @@ export default defineComponent({
         const rules = {
             required: input => !!input || 'Field is required.',
             topic: input => {
-                if (topicFound(input, activeTopics.value) || 
+                if (topicFound(input, activeTopics.value) ||
                     (topicFound(input, pendingTopics.value) && isTopicNew.value)) {
                     return 'This topic is already added to or overlaps with an existing topic';
                 }
@@ -521,11 +516,13 @@ export default defineComponent({
 
         // Topic configuration dialog
         const showTopicConfigDialog = ref(false);
+        const configuredTopicIsPending = ref(false);
         const topicDialogTitle = ref('Create New Topic');
         const isTopicNew = ref(true);
         const previousTopic = ref('');
         const previousTarget = ref('');
         const editActiveTarget = ref(false);
+        const form = ref(false);
 
         // Topic metric monitoring dialog
         const showTopicMonitorDialog = ref(false);
@@ -831,7 +828,9 @@ export default defineComponent({
         };
 
         // Configure pending topic and target
-        const configureTopic = (item) => {
+        const configureTopic = (state, item) => {
+            configuredTopicIsPending.value = state === 'pending';
+
             showTopicConfigDialog.value = true;
 
             if (!item) {
@@ -850,8 +849,25 @@ export default defineComponent({
             populateFields(item);
         };
 
+        const configureActiveTarget = async () => {
+            // First check if the content is valid
+            const { valid } = await form.value.validate();
+            if (!valid) {
+                return;
+            }
+
+            // Save the new target
+            editActiveTarget.value = false;
+        }
+
         // Adds or updates the topic, both in the list of active topics and pending topics
         const saveTopic = async () => {
+            // First check if the content is valid
+            const { valid } = await form.value.validate();
+            if (!valid) {
+                return;
+            }
+
             const isActive = topicFound(topicToAdd.value, activeTopics.value);
 
             if (isActive) {
@@ -1083,8 +1099,10 @@ export default defineComponent({
             makingServerRequest,
             lastSyncTime,
             showTopicConfigDialog,
+            configuredTopicIsPending,
             topicDialogTitle,
             editActiveTarget,
+            form,
             showTopicMonitorDialog,
             monitorDialogTitle,
             topicMetrics,
@@ -1108,6 +1126,7 @@ export default defineComponent({
             monitorTopic,
             topicFound,
             configureTopic,
+            configureActiveTarget,
             saveTopic,
             addToSubscription,
             addAllToSubscription,
@@ -1122,10 +1141,11 @@ export default defineComponent({
 </script>
 
 <style scoped>
-
-.equal-width th, .equal-width td {
+.equal-width th,
+.equal-width td {
     width: 33%;
-    word-break: break-word; /* Ensure long words wrap */
+    word-break: break-word;
+    /* Ensure long words wrap */
 }
 
 /* Misc. */
