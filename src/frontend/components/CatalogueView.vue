@@ -67,7 +67,7 @@
                                     class="clickable-row">
                                     <td class="small-title py-3">
                                         <div class="title-section">
-                                            <span><b v-if="centreFound(item)">{{ item.centre_identifier }}:</b> {{ item.title }}</span>
+                                            <span><b v-if="item.centre_identifier">{{ item.centre_identifier }}:</b> {{ item.title }}</span>
                                             <span class="policy-section">({{ item.data_policy }})</span>
                                         </div>
                                         <div class="description-section">
@@ -116,7 +116,7 @@
                                         <tr v-if="key !== 'title'" class="align-top">
                                             <td class="feature-column"><b>{{ formatKey(key) }}</b></td>
                                             <td><v-divider vertical/></td>
-                                            <td>{{ value }}</td>
+                                            <td>{{ formatValue(value) }}</td>
                                         </tr>
                                     </tbody>
                                 </template>
@@ -233,11 +233,6 @@ export default defineComponent({
         const selectedTopics = computed(() => {
             return [...activeTopics.value, ...pendingTopics.value];
         });
-
-        // Check a dataset's centre identifier is found
-        const centreFound = (item) => {
-            return item.centre_identifier !== 'No centre identifier found';
-        }
 
         // Methods
 
@@ -368,16 +363,16 @@ export default defineComponent({
                 }
 
                 return {
-                    identifier: identifier || 'No identifier found',
-                    centre_identifier: centre_id || 'No centre identifier found',
-                    title: properties?.title || 'No title found',
-                    creation_date: properties?.created || 'No creation date found',
-                    last_update: properties?.updated || 'No updates',
-                    topic_hierarchy: topic_hierarchy || 'No topic hierarchy found',
-                    data_policy: data_policy || 'No data policy found',
-                    keywords: properties?.keywords?.join(', ') || 'None found',
-                    earth_system_discipline: discipline || 'No discipline found',
-                    description: properties.description || 'No description found'
+                    identifier: identifier,
+                    centre_identifier: centre_id,
+                    title: properties?.title,
+                    creation_date: properties?.created,
+                    last_update: properties?.updated,
+                    topic_hierarchy: topic_hierarchy,
+                    data_policy: data_policy,
+                    keywords: properties?.keywords?.join(', '),
+                    earth_system_discipline: discipline,
+                    description: properties.description
                 }
             });
 
@@ -408,6 +403,11 @@ export default defineComponent({
                 .split(' ')
                 .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                 .join(' ');
+        }
+
+        // Format the value of this key to show 'N/A' if it is null
+        const formatValue = (value) => {
+            return value ? value : 'N/A';
         }
 
         // Opens JSON of dataset metadata
@@ -575,12 +575,12 @@ export default defineComponent({
             // Computed variables
             catalogueBoolean,
             selectedTopics,
-            centreFound,
 
             // Methods
             searchCatalogue,
             openDialog,
             formatKey,
+            formatValue,
             openJSON,
             topicFound,
             addTopicToPending,
