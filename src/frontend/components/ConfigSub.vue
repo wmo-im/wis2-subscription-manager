@@ -230,13 +230,13 @@
             <v-sheet class="mx-auto py-5" width="95%">
                 <!-- Pending topics -->
                 <v-form ref="form" v-if="configuredTopicIsPending">
-                    <v-text-field v-model="topicToAdd" label="Topic" :rules="[rules.required, rules.topic]" />
+                    <v-text-field v-model="topicToAdd" label="Topic" :rules="[rules.required, rules.topic]" class="my-2"/>
 
                     <v-text-field v-model="targetToAdd" label="Associated Sub-Directory"
-                        :rules="[rules.required, rules.target]" />
+                        :rules="[rules.required, rules.target]" class="my-2"/>
 
                     <v-btn type="submit" color="#003DA5" variant="flat" block @click="saveTopic"
-                        :loading="makingServerRequest[topicToAdd]">Save</v-btn>
+                        :loading="makingServerRequest[topicToAdd]" class="mt-2">Save</v-btn>
                 </v-form>
 
                 <!-- Active topics -->
@@ -272,8 +272,8 @@
 
                     <v-row>
                         <v-col cols="12">
-                            <!-- If an active target is being edited, you can't save -->
-                            <v-btn :disabled="editActiveTarget" type="submit" color="#003DA5" variant="flat" block
+                            <!-- If an active target hasn't changed or is being edited, you can't save -->
+                            <v-btn :disabled="!canSaveActiveChanges" type="submit" color="#003DA5" variant="flat" block
                                 @click="saveTopic" :loading="makingServerRequest[topicToAdd]">Save</v-btn>
                         </v-col>
                     </v-row>
@@ -552,6 +552,11 @@ export default defineComponent({
         // Build subscription URL from the server link
         const subscribeLink = computed(() => {
             return `${serverLink.value}/subscriptions`;
+        });
+
+        // Check if the active topic configuration can be saved
+        const canSaveActiveChanges = computed(() => {
+            return targetToAdd.value !== previousTarget.value && targetToAdd.value !== '' && !editActiveTarget.value;
         });
 
         // Check if the topic has metrics to display
@@ -880,7 +885,10 @@ export default defineComponent({
                 };
 
                 await addToSubscription(updatedItem);
-                // Close the dialog
+
+                // Reset the input fields and close the dialog
+                topicToAdd.value = '';
+                targetToAdd.value = '';
                 showTopicConfigDialog.value = false;
                 return;
             }
@@ -1114,6 +1122,7 @@ export default defineComponent({
 
             // Computed variables
             settings,
+            canSaveActiveChanges,
             topicHasMetrics,
 
             // Methods
