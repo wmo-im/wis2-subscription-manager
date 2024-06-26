@@ -5,8 +5,12 @@
                 <v-toolbar dense>
                     <v-toolbar-title class="big-title">Search a WIS2 Global Discovery Catalogue</v-toolbar-title>
                 </v-toolbar>
-                <v-card-subtitle>Explore and find datasets to add to your list of pending
-                    subscriptions</v-card-subtitle>
+                <v-card-subtitle>
+                    Explore and find datasets to add to your list of pending
+                    subscriptions.
+                    <br>
+                    If you have not yet connected to a WIS2 Downloader, you will only be able to view the datasets.
+                </v-card-subtitle>
 
                 <v-col cols="12" />
 
