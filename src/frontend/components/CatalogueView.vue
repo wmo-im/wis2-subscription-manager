@@ -53,7 +53,7 @@
                                 </th>
                                 <th scope="row" class="button-column">
                                     <v-row justify="center" class="pa-2"
-                                        v-if="tableBoolean === true && connectionStatus">
+                                        v-if="tableBoolean === true && connectedToDownloader">
                                         <v-switch inset label="Add All" v-model="addAllTopics"
                                             @change="addOrRemoveAllTopics(datasets, addAllTopics)"
                                             :disabled="tableBoolean === false" color="#003DA5" />
@@ -83,19 +83,19 @@
                                     <td>
                                         <!-- If topic not added, allow them to add -->
                                         <v-btn block
-                                            v-if="!topicFound(item.topic_hierarchy, selectedTopics) && item.topic_hierarchy && connectionStatus"
+                                            v-if="!topicFound(item.topic_hierarchy, selectedTopics) && item.topic_hierarchy && connectedToDownloader"
                                             color="#64BF40" append-icon="mdi-plus" variant="flat"
                                             @click.stop="addTopicToPending(item)">
                                             Add</v-btn>
                                         <v-btn block
-                                            v-if="topicFound(item.topic_hierarchy, pendingTopics) && connectionStatus"
+                                            v-if="topicFound(item.topic_hierarchy, pendingTopics) && connectedToDownloader"
                                             color="error" append-icon="mdi-minus" variant="flat"
                                             @click.stop="removeTopicFromPending(item)">
                                             Remove</v-btn>
                                         <v-btn block v-if="topicFound(item.topic_hierarchy, activeTopics)" disabled
                                             color="#003DA5" append-icon="mdi-download-multiple" variant="flat">
                                             Active</v-btn>
-                                        <v-btn block v-if="!item.topic_hierarchy && connectionStatus" disabled
+                                        <v-btn block v-if="!item.topic_hierarchy && connectedToDownloader" disabled
                                             variant="flat">
                                             No Topic</v-btn>
                                     </td>
@@ -110,7 +110,7 @@
                             <v-toolbar :title="selectedItem.title" color="#003DA5">
                                 <v-btn icon="mdi-close" variant="text" @click="dialog = false" />
                             </v-toolbar>
-                            <v-table class="px-4 py-7">
+                            <v-table class="px-4 py-7 scrollable-table">
                                 <template v-for="(value, key) in selectedItem">
                                     <tbody>
                                         <tr v-if="key !== 'title'" class="align-top">
@@ -203,7 +203,7 @@ export default defineComponent({
         // Information from Subscribe page
         const serverLink = ref('');
         const token = ref('');
-        const connectionStatus = ref(false);
+        const connectedToDownloader = ref(false);
         const activeTopics = ref([]);
         const pendingTopics = ref([]);
 
@@ -218,7 +218,7 @@ export default defineComponent({
             return {
                 serverLink: serverLink.value,
                 token: token.value,
-                connectionStatus: connectionStatus.value,
+                connectedToDownloader: connectedToDownloader.value,
                 activeTopics: activeTopics.value,
                 pendingTopics: pendingTopics.value
             }
@@ -258,7 +258,7 @@ export default defineComponent({
                 }
                 serverLink.value = storedSettings?.serverLink || 'http://localhost:5050';
                 token.value = storedSettings?.token || '';
-                connectionStatus.value = storedSettings?.connectionStatus || false;
+                connectedToDownloader.value = storedSettings?.connectedToDownloader || false;
                 activeTopics.value = storedSettings?.activeTopics || [];
                 pendingTopics.value = storedSettings?.pendingTopics || [];
             }
@@ -566,7 +566,7 @@ export default defineComponent({
             formattedJson,
             loadingJsonBoolean,
             jsonDialog,
-            connectionStatus,
+            connectedToDownloader,
             activeTopics,
             pendingTopics,
             errorMessage,
@@ -631,6 +631,12 @@ export default defineComponent({
 
 .feature-column {
     width: 15%
+}
+
+.scrollable-table
+{
+    max-height: 600px;
+    overflow-y: auto;
 }
 
 </style>
