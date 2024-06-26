@@ -187,7 +187,7 @@ export default defineComponent({
 
         // Static variables
         const catalogueList = [
-            { title: 'Meteorological Service of Canada', url: 'https://api.weather.gc.ca/collections/wis2-discovery-metadata/items' },
+            { title: 'Meteorological Service of Canada', url: 'https://api.weather.gc.ca/collections/wis2-discovery-metadata/items?f=json' },
             { title: 'China Meteorological Administration', url: 'https://gdc.wis.cma.cn/collections/wis2-discovery-metadata/items?f=json' }
         ];
 
@@ -212,6 +212,7 @@ export default defineComponent({
         const pendingTopics = ref([]);
 
         // Error from the catalogue
+        const errorTitle = ref('');
         const errorMessage = ref('');
         const showErrorDialog = ref(false);
 
