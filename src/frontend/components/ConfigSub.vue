@@ -179,7 +179,7 @@
                                                 <td class="text-center">
                                                     <v-btn class="mr-5" :append-icon="lgAndUp ? 'mdi-cloud-upload' : ''"
                                                         color="#003DA5" variant="flat"
-                                                        @click.stop="addToSubscription(item)"
+                                                        @click.stop="addToSubscription(item, 'pending')"
                                                         :loading="makingServerRequest[item.topic]">
                                                         <p v-if="mdAndUp">Activate</p>
                                                         <v-icon v-if="!mdAndUp" icon="mdi-cloud-upload" />
@@ -228,14 +228,16 @@
                 <v-btn icon="mdi-close" variant="text" size="small" @click="showTopicConfigDialog = false" />
             </v-toolbar>
             <v-sheet class="mx-auto py-5" width="95%">
+
                 <!-- Pending topics -->
                 <v-form ref="form" v-if="configuredTopicIsPending">
-                    <v-text-field v-model="topicToAdd" label="Topic" :rules="[rules.required, rules.topic]" class="my-2"/>
+                    <v-text-field v-model="topicToAdd" label="Topic" :rules="[rules.required, rules.topic]"
+                        class="my-2" />
 
                     <v-text-field v-model="targetToAdd" label="Associated Sub-Directory"
-                        :rules="[rules.required, rules.target]" class="my-2"/>
+                        :rules="[rules.required, rules.target]" class="my-2" />
 
-                    <v-btn type="submit" color="#003DA5" variant="flat" block @click="saveTopic"
+                    <v-btn color="#003DA5" variant="flat" block @click="saveTopic('pending')"
                         :loading="makingServerRequest[topicToAdd]" class="mt-2">Save</v-btn>
                 </v-form>
 
@@ -273,8 +275,8 @@
                     <v-row>
                         <v-col cols="12">
                             <!-- If an active target hasn't changed or is being edited, you can't save -->
-                            <v-btn :disabled="!canSaveActiveChanges" type="submit" color="#003DA5" variant="flat" block
-                                @click="saveTopic" :loading="makingServerRequest[topicToAdd]">Save</v-btn>
+                            <v-btn :disabled="!canSaveActiveChanges" color="#003DA5" variant="flat" block
+                                @click="saveTopic('active')" :loading="makingServerRequest[topicToAdd]">Save</v-btn>
                         </v-col>
                     </v-row>
                 </v-form>
@@ -713,7 +715,7 @@ export default defineComponent({
         };
 
         // Add the topic and target to the downloader using the /add endpoint
-        const addToSubscription = async (item) => {
+        const addToSubscription = async (item, state) => {
             // Start the button loading animation for this topic
             makingServerRequest.value[item.topic] = true;
 
@@ -748,8 +750,11 @@ export default defineComponent({
                     return;
                 }
 
-                topicToRemove.value = item.topic;
-                removeTopicFromPending();
+                // If the topic was pending, remove it from the pending list
+                if (state === 'pending') {
+                    topicToRemove.value = item.topic;
+                    removeTopicFromPending();
+                }
 
                 // Update the active topics
                 await getTopicList();
@@ -866,16 +871,14 @@ export default defineComponent({
         }
 
         // Adds or updates the topic, both in the list of active topics and pending topics
-        const saveTopic = async () => {
+        const saveTopic = async (state) => {
             // First check if the content is valid
             const { valid } = await form.value.validate();
             if (!valid) {
                 return;
             }
 
-            const isActive = topicFound(topicToAdd.value, activeTopics.value);
-
-            if (isActive) {
+            if (state === 'active') {
                 // To update the topic's target, we must first remove it and then add it back
                 await removeFromSubscription(topicToAdd.value);
 
@@ -884,11 +887,8 @@ export default defineComponent({
                     target: targetToAdd.value
                 };
 
-                await addToSubscription(updatedItem);
+                await addToSubscription(updatedItem, state);
 
-                // Reset the input fields and close the dialog
-                topicToAdd.value = '';
-                targetToAdd.value = '';
                 showTopicConfigDialog.value = false;
                 return;
             }
