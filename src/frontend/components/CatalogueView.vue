@@ -270,7 +270,7 @@ export default defineComponent({
         // Helper function to fetch API data
         const fetchAPI = async (url, params) => {
             try {
-                const response = await fetch(`${url}?${params}`);
+                const response = await fetch(`${url}&${params}`);
                 if (!response.ok) {
                     const readableError = HTTP_CODES[response.status] || response.statusText;
                     throw new Error(`There was an error connecting to the catalogue: ${readableError}`);
