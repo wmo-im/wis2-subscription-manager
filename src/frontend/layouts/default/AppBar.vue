@@ -44,7 +44,6 @@ export default defineComponent({
     // Check if the OS is Darwin
     const checkOS = async () => {
       const platform = await window.electronAPI.getOS();
-      console.log(platform)
       isDarwin.value = (platform === 'darwin');
     };
 

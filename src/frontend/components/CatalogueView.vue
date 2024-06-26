@@ -34,13 +34,13 @@
                 <!-- Dialog to display typical error messages -->
                 <v-dialog v-model="showErrorDialog" max-width="600px" persistent>
                     <v-card>
-                        <v-toolbar :title="errorTitle" color="#003DA5">
+                        <v-toolbar :title="errorTitle" color="error">
                         </v-toolbar>
                         <v-card-text>
                             {{ errorMessage }}
                         </v-card-text>
                         <v-card-actions>
-                            <v-btn color="#003DA5" block @click="showErrorDialog = false">
+                            <v-btn color="black" variant="flat" block @click="showErrorDialog = false">
                                 OK
                             </v-btn>
                         </v-card-actions>
@@ -187,7 +187,7 @@ export default defineComponent({
 
         // Static variables
         const catalogueList = [
-            { title: 'Meteorological Service of Canada', url: 'https://api.weather.gc.ca/collections/wis2-discovery-metadata/items' },
+            { title: 'Meteorological Service of Canada', url: 'https://api.weather.gc.ca/collections/wis2-discovery-metadata/items?f=json' },
             { title: 'China Meteorological Administration', url: 'https://gdc.wis.cma.cn/collections/wis2-discovery-metadata/items?f=json' }
         ];
 
@@ -212,6 +212,7 @@ export default defineComponent({
         const pendingTopics = ref([]);
 
         // Error from the catalogue
+        const errorTitle = ref('');
         const errorMessage = ref('');
         const showErrorDialog = ref(false);
 
@@ -269,14 +270,14 @@ export default defineComponent({
         // Helper function to fetch API data
         const fetchAPI = async (url, params) => {
             try {
-                const response = await fetch(`${url}?${params}`);
+                const response = await fetch(`${url}&${params}`);
                 if (!response.ok) {
                     const readableError = HTTP_CODES[response.status] || response.statusText;
                     throw new Error(`There was an error connecting to the catalogue: ${readableError}`);
                 }
                 return await response.json();
             } catch (error) {
-                throw new Error(`There was an error connecting to the catalogue: ${error.message}`);
+                throw new Error(error.message);
             }
         };
 
@@ -573,6 +574,7 @@ export default defineComponent({
             connectedToDownloader,
             activeTopics,
             pendingTopics,
+            errorTitle,
             errorMessage,
             showErrorDialog,
 
