@@ -5,8 +5,12 @@
                 <v-toolbar dense>
                     <v-toolbar-title class="big-title">Search a WIS2 Global Discovery Catalogue</v-toolbar-title>
                 </v-toolbar>
-                <v-card-subtitle>Explore and find datasets to add to your list of pending
-                    subscriptions</v-card-subtitle>
+                <v-card-subtitle>
+                    Explore and find datasets to add to your list of pending
+                    subscriptions.
+                    <br>
+                    If you have not yet connected to a WIS2 Downloader, you will only be able to view the datasets.
+                </v-card-subtitle>
 
                 <v-col cols="12" />
 
@@ -53,7 +57,7 @@
                                 </th>
                                 <th scope="row" class="button-column">
                                     <v-row justify="center" class="pa-2"
-                                        v-if="tableBoolean === true && connectionStatus">
+                                        v-if="tableBoolean === true && connectedToDownloader">
                                         <v-switch inset label="Add All" v-model="addAllTopics"
                                             @change="addOrRemoveAllTopics(datasets, addAllTopics)"
                                             :disabled="tableBoolean === false" color="#003DA5" />
@@ -67,7 +71,7 @@
                                     class="clickable-row">
                                     <td class="small-title py-3">
                                         <div class="title-section">
-                                            <span><b v-if="centreFound(item)">{{ item.centre_identifier }}:</b> {{ item.title }}</span>
+                                            <span><b v-if="item.centre_identifier">{{ item.centre_identifier }}:</b> {{ item.title }}</span>
                                             <span class="policy-section">({{ item.data_policy }})</span>
                                         </div>
                                         <div class="description-section">
@@ -83,19 +87,19 @@
                                     <td>
                                         <!-- If topic not added, allow them to add -->
                                         <v-btn block
-                                            v-if="!topicFound(item.topic_hierarchy, selectedTopics) && item.topic_hierarchy && connectionStatus"
+                                            v-if="!topicFound(item.topic_hierarchy, selectedTopics) && item.topic_hierarchy && connectedToDownloader"
                                             color="#64BF40" append-icon="mdi-plus" variant="flat"
                                             @click.stop="addTopicToPending(item)">
                                             Add</v-btn>
                                         <v-btn block
-                                            v-if="topicFound(item.topic_hierarchy, pendingTopics) && connectionStatus"
+                                            v-if="topicFound(item.topic_hierarchy, pendingTopics) && connectedToDownloader"
                                             color="error" append-icon="mdi-minus" variant="flat"
                                             @click.stop="removeTopicFromPending(item)">
                                             Remove</v-btn>
                                         <v-btn block v-if="topicFound(item.topic_hierarchy, activeTopics)" disabled
                                             color="#003DA5" append-icon="mdi-download-multiple" variant="flat">
                                             Active</v-btn>
-                                        <v-btn block v-if="!item.topic_hierarchy && connectionStatus" disabled
+                                        <v-btn block v-if="!item.topic_hierarchy && connectedToDownloader" disabled
                                             variant="flat">
                                             No Topic</v-btn>
                                     </td>
@@ -110,13 +114,13 @@
                             <v-toolbar :title="selectedItem.title" color="#003DA5">
                                 <v-btn icon="mdi-close" variant="text" @click="dialog = false" />
                             </v-toolbar>
-                            <v-table class="px-4 py-7">
+                            <v-table class="px-4 py-7 scrollable-table">
                                 <template v-for="(value, key) in selectedItem">
                                     <tbody>
                                         <tr v-if="key !== 'title'" class="align-top">
                                             <td class="feature-column"><b>{{ formatKey(key) }}</b></td>
                                             <td><v-divider vertical/></td>
-                                            <td>{{ value }}</td>
+                                            <td>{{ formatValue(value) }}</td>
                                         </tr>
                                     </tbody>
                                 </template>
@@ -203,7 +207,7 @@ export default defineComponent({
         // Information from Subscribe page
         const serverLink = ref('');
         const token = ref('');
-        const connectionStatus = ref(false);
+        const connectedToDownloader = ref(false);
         const activeTopics = ref([]);
         const pendingTopics = ref([]);
 
@@ -218,7 +222,7 @@ export default defineComponent({
             return {
                 serverLink: serverLink.value,
                 token: token.value,
-                connectionStatus: connectionStatus.value,
+                connectedToDownloader: connectedToDownloader.value,
                 activeTopics: activeTopics.value,
                 pendingTopics: pendingTopics.value
             }
@@ -233,11 +237,6 @@ export default defineComponent({
         const selectedTopics = computed(() => {
             return [...activeTopics.value, ...pendingTopics.value];
         });
-
-        // Check a dataset's centre identifier is found
-        const centreFound = (item) => {
-            return item.centre_identifier !== 'No centre identifier found';
-        }
 
         // Methods
 
@@ -256,9 +255,9 @@ export default defineComponent({
                     handleError('Error Loading Settings', 'There was an issue loading the settings or topics you selected. Please try reloading the application.');
                     return;
                 }
-                serverLink.value = storedSettings?.serverLink || '';
+                serverLink.value = storedSettings?.serverLink || 'http://localhost:5050';
                 token.value = storedSettings?.token || '';
-                connectionStatus.value = storedSettings?.connectionStatus || false;
+                connectedToDownloader.value = storedSettings?.connectedToDownloader || false;
                 activeTopics.value = storedSettings?.activeTopics || [];
                 pendingTopics.value = storedSettings?.pendingTopics || [];
             }
@@ -368,16 +367,16 @@ export default defineComponent({
                 }
 
                 return {
-                    identifier: identifier || 'No identifier found',
-                    centre_identifier: centre_id || 'No centre identifier found',
-                    title: properties?.title || 'No title found',
-                    creation_date: properties?.created || 'No creation date found',
-                    last_update: properties?.updated || 'No updates',
-                    topic_hierarchy: topic_hierarchy || 'No topic hierarchy found',
-                    data_policy: data_policy || 'No data policy found',
-                    keywords: properties?.keywords?.join(', ') || 'None found',
-                    earth_system_discipline: discipline || 'No discipline found',
-                    description: properties.description || 'No description found'
+                    identifier: identifier,
+                    centre_identifier: centre_id,
+                    title: properties?.title,
+                    creation_date: properties?.created,
+                    last_update: properties?.updated,
+                    topic_hierarchy: topic_hierarchy,
+                    data_policy: data_policy,
+                    keywords: properties?.keywords?.join(', '),
+                    earth_system_discipline: discipline,
+                    description: properties.description
                 }
             });
 
@@ -408,6 +407,11 @@ export default defineComponent({
                 .split(' ')
                 .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                 .join(' ');
+        }
+
+        // Format the value of this key to show 'N/A' if it is null
+        const formatValue = (value) => {
+            return value ? value : 'N/A';
         }
 
         // Opens JSON of dataset metadata
@@ -566,7 +570,7 @@ export default defineComponent({
             formattedJson,
             loadingJsonBoolean,
             jsonDialog,
-            connectionStatus,
+            connectedToDownloader,
             activeTopics,
             pendingTopics,
             errorMessage,
@@ -575,12 +579,12 @@ export default defineComponent({
             // Computed variables
             catalogueBoolean,
             selectedTopics,
-            centreFound,
 
             // Methods
             searchCatalogue,
             openDialog,
             formatKey,
+            formatValue,
             openJSON,
             topicFound,
             addTopicToPending,
@@ -631,6 +635,12 @@ export default defineComponent({
 
 .feature-column {
     width: 15%
+}
+
+.scrollable-table
+{
+    max-height: 600px;
+    overflow-y: auto;
 }
 
 </style>
