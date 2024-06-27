@@ -72,13 +72,16 @@
                                     <td class="small-title py-3">
                                         <div class="title-section">
                                             <span><b v-if="item.centre_identifier">{{ item.centre_identifier }}:</b> {{ item.title }}</span>
-                                            <span class="policy-section">({{ item.data_policy }})</span>
+                                            <v-chip class="policy-section">{{ item.data_policy }}</v-chip>
                                         </div>
                                         <div class="description-section">
                                             <p>{{ item.description.substring(0, 120) + '...' }}</p>
                                         </div>
                                         <div class="keywords-section">
                                             <p><b>Keywords:</b> {{ item.keywords }}</p>
+                                        </div>
+                                        <div class="country-section">
+                                            <p><b>Country:</b> {{ item.country }}</p>
                                         </div>
                                         <div class="date-section">
                                             <p><b>Creation Date:</b> {{ item.creation_date }}</p>
@@ -188,7 +191,7 @@ export default defineComponent({
         // Static variables
         const catalogueList = [
             { title: 'Meteorological Service of Canada', url: 'https://api.weather.gc.ca/collections/wis2-discovery-metadata/items?f=json' },
-            { title: 'China Meteorological Administration', url: 'https://gdc.wis.cma.cn/collections/wis2-discovery-metadata/items?f=json' }
+            { title: 'China Meteorological Administration', url: 'https://gdc.wis.cma.cn/api/collections/wis2-discovery-metadata/items?f=json' }
         ];
 
         // Reactive variables
@@ -371,6 +374,7 @@ export default defineComponent({
                     identifier: identifier,
                     centre_identifier: centre_id,
                     title: properties?.title,
+                    country: properties.contacts?.[0]?.addresses?.[0]?.country,
                     creation_date: properties?.created,
                     last_update: properties?.updated,
                     topic_hierarchy: topic_hierarchy,
@@ -621,6 +625,12 @@ export default defineComponent({
     font-size: 0.75rem;
     color: #555;
     font-style: italic;
+}
+
+.country-section {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: #555;
 }
 
 .date-section {
