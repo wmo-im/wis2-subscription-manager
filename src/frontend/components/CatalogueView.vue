@@ -190,7 +190,7 @@ export default defineComponent({
 
         // Static variables
         const catalogueList = [
-            { title: 'Meteorological Service of Canada', url: 'https://api.weather.gc.ca/collections/wis2-discovery-metadata/items?f=json' },
+            { title: 'Meteorological Service of Canada', url: 'https://wis2-gdc.weather.gc.ca/collections/wis2-discovery-metadata/items?f=json' },
             { title: 'China Meteorological Administration', url: 'https://gdc.wis.cma.cn/api/collections/wis2-discovery-metadata/items?f=json' }
         ];
 
