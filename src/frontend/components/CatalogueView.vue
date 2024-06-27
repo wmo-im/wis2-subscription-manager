@@ -5,28 +5,62 @@
                 <v-toolbar dense>
                     <v-toolbar-title class="big-title">Search a WIS2 Global Discovery Catalogue</v-toolbar-title>
                 </v-toolbar>
-                <v-card-subtitle>
+                <v-card-subtitle class="py-2">
                     Explore and find datasets to add to your list of pending
                     subscriptions.
                     <br>
                     If you have not yet connected to a WIS2 Downloader, you will only be able to view the datasets.
                 </v-card-subtitle>
 
-                <v-col cols="12" />
-
                 <v-card-item>
-                    <v-row dense>
-                        <v-col cols="5.5">
+                    <v-row>
+                        <v-col cols="6">
                             <v-select v-model="selectedCatalogue" :items="catalogueList" item-title="title"
                                 item-value="url" label="Choose a catalogue"></v-select>
                         </v-col>
-                        <v-col cols="5.5">
+                        <v-col cols="6">
                             <v-text-field v-model="query" label="Search the catalogue" hint="Optional" persistent-hint
                                 clearable></v-text-field>
                         </v-col>
-                        <v-col cols="1">
-                            <v-btn @click="searchCatalogue" icon="mdi-cloud-search" color="#003DA5" variant="flat"
-                                :disabled="!catalogueBoolean" :loading="loadingBoolean" class="mx-3"></v-btn>
+                    </v-row>
+
+                    <transition name="slide-y-transition">
+                        <v-sheet v-if="showAdvancedSearch">
+                            <v-row>
+                                <v-col cols="6">
+                                    <v-card class="mb-n7">
+                                        <v-toolbar color="#F5F5F5" title="Update Date Range"
+                                        density="compact"></v-toolbar>
+                                    </v-card>
+                                </v-col>
+                            </v-row>
+
+                            <v-row>
+                                <v-col cols="3">
+                                    <v-date-picker v-model="startingUpdateDate" hide-header show-adjacent-months
+                                        color="#00ABC9"></v-date-picker>
+                                </v-col>
+
+                                <v-col cols="3" class="mx-n3">
+                                    <v-date-picker v-model="endingUpdateDate" hide-header show-adjacent-months
+                                        color="#00ABC9"></v-date-picker>
+                                </v-col>
+                            </v-row>
+                        </v-sheet>
+                    </transition>
+
+                    <v-row class="my-1">
+                        <v-col cols="6">
+                            <v-btn @click="searchCatalogue" append-icon="mdi-cloud-search" color="#003DA5"
+                                variant="flat" block :disabled="!catalogueBoolean"
+                                :loading="loadingBoolean">Browse</v-btn>
+                        </v-col>
+                        <v-col cols="6">
+                            <v-btn v-if="!showAdvancedSearch" @click="showAdvancedSearch = true" color="#E09D00"
+                                variant="flat" block>Enable
+                                Advanced Search</v-btn>
+                            <v-btn v-if="showAdvancedSearch" @click="disableAdvancedSearch" color="#E09D00"
+                                variant="flat" block>Disable Advanced Search</v-btn>
                         </v-col>
                     </v-row>
                 </v-card-item>
@@ -71,7 +105,8 @@
                                     class="clickable-row">
                                     <td class="small-title py-3">
                                         <div class="title-section">
-                                            <span><b v-if="item.centre_identifier">{{ item.centre_identifier }}:</b> {{ formatValue(item.title) }}</span>
+                                            <span><b v-if="item.centre_identifier">{{ item.centre_identifier }}:</b> {{
+                                formatValue(item.title) }}</span>
                                             <v-chip class="policy-section">{{ formatValue(item.data_policy) }}</v-chip>
                                         </div>
                                         <div class="description-section">
@@ -84,7 +119,7 @@
                                             <p><b>Country:</b> {{ formatValue(item.country) }}</p>
                                         </div>
                                         <div class="date-section">
-                                            <p><b>Creation Date:</b> {{ formatValue(item.creation_date) }}</p>
+                                            <p><b>Last Update:</b> {{ formatValue(item.last_update) }}</p>
                                         </div>
                                     </td>
                                     <td>
@@ -122,7 +157,7 @@
                                     <tbody>
                                         <tr v-if="key !== 'title'" class="align-top">
                                             <td class="feature-column"><b>{{ formatKey(key) }}</b></td>
-                                            <td><v-divider vertical/></td>
+                                            <td><v-divider vertical /></td>
                                             <td>{{ formatValue(value) }}</td>
                                         </tr>
                                     </tbody>
@@ -162,7 +197,8 @@
 
 <script>
 import { defineComponent, ref, computed, watch, onMounted } from 'vue';
-import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VTable } from 'vuetify/lib/components/index.mjs';
+import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VTable, VDatePicker } from 'vuetify/lib/components/index.mjs';
+import { useDate } from 'vuetify';
 
 // Utilities
 import { HTTP_CODES } from '@/utils/constants.js';
@@ -180,7 +216,8 @@ export default defineComponent({
         VListGroup,
         VSelect,
         VTextField,
-        VTable
+        VTable,
+        VDatePicker
     },
     setup() {
         // Deep clone function to avoid reference issues between model and default model
@@ -195,8 +232,16 @@ export default defineComponent({
         ];
 
         // Reactive variables
+
+        // Catalogue query variables
         const selectedCatalogue = ref('');
         const query = ref(null);
+        const showAdvancedSearch = ref(false);
+        const startingUpdateDate = ref(null);
+        const endingUpdateDate = ref(null);
+        const boundingBox = ref([]);
+
+        // Dataset information
         const datasets = ref([]);
         const loadingBoolean = ref(false);
         const tableBoolean = ref(false);
@@ -242,6 +287,13 @@ export default defineComponent({
             return [...activeTopics.value, ...pendingTopics.value];
         });
 
+        // Formatted datetime range for the catalogue query
+        const datetimeRange = computed(() => {
+            let start = startingUpdateDate.value ? formatDate(startingUpdateDate.value) : '..'
+            let end = endingUpdateDate.value ? formatDate(endingUpdateDate.value) : '..'
+            return `${start}/${end}`;
+        });
+
         // Methods
 
         // Handle errors displayed to user
@@ -249,6 +301,14 @@ export default defineComponent({
             errorTitle.value = title;
             errorMessage.value = message;
             showErrorDialog.value = true;
+        };
+
+        // Date formatter helper to format date to YYYY-MM-DD
+        const formatDate = (date) => {
+            const year = useDate().getYear(date);
+            const month = (useDate().getMonth(date) + 1).toString().padStart(2, '0');
+            const day = useDate().format(date, 'dayOfMonth').toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
         };
 
         // Load the saved information from the electron API
@@ -295,12 +355,15 @@ export default defineComponent({
             // Enable the button loading animation
             loadingBoolean.value = true;
 
-            // Query the catalogue and write the results to JSON file
+            // Query the catalogue with the selected parameters
             const params = new URLSearchParams();
 
-            // Add query if it exists
             if (query.value) {
                 params.append('q', query.value);
+            }
+
+            if (datetimeRange.value !== '../..') {
+                params.append('datetime', datetimeRange.value);
             }
 
             let items;
@@ -396,6 +459,13 @@ export default defineComponent({
 
             // Disable loading animation of button
             loadingBoolean.value = false;
+        };
+
+        // Reset values when returning to basic search
+        const disableAdvancedSearch = () => {
+            showAdvancedSearch.value = false;
+            startingUpdateDate.value = null;
+            endingUpdateDate.value = null;
         };
 
         // Open the dialog to display dataset metadata
@@ -567,6 +637,10 @@ export default defineComponent({
             // Reactive variables
             selectedCatalogue,
             query,
+            showAdvancedSearch,
+            startingUpdateDate,
+            endingUpdateDate,
+            boundingBox,
             datasets,
             loadingBoolean,
             tableBoolean,
@@ -586,9 +660,11 @@ export default defineComponent({
             // Computed variables
             catalogueBoolean,
             selectedTopics,
+            datetimeRange,
 
             // Methods
             searchCatalogue,
+            disableAdvancedSearch,
             openDialog,
             formatKey,
             formatValue,
@@ -650,10 +726,8 @@ export default defineComponent({
     width: 15%
 }
 
-.scrollable-table
-{
+.scrollable-table {
     max-height: 600px;
     overflow-y: auto;
 }
-
 </style>
