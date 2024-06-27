@@ -71,20 +71,20 @@
                                     class="clickable-row">
                                     <td class="small-title py-3">
                                         <div class="title-section">
-                                            <span><b v-if="item.centre_identifier">{{ item.centre_identifier }}:</b> {{ item.title }}</span>
-                                            <v-chip class="policy-section">{{ item.data_policy }}</v-chip>
+                                            <span><b v-if="item.centre_identifier">{{ item.centre_identifier }}:</b> {{ formatValue(item.title) }}</span>
+                                            <v-chip class="policy-section">{{ formatValue(item.data_policy) }}</v-chip>
                                         </div>
                                         <div class="description-section">
                                             <p>{{ item.description.substring(0, 120) + '...' }}</p>
                                         </div>
                                         <div class="keywords-section">
-                                            <p><b>Keywords:</b> {{ item.keywords }}</p>
+                                            <p><b>Keywords:</b> {{ formatValue(item.keywords) }}</p>
                                         </div>
                                         <div class="country-section">
-                                            <p><b>Country:</b> {{ item.country }}</p>
+                                            <p><b>Country:</b> {{ formatValue(item.country) }}</p>
                                         </div>
                                         <div class="date-section">
-                                            <p><b>Creation Date:</b> {{ item.creation_date }}</p>
+                                            <p><b>Creation Date:</b> {{ formatValue(item.creation_date) }}</p>
                                         </div>
                                     </td>
                                     <td>
@@ -285,8 +285,9 @@ export default defineComponent({
         };
 
         // Helper function to capitalise the first letter of a string
-        const capitalizeFirstLetter = (string) => {
-            return string.charAt(0).toUpperCase() + string.slice(1);
+        const capitalizeFirstLetter = (s) => {
+            if (typeof s !== 'string') return '';
+            return s.charAt(0).toUpperCase() + s.slice(1);
         };
 
         // Search the catalogue
