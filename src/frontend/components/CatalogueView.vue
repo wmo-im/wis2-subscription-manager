@@ -5,14 +5,12 @@
                 <v-toolbar dense>
                     <v-toolbar-title class="big-title">Search a WIS2 Global Discovery Catalogue</v-toolbar-title>
                 </v-toolbar>
-                <v-card-subtitle>
+                <v-card-subtitle class="py-2">
                     Explore and find datasets to add to your list of pending
                     subscriptions.
                     <br>
                     If you have not yet connected to a WIS2 Downloader, you will only be able to view the datasets.
                 </v-card-subtitle>
-
-                <v-col cols="12" />
 
                 <v-card-item>
                     <v-row dense>
@@ -67,21 +65,25 @@
                         </thead>
                         <transition name="slide-y-transition">
                             <tbody v-show="tableBoolean === true">
-                                <tr v-for="item in datasets" :key="item.title" @click="openDialog(item)"
+                                <tr v-for="item in datasets" :key="`${item.title}-${item.creation_date}`" @click="openDialog(item)"
                                     class="clickable-row">
                                     <td class="small-title py-3">
                                         <div class="title-section">
-                                            <span><b v-if="item.centre_identifier">{{ item.centre_identifier }}:</b> {{ item.title }}</span>
-                                            <span class="policy-section">({{ item.data_policy }})</span>
+                                            <span><b v-if="item.centre_identifier">{{ item.centre_identifier }}:</b> {{
+                                formatValue(item.title) }}</span>
+                                            <v-chip class="policy-section">{{ formatValue(item.data_policy) }}</v-chip>
                                         </div>
                                         <div class="description-section">
                                             <p>{{ item.description.substring(0, 120) + '...' }}</p>
                                         </div>
                                         <div class="keywords-section">
-                                            <p><b>Keywords:</b> {{ item.keywords }}</p>
+                                            <p><b>Keywords:</b> {{ formatValue(item.keywords) }}</p>
+                                        </div>
+                                        <div class="country-section">
+                                            <p><b>Country:</b> {{ formatValue(item.country) }}</p>
                                         </div>
                                         <div class="date-section">
-                                            <p><b>Creation Date:</b> {{ item.creation_date }}</p>
+                                            <p><b>Creation Date:</b> {{ formatValue(item.creation_date) }}</p>
                                         </div>
                                     </td>
                                     <td>
@@ -114,17 +116,20 @@
                             <v-toolbar :title="selectedItem.title" color="#003DA5">
                                 <v-btn icon="mdi-close" variant="text" @click="dialog = false" />
                             </v-toolbar>
-                            <v-table class="px-4 py-7 scrollable-table">
-                                <template v-for="(value, key) in selectedItem">
+                            <div class="scrollable-table">
+                                <v-container class="pa-8">
+                                    <bbox-view :coordinates="selectedItem.coordinates" height="16rem"
+                                        id="map"></bbox-view>
+                                </v-container>
+                                <v-table class="px-4">
                                     <tbody>
-                                        <tr v-if="key !== 'title'" class="align-top">
+                                        <tr v-for="([key, value], _) in filteredItems">
                                             <td class="feature-column"><b>{{ formatKey(key) }}</b></td>
-                                            <td><v-divider vertical/></td>
                                             <td>{{ formatValue(value) }}</td>
                                         </tr>
                                     </tbody>
-                                </template>
-                            </v-table>
+                                </v-table>
+                            </div>
                             <v-card-actions>
                                 <v-row>
                                     <v-col cols="12">
@@ -159,7 +164,11 @@
 
 <script>
 import { defineComponent, ref, computed, watch, onMounted } from 'vue';
-import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VTable } from 'vuetify/lib/components/index.mjs';
+import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VTable, VDatePicker, VDivider } from 'vuetify/lib/components/index.mjs';
+import { useDate } from 'vuetify';
+
+// Sub-components
+import BboxView from "@/components/sub-components/BboxView.vue";
 
 // Utilities
 import { HTTP_CODES } from '@/utils/constants.js';
@@ -177,7 +186,10 @@ export default defineComponent({
         VListGroup,
         VSelect,
         VTextField,
-        VTable
+        VTable,
+        VDatePicker,
+        VDivider,
+        BboxView
     },
     setup() {
         // Deep clone function to avoid reference issues between model and default model
@@ -187,13 +199,21 @@ export default defineComponent({
 
         // Static variables
         const catalogueList = [
-            { title: 'Meteorological Service of Canada', url: 'https://api.weather.gc.ca/collections/wis2-discovery-metadata/items?f=json' },
-            { title: 'China Meteorological Administration', url: 'https://gdc.wis.cma.cn/collections/wis2-discovery-metadata/items?f=json' }
+            { title: 'Meteorological Service of Canada', url: 'https://wis2-gdc.weather.gc.ca/collections/wis2-discovery-metadata/items' },
+            { title: 'China Meteorological Administration', url: 'https://gdc.wis.cma.cn/api/collections/wis2-discovery-metadata/items' }
         ];
 
         // Reactive variables
+
+        // Catalogue query variables
         const selectedCatalogue = ref('');
         const query = ref(null);
+        const showAdvancedSearch = ref(false);
+        const startingUpdateDate = ref(null);
+        const endingUpdateDate = ref(null);
+        const boundingBox = ref([]);
+
+        // Dataset information
         const datasets = ref([]);
         const loadingBoolean = ref(false);
         const tableBoolean = ref(false);
@@ -239,6 +259,11 @@ export default defineComponent({
             return [...activeTopics.value, ...pendingTopics.value];
         });
 
+        // Items to display in the dataset metadata dialog
+        const filteredItems = computed(() => {
+            return Object.entries(selectedItem.value || {}).filter(([key, _]) => key !== 'title' && key !== 'coordinates');
+        });
+
         // Methods
 
         // Handle errors displayed to user
@@ -270,7 +295,7 @@ export default defineComponent({
         // Helper function to fetch API data
         const fetchAPI = async (url, params) => {
             try {
-                const response = await fetch(`${url}&${params}`);
+                const response = await fetch(`${url}?f=json&${params}`);
                 if (!response.ok) {
                     const readableError = HTTP_CODES[response.status] || response.statusText;
                     throw new Error(`There was an error connecting to the catalogue: ${readableError}`);
@@ -282,19 +307,38 @@ export default defineComponent({
         };
 
         // Helper function to capitalise the first letter of a string
-        const capitalizeFirstLetter = (string) => {
-            return string.charAt(0).toUpperCase() + string.slice(1);
+        const capitalizeFirstLetter = (s) => {
+            if (typeof s !== 'string') return '';
+            return s.charAt(0).toUpperCase() + s.slice(1);
         };
+
+        // Helper function to find topic - the string starting with 'cache/'
+        // or 'origin/' that has href starting with 'mqtt'
+        const findTopic = (links) => {
+            if (!links) {
+                return null;
+            }
+
+            for (const link of links || []) {
+                if (link.href.startsWith('mqtt')) {
+                    console.log('Link:', link)
+                    for (const key in link) {
+                        if (link[key].startsWith('cache/') || link[key].startsWith('origin/')) {
+                            return link[key];
+                        }
+                    }
+                }
+            }
+        }
 
         // Search the catalogue
         const searchCatalogue = async () => {
             // Enable the button loading animation
             loadingBoolean.value = true;
 
-            // Query the catalogue and write the results to JSON file
+            // Query the catalogue with the selected parameters
             const params = new URLSearchParams();
 
-            // Add query if it exists
             if (query.value) {
                 params.append('q', query.value);
             }
@@ -321,19 +365,7 @@ export default defineComponent({
                 const properties = item.properties;
 
                 // Initialise other features we want to extract
-                let topic_hierarchy = null;
                 let centre_id = null;
-
-                // The topic hierarchy is found in the 'channel'
-                // property in 'links' where the 'rel' is 'items'
-                // and the href starts with 'mqtt'
-                for (const link of item.links || []) {
-                    if (link.rel === 'items' && link.href.startsWith('mqtt')) {
-                        topic_hierarchy = link.channel;
-                        // Once found, exit loop
-                        break;
-                    }
-                }
 
                 // Get the center ID from the identifier,
                 // depending on the structure of the identifier
@@ -371,13 +403,15 @@ export default defineComponent({
                     identifier: identifier,
                     centre_identifier: centre_id,
                     title: properties?.title,
+                    country: properties.contacts?.[0]?.addresses?.[0]?.country,
                     creation_date: properties?.created,
-                    last_update: properties?.updated,
-                    topic_hierarchy: topic_hierarchy,
+                    last_metadata_update: properties?.updated,
+                    topic_hierarchy: findTopic(item.links),
                     data_policy: data_policy,
                     keywords: properties?.keywords?.join(', '),
                     earth_system_discipline: discipline,
-                    description: properties.description
+                    description: properties.description,
+                    coordinates: item.geometry?.coordinates[0]
                 }
             });
 
@@ -391,6 +425,13 @@ export default defineComponent({
 
             // Disable loading animation of button
             loadingBoolean.value = false;
+        };
+
+        // Reset values when returning to basic search
+        const disableAdvancedSearch = () => {
+            showAdvancedSearch.value = false;
+            startingUpdateDate.value = null;
+            endingUpdateDate.value = null;
         };
 
         // Open the dialog to display dataset metadata
@@ -562,6 +603,10 @@ export default defineComponent({
             // Reactive variables
             selectedCatalogue,
             query,
+            showAdvancedSearch,
+            startingUpdateDate,
+            endingUpdateDate,
+            boundingBox,
             datasets,
             loadingBoolean,
             tableBoolean,
@@ -581,9 +626,11 @@ export default defineComponent({
             // Computed variables
             catalogueBoolean,
             selectedTopics,
+            filteredItems,
 
             // Methods
             searchCatalogue,
+            disableAdvancedSearch,
             openDialog,
             formatKey,
             formatValue,
@@ -623,6 +670,12 @@ export default defineComponent({
     font-style: italic;
 }
 
+.country-section {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: #555;
+}
+
 .date-section {
     margin-top: 0.5rem;
     font-size: 0.75rem;
@@ -639,10 +692,8 @@ export default defineComponent({
     width: 15%
 }
 
-.scrollable-table
-{
+.scrollable-table {
     max-height: 600px;
     overflow-y: auto;
 }
-
 </style>
