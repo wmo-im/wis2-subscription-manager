@@ -64,6 +64,7 @@ export default defineComponent({
 .wmo-logo {
   -webkit-app-region: no-drag;
   height: 50px;
+  margin-left: 10%;
 }
 
 .logo-placeholder {

@@ -42,6 +42,8 @@
   "dependencies": {
     "@mdi/font": "^7.3.67",
     "electron-squirrel-startup": "^1.0.0",
+    "leaflet": "^1.9.4",
+    "leaflet-draw": "^1.0.4",
     "pyinstaller": "^0.0.1",
     "python-shell": "^5.0.0",
     "tree-kill": "^1.2.2",

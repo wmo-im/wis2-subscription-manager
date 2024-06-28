@@ -13,54 +13,18 @@
                 </v-card-subtitle>
 
                 <v-card-item>
-                    <v-row>
-                        <v-col cols="6">
+                    <v-row dense>
+                        <v-col cols="5.5">
                             <v-select v-model="selectedCatalogue" :items="catalogueList" item-title="title"
                                 item-value="url" label="Choose a catalogue"></v-select>
                         </v-col>
-                        <v-col cols="6">
+                        <v-col cols="5.5">
                             <v-text-field v-model="query" label="Search the catalogue" hint="Optional" persistent-hint
                                 clearable></v-text-field>
                         </v-col>
-                    </v-row>
-
-                    <transition name="slide-y-transition">
-                        <v-sheet v-if="showAdvancedSearch">
-                            <v-row>
-                                <v-col cols="6">
-                                    <v-card class="mb-n7">
-                                        <v-toolbar color="#F5F5F5" title="Update Date Range"
-                                        density="compact"></v-toolbar>
-                                    </v-card>
-                                </v-col>
-                            </v-row>
-
-                            <v-row>
-                                <v-col cols="3">
-                                    <v-date-picker v-model="startingUpdateDate" hide-header show-adjacent-months
-                                        color="#00ABC9"></v-date-picker>
-                                </v-col>
-
-                                <v-col cols="3" class="mx-n3">
-                                    <v-date-picker v-model="endingUpdateDate" hide-header show-adjacent-months
-                                        color="#00ABC9"></v-date-picker>
-                                </v-col>
-                            </v-row>
-                        </v-sheet>
-                    </transition>
-
-                    <v-row class="my-1">
-                        <v-col cols="6">
-                            <v-btn @click="searchCatalogue" append-icon="mdi-cloud-search" color="#003DA5"
-                                variant="flat" block :disabled="!catalogueBoolean"
-                                :loading="loadingBoolean">Browse</v-btn>
-                        </v-col>
-                        <v-col cols="6">
-                            <v-btn v-if="!showAdvancedSearch" @click="showAdvancedSearch = true" color="#E09D00"
-                                variant="flat" block>Enable
-                                Advanced Search</v-btn>
-                            <v-btn v-if="showAdvancedSearch" @click="disableAdvancedSearch" color="#E09D00"
-                                variant="flat" block>Disable Advanced Search</v-btn>
+                        <v-col cols="1">
+                            <v-btn @click="searchCatalogue" icon="mdi-cloud-search" color="#003DA5" variant="flat"
+                                :disabled="!catalogueBoolean" :loading="loadingBoolean" class="mx-3"></v-btn>
                         </v-col>
                     </v-row>
                 </v-card-item>
@@ -119,7 +83,7 @@
                                             <p><b>Country:</b> {{ formatValue(item.country) }}</p>
                                         </div>
                                         <div class="date-section">
-                                            <p><b>Last Update:</b> {{ formatValue(item.last_update) }}</p>
+                                            <p><b>Creation Date:</b> {{ formatValue(item.creation_date) }}</p>
                                         </div>
                                     </td>
                                     <td>
@@ -200,6 +164,9 @@ import { defineComponent, ref, computed, watch, onMounted } from 'vue';
 import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VTable, VDatePicker } from 'vuetify/lib/components/index.mjs';
 import { useDate } from 'vuetify';
 
+// Sub-components
+import BboxEditor from "@/components/sub-components/BboxEditor.vue";
+
 // Utilities
 import { HTTP_CODES } from '@/utils/constants.js';
 
@@ -217,7 +184,8 @@ export default defineComponent({
         VSelect,
         VTextField,
         VTable,
-        VDatePicker
+        VDatePicker,
+        BboxEditor
     },
     setup() {
         // Deep clone function to avoid reference issues between model and default model
@@ -227,8 +195,8 @@ export default defineComponent({
 
         // Static variables
         const catalogueList = [
-            { title: 'Meteorological Service of Canada', url: 'https://wis2-gdc.weather.gc.ca/collections/wis2-discovery-metadata/items?f=json' },
-            { title: 'China Meteorological Administration', url: 'https://gdc.wis.cma.cn/api/collections/wis2-discovery-metadata/items?f=json' }
+            { title: 'Meteorological Service of Canada', url: 'https://wis2-gdc.weather.gc.ca/collections/wis2-discovery-metadata/items' },
+            { title: 'China Meteorological Administration', url: 'https://gdc.wis.cma.cn/api/collections/wis2-discovery-metadata/items' }
         ];
 
         // Reactive variables
@@ -304,10 +272,11 @@ export default defineComponent({
         };
 
         // Date formatter helper to format date to YYYY-MM-DD
-        const formatDate = (date) => {
-            const year = useDate().getYear(date);
-            const month = (useDate().getMonth(date) + 1).toString().padStart(2, '0');
-            const day = useDate().format(date, 'dayOfMonth').toString().padStart(2, '0');
+        const formatDate = (value) => {
+            const date = useDate();
+            const year = date.getYear(value);
+            const month = (date.getMonth(value) + 1).toString().padStart(2, '0');
+            const day = date.format(value, 'dayOfMonth').toString().padStart(2, '0');
             return `${year}-${month}-${day}`;
         };
 
@@ -333,7 +302,7 @@ export default defineComponent({
         // Helper function to fetch API data
         const fetchAPI = async (url, params) => {
             try {
-                const response = await fetch(`${url}&${params}`);
+                const response = await fetch(`${url}?f=json&${params}`);
                 if (!response.ok) {
                     const readableError = HTTP_CODES[response.status] || response.statusText;
                     throw new Error(`There was an error connecting to the catalogue: ${readableError}`);
@@ -395,7 +364,7 @@ export default defineComponent({
                 // property in 'links' where the 'rel' is 'items'
                 // and the href starts with 'mqtt'
                 for (const link of item.links || []) {
-                    if (link.rel === 'items' && link.href.startsWith('mqtt')) {
+                    if (link.href.startsWith('mqtt')) {
                         topic_hierarchy = link.channel;
                         // Once found, exit loop
                         break;
@@ -440,7 +409,7 @@ export default defineComponent({
                     title: properties?.title,
                     country: properties.contacts?.[0]?.addresses?.[0]?.country,
                     creation_date: properties?.created,
-                    last_update: properties?.updated,
+                    last_metadata_update: properties?.updated,
                     topic_hierarchy: topic_hierarchy,
                     data_policy: data_policy,
                     keywords: properties?.keywords?.join(', '),
