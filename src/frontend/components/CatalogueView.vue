@@ -14,19 +14,26 @@
 
                 <v-card-item>
                     <v-row dense>
-                        <v-col cols="5.5">
+                        <v-col cols="5">
                             <v-select v-model="selectedCatalogue" :items="catalogueList" item-title="title"
                                 item-value="url" label="Choose a catalogue"></v-select>
                         </v-col>
-                        <v-col cols="5.5">
+                        <v-col cols="5">
                             <v-text-field v-model="query" label="Search the catalogue" hint="Optional" persistent-hint
                                 clearable></v-text-field>
                         </v-col>
-                        <v-col cols="1">
-                            <v-btn @click="searchCatalogue" icon="mdi-cloud-search" color="#003DA5" variant="flat"
-                                :disabled="!catalogueBoolean" :loading="loadingBoolean" class="mx-3"></v-btn>
+                        <v-col cols="2">
+                            <v-select v-model="limit" :items="limitOptions" label="Limit"></v-select>
                         </v-col>
                     </v-row>
+
+                    <v-row>
+                        <v-col cols="12">
+                            <v-btn @click="searchCatalogue" append-icon="mdi-cloud-search" color="#003DA5"
+                                variant="flat" block :disabled="!catalogueBoolean" :loading="loadingBoolean">Browse the Catalogue</v-btn>
+                        </v-col>
+                    </v-row>
+
                 </v-card-item>
 
                 <!-- Dialog to display typical error messages -->
@@ -65,8 +72,8 @@
                         </thead>
                         <transition name="slide-y-transition">
                             <tbody v-show="tableBoolean === true">
-                                <tr v-for="item in datasets" :key="`${item.title}-${item.creation_date}`" @click="openDialog(item)"
-                                    class="clickable-row">
+                                <tr v-for="item in datasets" :key="`${item.title}-${item.creation_date}`"
+                                    @click="openDialog(item)" class="clickable-row">
                                     <td class="small-title py-3">
                                         <div class="title-section">
                                             <span><b v-if="item.centre_identifier">{{ item.centre_identifier }}:</b> {{
@@ -202,16 +209,14 @@ export default defineComponent({
             { title: 'Meteorological Service of Canada', url: 'https://wis2-gdc.weather.gc.ca/collections/wis2-discovery-metadata/items' },
             { title: 'China Meteorological Administration', url: 'https://gdc.wis.cma.cn/api/collections/wis2-discovery-metadata/items' }
         ];
+        const limitOptions = [10, 100, 500, 1000];
 
         // Reactive variables
 
         // Catalogue query variables
         const selectedCatalogue = ref('');
+        const limit = ref(10);
         const query = ref(null);
-        const showAdvancedSearch = ref(false);
-        const startingUpdateDate = ref(null);
-        const endingUpdateDate = ref(null);
-        const boundingBox = ref([]);
 
         // Dataset information
         const datasets = ref([]);
@@ -339,6 +344,8 @@ export default defineComponent({
             // Query the catalogue with the selected parameters
             const params = new URLSearchParams();
 
+            params.append('limit', limit.value)
+
             if (query.value) {
                 params.append('q', query.value);
             }
@@ -427,13 +434,6 @@ export default defineComponent({
             loadingBoolean.value = false;
         };
 
-        // Reset values when returning to basic search
-        const disableAdvancedSearch = () => {
-            showAdvancedSearch.value = false;
-            startingUpdateDate.value = null;
-            endingUpdateDate.value = null;
-        };
-
         // Open the dialog to display dataset metadata
         const openDialog = (item) => {
             selectedItem.value = item;
@@ -516,7 +516,7 @@ export default defineComponent({
 
         // When the user clicks 'Add dataset to subscription', add the
         // associated topic to an array which will be parsed to the Electron API
-        const addTopicToPending = (item) => {
+        const addTopicToPending = (item, addingAllTopics) => {
             const topicToAdd = item.topic_hierarchy;
 
             // Check if there is any topic hierarchy associated with the dataset
@@ -531,7 +531,9 @@ export default defineComponent({
 
             // Make sure there are no duplicates before adding
             const isDuplicate = topicFound(topicToAdd, selectedTopics.value);
-            if (isDuplicate) {
+            // If the user has pressed the 'Add All' button, prevent confusion
+            // by not displaying the error message
+            if (isDuplicate && !addingAllTopics) {
                 handleError('Error Adding Topic', 'The topic has already been added to subscription');
                 return;
             }
@@ -571,9 +573,11 @@ export default defineComponent({
 
         // Toggles the selection of all topics
         const addOrRemoveAllTopics = async (items, shouldSelectAll) => {
+            const addingAllTopics = true;
+
             if (shouldSelectAll === true) {
                 for (const item of items) {
-                    addTopicToPending(item);
+                    addTopicToPending(item, addingAllTopics);
                 }
             }
             else if (shouldSelectAll === false) {
@@ -599,14 +603,12 @@ export default defineComponent({
         return {
             // Static variables
             catalogueList,
+            limitOptions,
 
             // Reactive variables
             selectedCatalogue,
             query,
-            showAdvancedSearch,
-            startingUpdateDate,
-            endingUpdateDate,
-            boundingBox,
+            limit,
             datasets,
             loadingBoolean,
             tableBoolean,
@@ -630,7 +632,6 @@ export default defineComponent({
 
             // Methods
             searchCatalogue,
-            disableAdvancedSearch,
             openDialog,
             formatKey,
             formatValue,
