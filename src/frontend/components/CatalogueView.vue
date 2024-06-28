@@ -84,7 +84,6 @@
                                         </div>
                                         <div class="date-section">
                                             <p><b>Creation Date:</b> {{ formatValue(item.creation_date) }}</p>
-                                            <p>Topic: {{ item.topic_hierarchy || 'N/A' }}</p>
                                         </div>
                                     </td>
                                     <td>
