@@ -65,7 +65,7 @@
                         </thead>
                         <transition name="slide-y-transition">
                             <tbody v-show="tableBoolean === true">
-                                <tr v-for="item in datasets" :key="item.title" @click="openDialog(item)"
+                                <tr v-for="item in datasets" :key="`${item.title}-${item.creation_date}`" @click="openDialog(item)"
                                     class="clickable-row">
                                     <td class="small-title py-3">
                                         <div class="title-section">
@@ -84,6 +84,7 @@
                                         </div>
                                         <div class="date-section">
                                             <p><b>Creation Date:</b> {{ formatValue(item.creation_date) }}</p>
+                                            <p>Topic: {{ item.topic_hierarchy || 'N/A' }}</p>
                                         </div>
                                     </td>
                                     <td>
@@ -312,6 +313,25 @@ export default defineComponent({
             return s.charAt(0).toUpperCase() + s.slice(1);
         };
 
+        // Helper function to find topic - the string starting with 'cache/'
+        // or 'origin/' that has href starting with 'mqtt'
+        const findTopic = (links) => {
+            if (!links) {
+                return null;
+            }
+
+            for (const link of links || []) {
+                if (link.href.startsWith('mqtt')) {
+                    console.log('Link:', link)
+                    for (const key in link) {
+                        if (link[key].startsWith('cache/') || link[key].startsWith('origin/')) {
+                            return link[key];
+                        }
+                    }
+                }
+            }
+        }
+
         // Search the catalogue
         const searchCatalogue = async () => {
             // Enable the button loading animation
@@ -346,19 +366,7 @@ export default defineComponent({
                 const properties = item.properties;
 
                 // Initialise other features we want to extract
-                let topic_hierarchy = null;
                 let centre_id = null;
-
-                // The topic hierarchy is found in the 'channel'
-                // property in 'links' where the 'rel' is 'items'
-                // and the href starts with 'mqtt'
-                for (const link of item.links || []) {
-                    if (link.href.startsWith('mqtt')) {
-                        topic_hierarchy = link.channel;
-                        // Once found, exit loop
-                        break;
-                    }
-                }
 
                 // Get the center ID from the identifier,
                 // depending on the structure of the identifier
@@ -399,7 +407,7 @@ export default defineComponent({
                     country: properties.contacts?.[0]?.addresses?.[0]?.country,
                     creation_date: properties?.created,
                     last_metadata_update: properties?.updated,
-                    topic_hierarchy: topic_hierarchy,
+                    topic_hierarchy: findTopic(item.links),
                     data_policy: data_policy,
                     keywords: properties?.keywords?.join(', '),
                     earth_system_discipline: discipline,
