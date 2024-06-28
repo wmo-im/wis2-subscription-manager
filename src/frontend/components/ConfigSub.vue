@@ -770,7 +770,7 @@ export default defineComponent({
 
         const addAllToSubscription = async () => {
             for (const item of pendingTopics.value) {
-                await addToSubscription(item);
+                await addToSubscription(item, 'pending');
             }
         };
 
