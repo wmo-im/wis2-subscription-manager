@@ -116,17 +116,20 @@
                             <v-toolbar :title="selectedItem.title" color="#003DA5">
                                 <v-btn icon="mdi-close" variant="text" @click="dialog = false" />
                             </v-toolbar>
-                            <v-table class="px-4 py-7 scrollable-table">
-                                <template v-for="(value, key) in selectedItem">
+                            <div class="scrollable-table">
+                                <v-container class="pa-8">
+                                    <bbox-view :coordinates="selectedItem.coordinates" height="16rem"
+                                        id="map"></bbox-view>
+                                </v-container>
+                                <v-table class="px-4">
                                     <tbody>
-                                        <tr v-if="key !== 'title'" class="align-top">
+                                        <tr v-for="([key, value], _) in filteredItems">
                                             <td class="feature-column"><b>{{ formatKey(key) }}</b></td>
-                                            <td><v-divider vertical /></td>
                                             <td>{{ formatValue(value) }}</td>
                                         </tr>
                                     </tbody>
-                                </template>
-                            </v-table>
+                                </v-table>
+                            </div>
                             <v-card-actions>
                                 <v-row>
                                     <v-col cols="12">
@@ -161,11 +164,11 @@
 
 <script>
 import { defineComponent, ref, computed, watch, onMounted } from 'vue';
-import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VTable, VDatePicker } from 'vuetify/lib/components/index.mjs';
+import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VTable, VDatePicker, VDivider } from 'vuetify/lib/components/index.mjs';
 import { useDate } from 'vuetify';
 
 // Sub-components
-import BboxEditor from "@/components/sub-components/BboxEditor.vue";
+import BboxView from "@/components/sub-components/BboxView.vue";
 
 // Utilities
 import { HTTP_CODES } from '@/utils/constants.js';
@@ -185,7 +188,8 @@ export default defineComponent({
         VTextField,
         VTable,
         VDatePicker,
-        BboxEditor
+        VDivider,
+        BboxView
     },
     setup() {
         // Deep clone function to avoid reference issues between model and default model
@@ -255,11 +259,9 @@ export default defineComponent({
             return [...activeTopics.value, ...pendingTopics.value];
         });
 
-        // Formatted datetime range for the catalogue query
-        const datetimeRange = computed(() => {
-            let start = startingUpdateDate.value ? formatDate(startingUpdateDate.value) : '..'
-            let end = endingUpdateDate.value ? formatDate(endingUpdateDate.value) : '..'
-            return `${start}/${end}`;
+        // Items to display in the dataset metadata dialog
+        const filteredItems = computed(() => {
+            return Object.entries(selectedItem.value || {}).filter(([key, _]) => key !== 'title' && key !== 'coordinates');
         });
 
         // Methods
@@ -269,15 +271,6 @@ export default defineComponent({
             errorTitle.value = title;
             errorMessage.value = message;
             showErrorDialog.value = true;
-        };
-
-        // Date formatter helper to format date to YYYY-MM-DD
-        const formatDate = (value) => {
-            const date = useDate();
-            const year = date.getYear(value);
-            const month = (date.getMonth(value) + 1).toString().padStart(2, '0');
-            const day = date.format(value, 'dayOfMonth').toString().padStart(2, '0');
-            return `${year}-${month}-${day}`;
         };
 
         // Load the saved information from the electron API
@@ -329,10 +322,6 @@ export default defineComponent({
 
             if (query.value) {
                 params.append('q', query.value);
-            }
-
-            if (datetimeRange.value !== '../..') {
-                params.append('datetime', datetimeRange.value);
             }
 
             let items;
@@ -414,7 +403,8 @@ export default defineComponent({
                     data_policy: data_policy,
                     keywords: properties?.keywords?.join(', '),
                     earth_system_discipline: discipline,
-                    description: properties.description
+                    description: properties.description,
+                    coordinates: item.geometry?.coordinates[0]
                 }
             });
 
@@ -629,7 +619,7 @@ export default defineComponent({
             // Computed variables
             catalogueBoolean,
             selectedTopics,
-            datetimeRange,
+            filteredItems,
 
             // Methods
             searchCatalogue,
