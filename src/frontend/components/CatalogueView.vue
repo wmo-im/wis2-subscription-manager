@@ -79,7 +79,7 @@
                         <thead>
                             <tr>
                                 <th scope="row" class="topic-column">
-                                    <p class="medium-title">Discovery Metadata Records Found</p>
+                                    <p class="medium-title">Discovery Metadata Records Found: <b class="hint-default">{{ datasets.length }}</b></p> 
                                 </th>
                                 <th scope="row" class="button-column">
                                     <v-row justify="center" class="pa-2"
@@ -107,7 +107,7 @@
                                         <div class="title-section">
                                             <span><b v-if="item.centre_identifier">{{ item.centre_identifier }}:</b> {{
                                 formatValue(item.title) }}</span>
-                                            <v-chip class="policy-section">{{ formatValue(item.data_policy) }}</v-chip>
+                                            <v-chip class="policy-section" label>{{ formatValue(item.data_policy) }}</v-chip>
                                         </div>
                                         <div class="description-section">
                                             <p>{{ item.description.substring(0, 120) + '...' }}</p>
