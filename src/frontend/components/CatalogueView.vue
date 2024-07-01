@@ -75,7 +75,7 @@
 
                 <!-- Display catalogue datasets searched by user -->
                 <v-card-item>
-                    <v-table :hover="true">
+                    <v-table :hover="true" class="scrollable-results">
                         <thead>
                             <tr>
                                 <th scope="row" class="topic-column">
@@ -93,6 +93,14 @@
                         </thead>
                         <transition name="slide-y-transition">
                             <tbody v-show="tableBoolean === true">
+                                <!-- Inform user if search returned nothing -->
+                                <tr v-if="datasets.length === 0">
+                                    <td class="small-title py-3">
+                                        <p>No datasets found. Please try a different search.</p>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <!-- If datasets found, display them -->
                                 <tr v-for="item in datasets" :key="`${item.title}-${item.creation_date}`"
                                     @click="openDialog(item)" class="clickable-row">
                                     <td class="small-title py-3">
@@ -721,7 +729,12 @@ export default defineComponent({
 }
 
 .scrollable-table {
-    max-height: 600px;
+    max-height: 50rem;
+    overflow-y: auto;
+}
+
+.scrollable-results {
+    max-height: 60vh;
     overflow-y: auto;
 }
 </style>
