@@ -79,7 +79,7 @@
                         <thead>
                             <tr>
                                 <th scope="row" class="topic-column">
-                                    <p class="medium-title">Discovery Metadata Records Found: <b class="hint-default">{{ datasets.length }}</b></p> 
+                                    <p class="medium-title">Discovery Metadata Records Found: <b v-if="tableBoolean" class="hint-default">{{ datasets.length }}</b></p> 
                                 </th>
                                 <th scope="row" class="button-column">
                                     <v-row justify="center" class="pa-2"
