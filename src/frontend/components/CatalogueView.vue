@@ -27,10 +27,31 @@
                         </v-col>
                     </v-row>
 
-                    <v-row>
-                        <v-col cols="12">
+                    <!-- Most screens -->
+                    <v-row align="center" v-if="mdAndUp">
+                        <v-col cols="4">
+                            <v-divider/>
+                        </v-col>
+                        <v-col cols="4">
                             <v-btn @click="searchCatalogue" append-icon="mdi-cloud-search" color="#003DA5"
-                                variant="flat" block :disabled="!catalogueBoolean" :loading="loadingBoolean">Browse the Catalogue</v-btn>
+                                variant="flat" size="large" block :disabled="!catalogueBoolean" :loading="loadingBoolean">Browse the Catalogue</v-btn>
+                        </v-col>
+                        <v-col cols="4">
+                            <v-divider/>
+                        </v-col>
+                    </v-row>
+
+                    <!-- Very small screens -->
+                    <v-row align="center" v-if="!mdAndUp">
+                        <v-col cols="3">
+                            <v-divider/>
+                        </v-col>
+                        <v-col cols="6">
+                            <v-btn @click="searchCatalogue" append-icon="mdi-cloud-search" color="#003DA5"
+                                variant="flat" size="large" block :disabled="!catalogueBoolean" :loading="loadingBoolean">Browse the Catalogue</v-btn>
+                        </v-col>
+                        <v-col cols="3">
+                            <v-divider/>
                         </v-col>
                     </v-row>
 
@@ -172,7 +193,7 @@
 <script>
 import { defineComponent, ref, computed, watch, onMounted } from 'vue';
 import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VTable, VDatePicker, VDivider } from 'vuetify/lib/components/index.mjs';
-import { useDate } from 'vuetify';
+import { useDisplay } from 'vuetify';
 
 // Sub-components
 import BboxView from "@/components/sub-components/BboxView.vue";
@@ -210,6 +231,9 @@ export default defineComponent({
             { title: 'China Meteorological Administration', url: 'https://gdc.wis.cma.cn/api/collections/wis2-discovery-metadata/items' }
         ];
         const limitOptions = [10, 100, 500, 1000];
+
+        // Breakpoints
+        const { smAndUp, mdAndUp, lgAndUp } = useDisplay();
 
         // Reactive variables
 
@@ -604,6 +628,9 @@ export default defineComponent({
             // Static variables
             catalogueList,
             limitOptions,
+            smAndUp,
+            mdAndUp,
+            lgAndUp,
 
             // Reactive variables
             selectedCatalogue,

@@ -438,6 +438,7 @@ export default defineComponent({
             }
         };
 
+        // Breakpoints
         const { mdAndUp, lgAndUp } = useDisplay();
 
         // Bar chart options
