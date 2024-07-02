@@ -85,7 +85,7 @@
                                     </v-col>
                                 </v-row>
                                 <v-card-item>
-                                    <v-table :hover="true" class="equal-width">
+                                    <v-table :hover="true" class="topic-table equal-width">
                                         <thead>
                                             <tr>
                                                 <th scope="row">
@@ -145,7 +145,7 @@
                                     downloader</v-card-subtitle>
 
                                 <v-card-item>
-                                    <v-table :hover="true" class="equal-width">
+                                    <v-table :hover="true" class="topic-table equal-width">
                                         <thead>
                                             <tr>
                                                 <th scope="row">
@@ -1202,5 +1202,10 @@ export default defineComponent({
     color: #666;
     opacity: 0.75;
     font-size: 1.1em;
+}
+
+.topic-table {
+    max-height: 400px;
+    overflow-y: auto;
 }
 </style>
