@@ -12,8 +12,6 @@
                     If you have not yet connected to a WIS2 Downloader, you will only be able to view the datasets.
                 </v-card-subtitle>
 
-                {{ pendingTopics }}
-
                 <v-card-item>
                     <v-row dense>
                         <v-col cols="5">
