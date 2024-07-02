@@ -12,6 +12,8 @@
                     If you have not yet connected to a WIS2 Downloader, you will only be able to view the datasets.
                 </v-card-subtitle>
 
+                {{ pendingTopics }}
+
                 <v-card-item>
                     <v-row dense>
                         <v-col cols="5">
@@ -167,7 +169,7 @@
                                         <v-btn block
                                             v-if="topicFound(item.topic_hierarchy, pendingTopics) && connectedToDownloader"
                                             color="error" append-icon="mdi-minus" variant="flat"
-                                            @click.stop="removeTopicFromPending(item)">
+                                            @click.stop="removeTopicFromPending(item.topic_hierarchy)">
                                             Remove</v-btn>
                                         <v-btn block v-if="topicFound(item.topic_hierarchy, activeTopics)" disabled
                                             color="#003DA5" append-icon="mdi-download-multiple" variant="flat">
@@ -183,10 +185,10 @@
                 </transition>
 
                 <!-- Dialog to display dataset metadata -->
-                <v-dialog v-model="dialog" transition="scroll-y-transition" class="max-dataset-width">
+                <v-dialog v-model="featureDialog" transition="scroll-y-transition" class="max-dataset-width">
                     <v-card class="overflow-hidden">
                         <v-toolbar :title="selectedItem.title" color="#003DA5">
-                            <v-btn icon="mdi-close" variant="text" @click="dialog = false" />
+                            <v-btn icon="mdi-close" variant="text" @click="featureDialog = false" />
                         </v-toolbar>
                         <div class="scrollable-table">
                             <v-container class="pa-8">
@@ -295,7 +297,7 @@ export default defineComponent({
         const tableBoolean = ref(false);
         const addAllTopics = ref(false);
         const selectedItem = ref(null);
-        const dialog = ref(false);
+        const featureDialog = ref(false);
         const formattedJson = ref(null);
         const loadingJsonBoolean = ref(false);
         const jsonDialog = ref(false);
@@ -538,7 +540,7 @@ export default defineComponent({
         // Open the dialog to display dataset metadata
         const openDialog = (item) => {
             selectedItem.value = item;
-            dialog.value = true;
+            featureDialog.value = true;
         }
 
         // Format the key to be more readable
@@ -641,17 +643,11 @@ export default defineComponent({
 
             const updatedTopics = [...pendingTopics.value, toAdd];
             pendingTopics.value = updatedTopics;
-
-            // Close the dialog
-            dialog.value = false;
         }
 
         // When the user clicks 'Remove dataset from subscription', remove
         // the associated topic from the array which will be parsed to the Electron API
-        const removeTopicFromPending = (item) => {
-            const topicToRemove = item.topic_hierarchy;
-
-            // Check if there is any topic hierarchy associated with the dataset
+        const removeTopicFromPending = (topicToRemove) => {
             if (!topicToRemove) {
                 return;
             }
@@ -663,13 +659,10 @@ export default defineComponent({
                 handleError('Error Removing Topic', 'The topic was not found in the subscription');
                 return;
             }
-
+            
             let updatedTopics = [...pendingTopics.value];
-            updatedTopics = updatedTopics.filter(item => item !== topicToRemove);
+            updatedTopics = updatedTopics.filter(item => item.topic !== topicToRemove);
             pendingTopics.value = updatedTopics;
-
-            // Close the dialog
-            dialog.value = false;
         };
 
         // Toggles the selection of all topics
@@ -721,7 +714,7 @@ export default defineComponent({
             tableBoolean,
             addAllTopics,
             selectedItem,
-            dialog,
+            featureDialog,
             formattedJson,
             loadingJsonBoolean,
             jsonDialog,

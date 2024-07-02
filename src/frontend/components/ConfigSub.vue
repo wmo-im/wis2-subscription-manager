@@ -349,6 +349,10 @@
                 <p>{{ removalMessage }}</p>
             </v-card-text>
             <v-card-actions>
+                
+                <v-col cols="6">
+                    <v-btn color="black" variant="flat" block @click="showRemoveWarningDialog = false">No</v-btn>
+                </v-col>
                 <v-col cols="6">
                     <!-- Pending topic 'Yes' button -->
                     <v-btn v-if="topicFound(topicToRemove, pendingTopics)" color="error" variant="flat" block
@@ -357,9 +361,6 @@
                     <v-btn v-if="topicFound(topicToRemove, activeTopics)" color="error" variant="flat" block
                         @click="removeFromSubscription(topicToRemove)"
                         :loading="makingServerRequest[topicToRemove]">Yes</v-btn>
-                </v-col>
-                <v-col cols="6">
-                    <v-btn color="black" variant="flat" block @click="showRemoveWarningDialog = false">No</v-btn>
                 </v-col>
             </v-card-actions>
         </v-card>
