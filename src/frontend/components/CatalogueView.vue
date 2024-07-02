@@ -91,19 +91,33 @@
                         </v-row>
 
                         <!-- Table title -->
-                        <v-banner v-if="tableBoolean === true" sticky class="pt-0 pb-3" id="top-banner">
-                            <v-row>
-                                <v-col cols="9">
-                                    <p class="text-h5 font-weight-light">
+                        <v-banner v-if="tableBoolean === true" sticky class="pt-0 pb-0" id="top-banner">
+                            <v-row class="align-center">
+                                <v-col cols="auto">
+                                    <p class="text-h5 font-weight-light pb-4">
                                         Discovery Metadata Records Found:
-                                        <b v-if="tableBoolean" class="hint-default"> {{ datasets.length
+                                        <b v-if="tableBoolean" class="hint-default"> {{ filteredDatasets.length
                                             }}</b>
                                     </p>
                                 </v-col>
 
-                                <v-col v-if="connectedToDownloader" class="py-0 mr-3 d-flex justify-end">
+                                <!-- Date order button -->
+                                <v-col cols="2">
+                                    <v-select label="Date"
+                                    v-model="dateOrder"
+                                    :items="['Latest', 'Oldest']"
+                                    variant="underlined" density="compact"/>
+                                </v-col>
+
+                                <!-- Filter by topic button -->
+                                <v-col cols="2">
+                                    <v-checkbox label="Topic Available"
+                                    v-model="filterByTopic" dense/>
+                                </v-col>
+
+                                <v-col v-if="connectedToDownloader" class="mr-3 d-flex justify-end">
                                     <v-switch inset label="Add All" v-model="addAllTopics"
-                                        @change="addOrRemoveAllTopics(datasets, addAllTopics)"
+                                        @change="addOrRemoveAllTopics(filteredDatasets, addAllTopics)"
                                         :disabled="tableBoolean === false" color="#003DA5" />
                                 </v-col>
                             </v-row>
@@ -113,14 +127,14 @@
                         <v-table :hover="true">
                             <tbody v-show="tableBoolean === true">
                                 <!-- Inform user if search returned nothing -->
-                                <tr v-if="datasets.length === 0">
+                                <tr v-if="filteredDatasets.length === 0">
                                     <td class="small-title py-3">
                                         <p>No datasets found. Please try a different search.</p>
                                     </td>
                                     <td></td>
                                 </tr>
                                 <!-- If datasets found, display them -->
-                                <tr v-for="item in datasets" :key="`${item.title}-${item.creation_date}`"
+                                <tr v-for="item in filteredDatasets" :key="`${item.title}-${item.creation_date}`"
                                     @click="openDialog(item)" class="clickable-row">
                                     <td class="small-title topic-column py-3">
                                         <div class="title-section">
@@ -180,7 +194,7 @@
                             </v-container>
                             <v-table class="px-4">
                                 <tbody>
-                                    <tr v-for="([key, value], _) in filteredItems">
+                                    <tr v-for="([key, value], _) in filteredFeatures">
                                         <td class="feature-column"><b>{{ formatKey(key) }}</b></td>
                                         <td>{{ formatValue(value) }}</td>
                                     </tr>
@@ -272,6 +286,8 @@ export default defineComponent({
         const selectedCatalogue = ref('');
         const limit = ref(10);
         const query = ref(null);
+        const dateOrder = ref(null);
+        const filterByTopic = ref(false);
 
         // Dataset information
         const datasets = ref([]);
@@ -319,8 +335,30 @@ export default defineComponent({
             return [...activeTopics.value, ...pendingTopics.value];
         });
 
-        // Items to display in the dataset metadata dialog
-        const filteredItems = computed(() => {
+        // Items to display in the table, depending on the date ordering and topic filter
+        const filteredDatasets = computed(() => {
+            // Date ordering
+            if (dateOrder.value === 'Latest') {
+                datasets.value.sort((a, b) => {
+                    return new Date(b.creation_date) - new Date(a.creation_date);
+                });
+            }
+            else if (dateOrder.value === 'Oldest') {
+                datasets.value.sort((a, b) => {
+                    return new Date(a.creation_date) - new Date(b.creation_date);
+                });
+            }
+            
+            // Topic filter
+            if (filterByTopic.value) {
+                return datasets.value.filter(item => item.topic_hierarchy);
+            }
+
+            return datasets.value;
+        });
+
+        // Features to display in the dataset metadata dialog
+        const filteredFeatures = computed(() => {
             return Object.entries(selectedItem.value || {}).filter(([key, _]) => key !== 'title' && key !== 'coordinates');
         });
 
@@ -676,6 +714,8 @@ export default defineComponent({
             selectedCatalogue,
             query,
             limit,
+            dateOrder,
+            filterByTopic,
             datasets,
             loadingBoolean,
             tableBoolean,
@@ -695,7 +735,8 @@ export default defineComponent({
             // Computed variables
             catalogueBoolean,
             selectedTopics,
-            filteredItems,
+            filteredDatasets,
+            filteredFeatures,
 
             // Methods
             onScroll,
