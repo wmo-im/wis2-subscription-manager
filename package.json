@@ -1,7 +1,7 @@
 {
   "name": "wis2-subscription-manager",
   "productName": "WIS2 Subscription Manager",
-  "version": "0.3.0-dev",
+  "version": "0.3.1-dev",
   "description": "This standalone application allows you to browse a WIS2 Global Discovery Catalogue, configure WIS2 subscriptions, and view download metrics.",
   "main": ".vite/build/main.js",
   "scripts": {

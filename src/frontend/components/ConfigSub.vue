@@ -85,7 +85,7 @@
                                     </v-col>
                                 </v-row>
                                 <v-card-item>
-                                    <v-table :hover="true" class="equal-width">
+                                    <v-table :hover="true" class="topic-table equal-width">
                                         <thead>
                                             <tr>
                                                 <th scope="row">
@@ -145,7 +145,7 @@
                                     downloader</v-card-subtitle>
 
                                 <v-card-item>
-                                    <v-table :hover="true" class="equal-width">
+                                    <v-table :hover="true" class="topic-table equal-width">
                                         <thead>
                                             <tr>
                                                 <th scope="row">
@@ -300,7 +300,7 @@
                         </vue-apex-charts>
                     </v-col>
                     <v-col cols="6">
-                        <v-card-title class="text-center">Downloaded Bytes
+                        <v-card-title class="text-center">{{ totalDownloadSizeTitle }}
                         </v-card-title>
                         <vue-apex-charts ref="chart" type="bar" height="300" :options="chartOptions"
                             :series="buildSeries('downloaded_bytes_total')">
@@ -349,6 +349,10 @@
                 <p>{{ removalMessage }}</p>
             </v-card-text>
             <v-card-actions>
+                
+                <v-col cols="6">
+                    <v-btn color="black" variant="flat" block @click="showRemoveWarningDialog = false">No</v-btn>
+                </v-col>
                 <v-col cols="6">
                     <!-- Pending topic 'Yes' button -->
                     <v-btn v-if="topicFound(topicToRemove, pendingTopics)" color="error" variant="flat" block
@@ -357,9 +361,6 @@
                     <v-btn v-if="topicFound(topicToRemove, activeTopics)" color="error" variant="flat" block
                         @click="removeFromSubscription(topicToRemove)"
                         :loading="makingServerRequest[topicToRemove]">Yes</v-btn>
-                </v-col>
-                <v-col cols="6">
-                    <v-btn color="black" variant="flat" block @click="showRemoveWarningDialog = false">No</v-btn>
                 </v-col>
             </v-card-actions>
         </v-card>
@@ -438,6 +439,7 @@ export default defineComponent({
             }
         };
 
+        // Breakpoints
         const { mdAndUp, lgAndUp } = useDisplay();
 
         // Bar chart options
@@ -529,6 +531,7 @@ export default defineComponent({
         // Topic metric monitoring dialog
         const showTopicMonitorDialog = ref(false);
         const monitorDialogTitle = ref('');
+        const totalDownloadSizeTitle = ref('Bytes Downloaded');
         const topicMetrics = ref({});
 
         // Warning dialog for removing a topic
@@ -910,14 +913,50 @@ export default defineComponent({
             return metricName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         };
 
+        // Helper function to scale the byte size to the most appropriate unit
+        const scaleBytes = (data) => {
+            const maxBytes = Math.max(...data);
+            let factor = 1;
+            let sizeTitle = 'Downloaded Bytes';
+            if (maxBytes > 1024) {
+                factor = 1024;
+                sizeTitle = 'Downloaded KB';
+            }
+            if (maxBytes > 1024 ** 2) {
+                factor = 1024 ** 2;
+                sizeTitle = 'Downloaded MB';
+            }
+            if (maxBytes > 1024 ** 3) {
+                factor = 1024 ** 3;
+                sizeTitle = 'Downloaded KB';
+            }
+            // Divide all values by this factor, rounded to 2 decimal places,
+            // to maintain the same scale.
+            data.forEach((val, index) => {
+                data[index] = (val / factor).toFixed(2);
+            });
+
+            // Update the title of the chart
+            totalDownloadSizeTitle.value = sizeTitle;
+
+            return data;
+        }
+
         // Build an array suitable for the bar charts
         const buildSeries = (metricName) => {
-            const data = [];
+            let data = [];
 
             // We must ensure the array is populated in the same
             // order as the x-axis categories
             for (const key of chartOptions.xaxis.categories) {
                 data.push(topicMetrics.value[metricName]?.[key] || 0);
+            }
+
+            // If the metric is downloaded_bytes_total, check the size of the maximum,
+            // and scale the data to the most appropriate unit
+            if (metricName === 'downloaded_bytes_total') {
+                data = scaleBytes(data);
+                metricName = totalDownloadSizeTitle.value;
             }
 
             return [{
@@ -1113,6 +1152,7 @@ export default defineComponent({
             form,
             showTopicMonitorDialog,
             monitorDialogTitle,
+            totalDownloadSizeTitle,
             topicMetrics,
             showRemoveWarningDialog,
             removalMessage,
@@ -1162,5 +1202,10 @@ export default defineComponent({
     color: #666;
     opacity: 0.75;
     font-size: 1.1em;
+}
+
+.topic-table {
+    max-height: 400px;
+    overflow-y: auto;
 }
 </style>

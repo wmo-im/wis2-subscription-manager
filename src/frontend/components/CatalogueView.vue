@@ -27,10 +27,33 @@
                         </v-col>
                     </v-row>
 
-                    <v-row>
-                        <v-col cols="12">
+                    <!-- Most screens -->
+                    <v-row align="center" v-if="mdAndUp">
+                        <v-col cols="4">
+                            <v-divider />
+                        </v-col>
+                        <v-col cols="4">
                             <v-btn @click="searchCatalogue" append-icon="mdi-cloud-search" color="#003DA5"
-                                variant="flat" block :disabled="!catalogueBoolean" :loading="loadingBoolean">Browse the Catalogue</v-btn>
+                                variant="flat" size="large" block :disabled="!catalogueBoolean"
+                                :loading="loadingBoolean">Browse the Catalogue</v-btn>
+                        </v-col>
+                        <v-col cols="4">
+                            <v-divider />
+                        </v-col>
+                    </v-row>
+
+                    <!-- Very small screens -->
+                    <v-row align="center" v-if="!mdAndUp">
+                        <v-col cols="3">
+                            <v-divider />
+                        </v-col>
+                        <v-col cols="6">
+                            <v-btn @click="searchCatalogue" append-icon="mdi-cloud-search" color="#003DA5"
+                                variant="flat" size="large" block :disabled="!catalogueBoolean"
+                                :loading="loadingBoolean">Browse the Catalogue</v-btn>
+                        </v-col>
+                        <v-col cols="3">
+                            <v-divider />
                         </v-col>
                     </v-row>
 
@@ -53,32 +76,73 @@
                 </v-dialog>
 
                 <!-- Display catalogue datasets searched by user -->
-                <v-card-item>
-                    <v-table :hover="true">
-                        <thead>
-                            <tr>
-                                <th scope="row" class="topic-column">
-                                    <p class="medium-title">Discovery Metadata Records Found</p>
-                                </th>
-                                <th scope="row" class="button-column">
-                                    <v-row justify="center" class="pa-2"
-                                        v-if="tableBoolean === true && connectedToDownloader">
-                                        <v-switch inset label="Add All" v-model="addAllTopics"
-                                            @change="addOrRemoveAllTopics(datasets, addAllTopics)"
-                                            :disabled="tableBoolean === false" color="#003DA5" />
-                                    </v-row>
-                                </th>
-                            </tr>
-                        </thead>
-                        <transition name="slide-y-transition">
+                <transition name="slide-y-transition">
+                    <v-card-item class="scrollable-results" v-scroll.self="onScroll">
+                        <!-- Scroll to top button -->
+                        <v-row>
+                            <v-col cols="12">
+                                <div class="overlay-container">
+                                    <v-fade-transition>
+                                        <v-btn v-if="offsetTop > 500" class="overlay-button" color="#003DA5" icon="mdi-arrow-up"
+                                            @click="toTop" />
+                                    </v-fade-transition>
+                                </div>
+                            </v-col>
+                        </v-row>
+
+                        <!-- Table title -->
+                        <v-banner v-if="tableBoolean === true" sticky class="pt-0 pb-0" id="top-banner">
+                            <v-row class="align-center">
+                                <v-col cols="auto">
+                                    <p class="text-h5 font-weight-light pb-4">
+                                        Discovery Metadata Records Found:
+                                        <b v-if="tableBoolean" class="hint-default"> {{ filteredDatasets.length
+                                            }}</b>
+                                    </p>
+                                </v-col>
+
+                                <!-- Date order button -->
+                                <v-col cols="2">
+                                    <v-select label="Date"
+                                    v-model="dateOrder"
+                                    :items="['Latest', 'Oldest']"
+                                    variant="underlined" density="compact"/>
+                                </v-col>
+
+                                <!-- Filter by topic button -->
+                                <v-col cols="2">
+                                    <v-checkbox label="Topic Available"
+                                    v-model="filterByTopic" dense/>
+                                </v-col>
+
+                                <v-col v-if="connectedToDownloader" class="mr-3 d-flex justify-end">
+                                    <v-switch inset label="Add All" v-model="addAllTopics"
+                                        @change="addOrRemoveAllTopics(filteredDatasets, addAllTopics)"
+                                        :disabled="tableBoolean === false" color="#003DA5" />
+                                </v-col>
+                            </v-row>
+                        </v-banner>
+
+                        <!-- Search results -->
+                        <v-table :hover="true">
                             <tbody v-show="tableBoolean === true">
-                                <tr v-for="item in datasets" :key="`${item.title}-${item.creation_date}`"
-                                    @click="openDialog(item)" class="clickable-row">
+                                <!-- Inform user if search returned nothing -->
+                                <tr v-if="filteredDatasets.length === 0">
                                     <td class="small-title py-3">
+                                        <p>No datasets found. Please try a different search.</p>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <!-- If datasets found, display them -->
+                                <tr v-for="item in filteredDatasets" :key="`${item.title}-${item.creation_date}`"
+                                    @click="openDialog(item)" class="clickable-row">
+                                    <td class="small-title topic-column py-3">
                                         <div class="title-section">
-                                            <span><b v-if="item.centre_identifier">{{ item.centre_identifier }}:</b> {{
+                                            <span><b v-if="item.centre_identifier">{{ item.centre_identifier }}:</b>
+                                                {{
                                 formatValue(item.title) }}</span>
-                                            <v-chip class="policy-section">{{ formatValue(item.data_policy) }}</v-chip>
+                                            <v-chip class="policy-section" label>{{ formatValue(item.data_policy)
+                                                }}</v-chip>
                                         </div>
                                         <div class="description-section">
                                             <p>{{ item.description.substring(0, 120) + '...' }}</p>
@@ -94,7 +158,7 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <!-- If topic not added, allow them to add -->
+                                        <!-- Buttons to add, remove, or show topic status -->
                                         <v-btn block
                                             v-if="!topicFound(item.topic_hierarchy, selectedTopics) && item.topic_hierarchy && connectedToDownloader"
                                             color="#64BF40" append-icon="mdi-plus" variant="flat"
@@ -103,7 +167,7 @@
                                         <v-btn block
                                             v-if="topicFound(item.topic_hierarchy, pendingTopics) && connectedToDownloader"
                                             color="error" append-icon="mdi-minus" variant="flat"
-                                            @click.stop="removeTopicFromPending(item)">
+                                            @click.stop="removeTopicFromPending(item.topic_hierarchy)">
                                             Remove</v-btn>
                                         <v-btn block v-if="topicFound(item.topic_hierarchy, activeTopics)" disabled
                                             color="#003DA5" append-icon="mdi-download-multiple" variant="flat">
@@ -114,56 +178,55 @@
                                     </td>
                                 </tr>
                             </tbody>
-                        </transition>
-                    </v-table>
+                        </v-table>
+                    </v-card-item>
+                </transition>
 
-                    <!-- Dialog to display dataset metadata -->
-                    <v-dialog v-model="dialog" transition="scroll-y-transition" class="max-dataset-width">
-                        <v-card class="overflow-hidden">
-                            <v-toolbar :title="selectedItem.title" color="#003DA5">
-                                <v-btn icon="mdi-close" variant="text" @click="dialog = false" />
-                            </v-toolbar>
-                            <div class="scrollable-table">
-                                <v-container class="pa-8">
-                                    <bbox-view :coordinates="selectedItem.coordinates" height="16rem"
-                                        id="map"></bbox-view>
-                                </v-container>
-                                <v-table class="px-4">
-                                    <tbody>
-                                        <tr v-for="([key, value], _) in filteredItems">
-                                            <td class="feature-column"><b>{{ formatKey(key) }}</b></td>
-                                            <td>{{ formatValue(value) }}</td>
-                                        </tr>
-                                    </tbody>
-                                </v-table>
-                            </div>
-                            <v-card-actions>
-                                <v-row>
-                                    <v-col cols="12">
-                                        <v-btn color="#E09D00" append-icon="mdi-code-json" variant="flat" block
-                                            @click="openJSON(selectedItem.identifier, selectedItem.title)"
-                                            :loading="loadingJsonBoolean">
-                                            View JSON
-                                        </v-btn>
-                                    </v-col>
-                                </v-row>
-                            </v-card-actions>
-                        </v-card>
-                    </v-dialog>
+                <!-- Dialog to display dataset metadata -->
+                <v-dialog v-model="featureDialog" transition="scroll-y-transition" class="max-dataset-width">
+                    <v-card class="overflow-hidden">
+                        <v-toolbar :title="selectedItem.title" color="#003DA5">
+                            <v-btn icon="mdi-close" variant="text" @click="featureDialog = false" />
+                        </v-toolbar>
+                        <div class="scrollable-table">
+                            <v-container class="pa-8">
+                                <bbox-view :coordinates="selectedItem.coordinates" height="16rem" id="map"></bbox-view>
+                            </v-container>
+                            <v-table class="px-4">
+                                <tbody>
+                                    <tr v-for="([key, value], _) in filteredFeatures">
+                                        <td class="feature-column"><b>{{ formatKey(key) }}</b></td>
+                                        <td>{{ formatValue(value) }}</td>
+                                    </tr>
+                                </tbody>
+                            </v-table>
+                        </div>
+                        <v-card-actions>
+                            <v-row>
+                                <v-col cols="12">
+                                    <v-btn color="#E09D00" append-icon="mdi-code-json" variant="flat" block
+                                        @click="openJSON(selectedItem.identifier, selectedItem.title)"
+                                        :loading="loadingJsonBoolean">
+                                        View JSON
+                                    </v-btn>
+                                </v-col>
+                            </v-row>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
 
-                    <!-- Dialog to display the whole JSON object -->
-                    <v-dialog v-model="jsonDialog" max-height="600px" max-width="1200px" scrollable
-                        transition="scale-transition">
-                        <v-card>
-                            <v-toolbar :title="selectedItem.title" color="#E09D00">
-                                <v-btn icon="mdi-close" variant="text" @click="jsonDialog = false" />
-                            </v-toolbar>
-                            <v-card-text>
-                                <pre class="wrap-text">{{ formattedJson }}</pre>
-                            </v-card-text>
-                        </v-card>
-                    </v-dialog>
-                </v-card-item>
+                <!-- Dialog to display the whole JSON object -->
+                <v-dialog v-model="jsonDialog" max-height="600px" max-width="1200px" scrollable
+                    transition="scale-transition">
+                    <v-card>
+                        <v-toolbar :title="selectedItem.title" color="#E09D00">
+                            <v-btn icon="mdi-close" variant="text" @click="jsonDialog = false" />
+                        </v-toolbar>
+                        <v-card-text>
+                            <pre class="wrap-text">{{ formattedJson }}</pre>
+                        </v-card-text>
+                    </v-card>
+                </v-dialog>
             </v-card>
         </v-col>
     </v-row>
@@ -172,7 +235,7 @@
 <script>
 import { defineComponent, ref, computed, watch, onMounted } from 'vue';
 import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSelect, VTextField, VTable, VDatePicker, VDivider } from 'vuetify/lib/components/index.mjs';
-import { useDate } from 'vuetify';
+import { useDisplay } from 'vuetify';
 
 // Sub-components
 import BboxView from "@/components/sub-components/BboxView.vue";
@@ -202,7 +265,7 @@ export default defineComponent({
         // Deep clone function to avoid reference issues between model and default model
         function deepClone(obj) {
             return JSON.parse(JSON.stringify(obj));
-        }
+        };
 
         // Static variables
         const catalogueList = [
@@ -211,12 +274,20 @@ export default defineComponent({
         ];
         const limitOptions = [10, 100, 500, 1000];
 
+        // Breakpoints
+        const { smAndUp, mdAndUp, lgAndUp } = useDisplay();
+
         // Reactive variables
+
+        // Scroll
+        const offsetTop = ref(0);
 
         // Catalogue query variables
         const selectedCatalogue = ref('');
         const limit = ref(10);
         const query = ref(null);
+        const dateOrder = ref(null);
+        const filterByTopic = ref(false);
 
         // Dataset information
         const datasets = ref([]);
@@ -224,7 +295,7 @@ export default defineComponent({
         const tableBoolean = ref(false);
         const addAllTopics = ref(false);
         const selectedItem = ref(null);
-        const dialog = ref(false);
+        const featureDialog = ref(false);
         const formattedJson = ref(null);
         const loadingJsonBoolean = ref(false);
         const jsonDialog = ref(false);
@@ -264,12 +335,43 @@ export default defineComponent({
             return [...activeTopics.value, ...pendingTopics.value];
         });
 
-        // Items to display in the dataset metadata dialog
-        const filteredItems = computed(() => {
+        // Items to display in the table, depending on the date ordering and topic filter
+        const filteredDatasets = computed(() => {
+            // Date ordering
+            if (dateOrder.value === 'Latest') {
+                datasets.value.sort((a, b) => {
+                    return new Date(b.creation_date) - new Date(a.creation_date);
+                });
+            }
+            else if (dateOrder.value === 'Oldest') {
+                datasets.value.sort((a, b) => {
+                    return new Date(a.creation_date) - new Date(b.creation_date);
+                });
+            }
+            
+            // Topic filter
+            if (filterByTopic.value) {
+                return datasets.value.filter(item => item.topic_hierarchy);
+            }
+
+            return datasets.value;
+        });
+
+        // Features to display in the dataset metadata dialog
+        const filteredFeatures = computed(() => {
             return Object.entries(selectedItem.value || {}).filter(([key, _]) => key !== 'title' && key !== 'coordinates');
         });
 
         // Methods
+
+        // Scroll to top button
+        const onScroll = (e) => {
+            offsetTop.value = e.target.scrollTop;
+        };
+        const toTop = () => {
+            const element = document.getElementById("top-banner");
+            element.scrollIntoView({ block: 'end', behavior: 'smooth' });
+        };
 
         // Handle errors displayed to user
         const handleError = (title, message) => {
@@ -326,7 +428,6 @@ export default defineComponent({
 
             for (const link of links || []) {
                 if (link.href.startsWith('mqtt')) {
-                    console.log('Link:', link)
                     for (const key in link) {
                         if (link[key].startsWith('cache/') || link[key].startsWith('origin/')) {
                             return link[key];
@@ -437,7 +538,7 @@ export default defineComponent({
         // Open the dialog to display dataset metadata
         const openDialog = (item) => {
             selectedItem.value = item;
-            dialog.value = true;
+            featureDialog.value = true;
         }
 
         // Format the key to be more readable
@@ -540,17 +641,11 @@ export default defineComponent({
 
             const updatedTopics = [...pendingTopics.value, toAdd];
             pendingTopics.value = updatedTopics;
-
-            // Close the dialog
-            dialog.value = false;
         }
 
         // When the user clicks 'Remove dataset from subscription', remove
         // the associated topic from the array which will be parsed to the Electron API
-        const removeTopicFromPending = (item) => {
-            const topicToRemove = item.topic_hierarchy;
-
-            // Check if there is any topic hierarchy associated with the dataset
+        const removeTopicFromPending = (topicToRemove) => {
             if (!topicToRemove) {
                 return;
             }
@@ -562,13 +657,10 @@ export default defineComponent({
                 handleError('Error Removing Topic', 'The topic was not found in the subscription');
                 return;
             }
-
+            
             let updatedTopics = [...pendingTopics.value];
-            updatedTopics = updatedTopics.filter(item => item !== topicToRemove);
+            updatedTopics = updatedTopics.filter(item => item.topic !== topicToRemove);
             pendingTopics.value = updatedTopics;
-
-            // Close the dialog
-            dialog.value = false;
         };
 
         // Toggles the selection of all topics
@@ -604,17 +696,23 @@ export default defineComponent({
             // Static variables
             catalogueList,
             limitOptions,
+            smAndUp,
+            mdAndUp,
+            lgAndUp,
 
             // Reactive variables
+            offsetTop,
             selectedCatalogue,
             query,
             limit,
+            dateOrder,
+            filterByTopic,
             datasets,
             loadingBoolean,
             tableBoolean,
             addAllTopics,
             selectedItem,
-            dialog,
+            featureDialog,
             formattedJson,
             loadingJsonBoolean,
             jsonDialog,
@@ -628,9 +726,12 @@ export default defineComponent({
             // Computed variables
             catalogueBoolean,
             selectedTopics,
-            filteredItems,
+            filteredDatasets,
+            filteredFeatures,
 
             // Methods
+            onScroll,
+            toTop,
             searchCatalogue,
             openDialog,
             formatKey,
@@ -648,11 +749,7 @@ export default defineComponent({
 
 <style scoped>
 .topic-column {
-    width: 83%;
-}
-
-.button-column {
-    width: 17%;
+    width: 85%;
 }
 
 .title-section {
@@ -694,7 +791,24 @@ export default defineComponent({
 }
 
 .scrollable-table {
-    max-height: 600px;
+    max-height: 50rem;
     overflow-y: auto;
+}
+
+.scrollable-results {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.overlay-container {
+  position: relative;
+  height: 0vh;
+  display: flex;
+  justify-content: center;
+}
+
+.overlay-button {
+    position: fixed;
+    z-index: 10;
 }
 </style>
