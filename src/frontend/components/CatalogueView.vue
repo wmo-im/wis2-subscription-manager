@@ -77,8 +77,21 @@
 
                 <!-- Display catalogue datasets searched by user -->
                 <transition name="slide-y-transition">
-                    <v-card-item class="scrollable-results">
-                        <v-banner v-if="tableBoolean === true" sticky class="py-0">
+                    <v-card-item class="scrollable-results" v-scroll.self="onScroll">
+                        <!-- Scroll to top button -->
+                        <v-row>
+                            <v-col cols="12">
+                                <div class="overlay-container">
+                                    <v-fade-transition>
+                                        <v-btn v-if="offsetTop > 500" class="overlay-button" color="#003DA5" icon="mdi-arrow-up"
+                                            @click="toTop" />
+                                    </v-fade-transition>
+                                </div>
+                            </v-col>
+                        </v-row>
+
+                        <!-- Table title -->
+                        <v-banner v-if="tableBoolean === true" sticky class="pt-0 pb-3" id="top-banner">
                             <v-row>
                                 <v-col cols="9">
                                     <p class="text-h5 font-weight-light">
@@ -96,6 +109,7 @@
                             </v-row>
                         </v-banner>
 
+                        <!-- Search results -->
                         <v-table :hover="true">
                             <tbody v-show="tableBoolean === true">
                                 <!-- Inform user if search returned nothing -->
@@ -150,10 +164,6 @@
                                     </td>
                                 </tr>
                             </tbody>
-                            <!-- Scroll to top button -->
-                            <v-btn v-if="datasets.length > 5" color="#003DA5">
-                                <v-icon>mdi-arrow-up</v-icon>
-                            </v-btn>
                         </v-table>
                     </v-card-item>
                 </transition>
@@ -241,7 +251,7 @@ export default defineComponent({
         // Deep clone function to avoid reference issues between model and default model
         function deepClone(obj) {
             return JSON.parse(JSON.stringify(obj));
-        }
+        };
 
         // Static variables
         const catalogueList = [
@@ -254,6 +264,9 @@ export default defineComponent({
         const { smAndUp, mdAndUp, lgAndUp } = useDisplay();
 
         // Reactive variables
+
+        // Scroll
+        const offsetTop = ref(0);
 
         // Catalogue query variables
         const selectedCatalogue = ref('');
@@ -312,6 +325,15 @@ export default defineComponent({
         });
 
         // Methods
+
+        // Scroll to top button
+        const onScroll = (e) => {
+            offsetTop.value = e.target.scrollTop;
+        };
+        const toTop = () => {
+            const element = document.getElementById("top-banner");
+            element.scrollIntoView({ block: 'end', behavior: 'smooth' });
+        };
 
         // Handle errors displayed to user
         const handleError = (title, message) => {
@@ -650,6 +672,7 @@ export default defineComponent({
             lgAndUp,
 
             // Reactive variables
+            offsetTop,
             selectedCatalogue,
             query,
             limit,
@@ -675,6 +698,8 @@ export default defineComponent({
             filteredItems,
 
             // Methods
+            onScroll,
+            toTop,
             searchCatalogue,
             openDialog,
             formatKey,
@@ -741,5 +766,17 @@ export default defineComponent({
 .scrollable-results {
     max-height: 60vh;
     overflow-y: auto;
+}
+
+.overlay-container {
+  position: relative;
+  height: 0vh;
+  display: flex;
+  justify-content: center;
+}
+
+.overlay-button {
+    position: fixed;
+    z-index: 10;
 }
 </style>
