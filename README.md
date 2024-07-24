@@ -22,7 +22,6 @@ The WIS2 Subscription Manager is an Electron application that allows you to easi
     </li>
     <li><a href="#demos">Demos</a>
       <ul>
-        <li><a href="#browsing-a-gdc">Browsing a GDC</a></li>
         <li><a href="#adding-and-configuring-topics">Adding and Configuring Topics</a></li>
       </ul>
     </li>
@@ -59,8 +58,8 @@ The WIS2 Subscription Manager is an Electron application that allows you to easi
 
 ### Examples
 <div align="center">
-    <img src="https://github.com/wmo-im/wis2-subscription-manager/assets/47696929/7a1e5164-d49a-4ec3-9e8c-ba5822970e9d" style="width:400px"/>
-    <img src="https://github.com/wmo-im/wis2-subscription-manager/assets/47696929/81cc2def-0fce-4224-a961-290c2cbff31d" style="width:400px"/>
+    <img src="https://github.com/user-attachments/assets/a2dc40d1-5790-4181-a7f1-f54eea6e980d" style="width:400px"/>
+    <img src="https://github.com/user-attachments/assets/c763f38a-e79d-4f05-abc4-6e8333d68c7c" style="width:400px"/>
 </div>
 
 <br/>
@@ -69,19 +68,6 @@ The WIS2 Subscription Manager is an Electron application that allows you to easi
     <img src="https://github.com/wmo-im/wis2-subscription-manager/assets/47696929/85ffd7ae-cf50-4bd0-87bd-450bd3e38247" style="width:400px"/>
     <img src="https://github.com/wmo-im/wis2-subscription-manager/assets/47696929/f7972cb0-a2e1-4e3d-8c65-7ec5cb56f8e2" style="width:400px"/>
 </div>
-
-
-## Demos
-### Browsing a GDC
-<div align="center">
-    <img src="https://github.com/wmo-im/wis2-subscription-manager/assets/47696929/293f3baf-efca-4de9-b635-f13f97259f62" style="width:700px"/>
-</div>
-
-### Adding and Configuring Topics
-<div align="center">
-   <img src="https://github.com/wmo-im/wis2-subscription-manager/assets/47696929/81d18cde-9014-482c-b8b1-5a82108b4e5e" style="width:700px"/>
-</div>
-
 
 ## Getting Started
 
