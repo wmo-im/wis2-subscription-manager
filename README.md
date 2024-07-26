@@ -142,7 +142,7 @@ This will create the application installer (`.deb`) in the `out/make/deb/x64` fo
 
 #### MacOS
 
-There is no virtual machine can be trusted to package this application compatibly for a real MacOS system. The best approach is to run the commands on a genuine Macbook.
+It is not recommend to use a virtual machine to package this application for MacOS, as there will likely be compatibility issues. We recommend to run the commands on a genuine Macbook.
 
 The only difference here is the application must be made for both the x64 and arm64 architectures, the latter of which is used by the Apple silicon chips (M1 and above). This is done by running:
 ```
