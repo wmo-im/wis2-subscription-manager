@@ -13,7 +13,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: GitHub checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
       # To make the app correctly on MacOS, the Python version must be < 3.12
