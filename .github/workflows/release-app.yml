@@ -1,19 +1,26 @@
-name: Release app
+name: Release App
 on:
   push:
     branches:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: write
+  issues: write
+  pull-requests: write
+
 jobs:
   build:
+    name: Release App
     # Run this job on the following operating systems
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: GitHub checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
       # To make the app correctly on MacOS, the Python version must be < 3.12
