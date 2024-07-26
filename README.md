@@ -2,7 +2,7 @@
 # The WIS2 Subscription Manager
 <a name="readme-top"></a>
 
-## The desktop application for managing your WIS2 Downloader
+### The desktop application for managing your WIS2 Downloader
 
 <div align="center">
 
@@ -64,15 +64,15 @@ The WIS2 Subscription Manager is an Electron application that allows you to easi
 
 ### Examples
 <div align="center">
-    ![Catalogue Search]<img src="https://github.com/user-attachments/assets/a2dc40d1-5790-4181-a7f1-f54eea6e980d" style="width:400px"/>
-    ![Feature Dialog]<img src="https://github.com/user-attachments/assets/c763f38a-e79d-4f05-abc4-6e8333d68c7c" style="width:400px"/>
+    <img src="https://github.com/user-attachments/assets/a2dc40d1-5790-4181-a7f1-f54eea6e980d" style="width:400px"/>
+    <img src="https://github.com/user-attachments/assets/c763f38a-e79d-4f05-abc4-6e8333d68c7c" style="width:400px"/>
 </div>
 
 <br/>
 
 <div align="center">
-    ![Topic Management]<img src="https://github.com/wmo-im/wis2-subscription-manager/assets/47696929/85ffd7ae-cf50-4bd0-87bd-450bd3e38247" style="width:400px"/>
-    ![Download Metrics]<img src="https://github.com/wmo-im/wis2-subscription-manager/assets/47696929/f7972cb0-a2e1-4e3d-8c65-7ec5cb56f8e2" style="width:400px"/>
+    <img src="https://github.com/wmo-im/wis2-subscription-manager/assets/47696929/85ffd7ae-cf50-4bd0-87bd-450bd3e38247" style="width:400px"/>
+    <img src="https://github.com/wmo-im/wis2-subscription-manager/assets/47696929/f7972cb0-a2e1-4e3d-8c65-7ec5cb56f8e2" style="width:400px"/>
 </div>
 
 ## Getting Started
