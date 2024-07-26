@@ -1,13 +1,3 @@
-/**
- * src/styles/settings.scss
- *
- * Configures SASS variables and Vuetify overwrites
- */
-
-// https://vuetifyjs.com/features/sass-variables/`
-// @use 'vuetify/settings' with (
-//   $color-pack: false
-// );
 .max-form-width {
     max-width: 1500px;
 }
@@ -22,6 +12,10 @@
 
 .max-dataset-width {
     max-width: 1200px;
+}
+
+.max-dataset-height {
+    max-height: 85%;
 }
 
 .max-error-width {
