@@ -79,6 +79,12 @@ Extract this folder and double click on the install file. This should open the a
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+---
+***Note**: Currently, the application has not yet been code-signed, as we are still in the alpha phase of development.*
+
+*Due to this, there may be a pop-up warning on installation that asks if you want to continue. In the case of the Microsoft Defender SmartScreen warning, you can proceed with installation simply by clicking 'More Info' and 'Run Anyway'.*
+
+---
 
 ## Development
 
@@ -105,6 +111,7 @@ npm run start
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### How to package the application
+This is already done automatically by the GitHub Actions workflow when there is a push to the main branch. If you want to test this locally however, please see the instructions below.
 
 #### Windows
 
@@ -146,9 +153,9 @@ This will create the application installer (`.dmg`) in the `out/make` folder.
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Understanding the structure of this repository
-Since this application requires an intersection of Vue/Vuetify 3 and ElectronJS, it's important to organise their usage in order to prevent confusion. For this reason, they exist primarily in separate folders:
+Since this application requires an intersection of Vue/Vuetify 3 and Electron, it's important to organise their usage in order to prevent confusion. For this reason, they exist primarily in separate folders:
 - **`src/frontend`**: This folder contains the folders and files you'd typically see in a Vite project, with the exception of the `main.js` file (see below).
-- **`src/main`**: This folder contains the core ElectronJS files, one of which is `renderer.js` which replaces the `main.js` you normally find in a Vite project. To repeat, the `main.js` file in this folder is that of Electron, **not** Vue 3.
+- **`src/main`**: This folder contains the core ElectronJS files, one of which is `renderer.js` which replaces the `main.js` you normally find in a Vite project. To clarify, the `main.js` file in this folder is that of Electron, **not** Vue 3.
 
 Let's explain this in more detail:
 

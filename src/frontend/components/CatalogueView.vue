@@ -183,7 +183,7 @@
                 </transition>
 
                 <!-- Dialog to display dataset metadata -->
-                <v-dialog v-model="featureDialog" transition="scroll-y-transition" class="max-dataset-width">
+                <v-dialog v-model="featureDialog" transition="scroll-y-transition" class="max-dataset-width max-dataset-height">
                     <v-card class="overflow-hidden">
                         <v-toolbar :title="selectedItem.title" color="#003DA5">
                             <v-btn icon="mdi-close" variant="text" @click="featureDialog = false" />
