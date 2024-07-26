@@ -28,5 +28,6 @@ jobs:
       - name: Super-linter
         uses: super-linter/super-linter@v6.7.0 # x-release-please-version
         env:
+          VALIDATE_SCSS: true
           # To report GitHub Actions status checks
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

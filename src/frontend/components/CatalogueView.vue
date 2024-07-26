@@ -28,34 +28,13 @@
                     </v-row>
 
                     <!-- Most screens -->
-                    <v-row align="center" v-if="mdAndUp">
-                        <v-col cols="4">
-                            <v-divider />
-                        </v-col>
-                        <v-col cols="4">
-                            <v-btn @click="searchCatalogue" append-icon="mdi-cloud-search" color="#003DA5"
-                                variant="flat" size="large" block :disabled="!catalogueBoolean"
-                                :loading="loadingBoolean">Browse the Catalogue</v-btn>
-                        </v-col>
-                        <v-col cols="4">
-                            <v-divider />
-                        </v-col>
-                    </v-row>
+                    <SearchBar v-if="mdAndUp" :searchCatalogue="searchCatalogue" :catalogueBoolean="catalogueBoolean"
+                        :loadingBoolean="loadingBoolean" barSize="4" />
 
                     <!-- Very small screens -->
-                    <v-row align="center" v-if="!mdAndUp">
-                        <v-col cols="3">
-                            <v-divider />
-                        </v-col>
-                        <v-col cols="6">
-                            <v-btn @click="searchCatalogue" append-icon="mdi-cloud-search" color="#003DA5"
-                                variant="flat" size="large" block :disabled="!catalogueBoolean"
-                                :loading="loadingBoolean">Browse the Catalogue</v-btn>
-                        </v-col>
-                        <v-col cols="3">
-                            <v-divider />
-                        </v-col>
-                    </v-row>
+                    <SearchBar v-if="!mdAndUp"
+                        :searchCatalogue="searchCatalogue" :catalogueBoolean="catalogueBoolean"
+                        :loadingBoolean="loadingBoolean" barSize="6" />
 
                 </v-card-item>
 
@@ -238,6 +217,7 @@ import { VCard, VCardTitle, VCardText, VCardItem, VForm, VBtn, VListGroup, VSele
 import { useDisplay } from 'vuetify';
 
 // Sub-components
+import SearchBar from '@/components/sub-components/SearchBar.vue';
 import BboxView from "@/components/sub-components/BboxView.vue";
 
 // Utilities
@@ -259,6 +239,7 @@ export default defineComponent({
         VTable,
         VDatePicker,
         VDivider,
+        SearchBar,
         BboxView
     },
     setup() {
@@ -275,7 +256,7 @@ export default defineComponent({
         const limitOptions = [10, 100, 500, 1000];
 
         // Breakpoints
-        const { smAndUp, mdAndUp, lgAndUp } = useDisplay();
+        const { mdAndUp } = useDisplay();
 
         // Reactive variables
 
@@ -696,9 +677,7 @@ export default defineComponent({
             // Static variables
             catalogueList,
             limitOptions,
-            smAndUp,
             mdAndUp,
-            lgAndUp,
 
             // Reactive variables
             offsetTop,

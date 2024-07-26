@@ -1,12 +1,15 @@
-<a name="readme-top"></a>
-![rounded-toolbar](https://github.com/user-attachments/assets/6b62a099-d346-48ed-921d-e1c1263950d1)
-
 # The WIS2 Subscription Manager
-### The desktop application for managing your WIS2 Downloader
+<a name="readme-top"></a>
 
-<a href="https://github.com/wmo-im/wis2-subscription-manager/blob/main/LICENSE" alt="License" ><img src="https://img.shields.io/badge/License-Apache_2.0-blue"></img></a>
-[![Super-Linter](https://github.com/wmo-im/wis2-subscription-manager/actions/workflows/test-code-quality.yml/badge.svg)](https://github.com/marketplace/actions/super-linter)
-![Release-App](https://github.com/wmo-im/wis2-subscription-manager/actions/workflows/release-app.yml/badge.svg)
+## The desktop application for managing your WIS2 Downloader
+
+<div align="center">
+
+  <a href="https://github.com/wmo-im/wis2-subscription-manager/blob/main/LICENSE" alt="License" ><img src="https://img.shields.io/badge/License-Apache_2.0-blue" alt="License Badge"></img></a>
+  [![Super-Linter](https://github.com/wmo-im/wis2-subscription-manager/actions/workflows/test-code-quality.yml/badge.svg)](https://github.com/marketplace/actions/super-linter)
+  ![Release-App](https://github.com/wmo-im/wis2-subscription-manager/actions/workflows/release-app.yml/badge.svg)
+
+</div>
 
 The WIS2 Subscription Manager is an Electron application that allows you to easily maintain your on-going subscriptions, as well as explore new topics of interest on a Global Discovery Catalogue.
 
@@ -14,42 +17,39 @@ The WIS2 Subscription Manager is an Electron application that allows you to easi
 
 <!-- TABLE OF CONTENTS -->
 <details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#features">Features</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-        <li><a href="#examples">Examples</a></li>
-      </ul>
-    </li>
-    <li><a href="#demos">Demos</a>
-      <ul>
-        <li><a href="#adding-and-configuring-topics">Adding and Configuring Topics</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#1-download">Download</a></li>
-        <li><a href="#2-install">Extract and Install</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#development">Development</a>
-      <ul>
-        <li><a href="#how-to-run-the-application">How to run the application</a></li>
-        <li><a href="#how-to-package-the-application">How to package the application</a></li>
-        <li><a href="#understanding-the-structure-of-this-repository">Understanding the structure of this repository</a></li>
-      </ul>
-    </li>
-    <li><a href="#bugs-and-issues">Bugs and Issues</a></li>
-    <li><a href="#contact">Contract</a></li>
-  </ol>
+<summary>Table of Contents</summary>
+<ol>
+<li><a href="#features">Features</a>
+<ul>
+<li><a href="#built-with">Built With</a></li>
+<li><a href="#examples">Examples</a></li>
+</ul>
+</li>
+<li><a href="#demos">Demos</a>
+<ul>
+<li><a href="#adding-and-configuring-topics">Adding and Configuring Topics</a></li>
+</ul>
+</li>
+<li><a href="#getting-started">Getting Started</a>
+<ul>
+<li><a href="#1-download">Download</a></li>
+<li><a href="#2-install">Extract and Install</a></li>
+</ul>
+</li>
+<li><a href="#development">Development</a>
+<ul>
+<li><a href="#how-to-run-the-application">How to run the application</a></li>
+<li><a href="#how-to-package-the-application">How to package the application</a></li>
+<li><a href="#understanding-the-structure-of-this-repository">Understanding the structure of this repository</a></li>
+</ul>
+</li>
+<li><a href="#bugs-and-issues">Bugs and Issues</a></li>
+<li><a href="#contact">Contract</a></li>
+</ol>
 </details>
 
 ## Features
-
+![rounded-toolbar](https://github.com/user-attachments/assets/6b62a099-d346-48ed-921d-e1c1263950d1)
 - **Configure Your Subscriptions**: Easily view and configure topics through a user-friendly interface, built with <a href="https://vuetifyjs.com/en/">Vuetify 3</a>.
 - **Explore the Global Discovery Catalogue (GDC)**: Browse a GDC of your choice and seamlessly add new topics to your subscription.
 - **Visualize Download Metrics**: Just click on a subscribed topic to see the number of files/bytes downloaded, file types, and failed downloads.
@@ -75,7 +75,7 @@ The WIS2 Subscription Manager is an Electron application that allows you to easi
 ## Getting Started
 
 ### 1. Download
-In the <a href="https://github.com/wmo-im/wis2-subscription-manager/releases">releases section</a>, expand the 'Assets' drop-down and download the zip file for your operating system.
+In the <a href="https://github.com/wmo-im/wis2-subscription-manager/releases">releases section</a>, expand the 'Assets' drop-down and download the ZIP file for your operating system.
 
 ### 2. Install
 Extract this folder and double click on the install file. This should open the application and you're ready to go.
@@ -95,19 +95,19 @@ Extract this folder and double click on the install file. This should open the a
 
 Firstly, clone this repository to your local directory
 
-```
+```bash
 git clone https://github.com/wmo-im/wis2-subscription-manager
 ```
 
 In this directory, install the required libraries with `npm`:
 
-```
+```bash
 npm install
 ```
 
 Lastly, to start the application
 
-```
+```bash
 npm run start
 ```
 
@@ -120,13 +120,13 @@ This is already done automatically by the GitHub Actions workflow when there is 
 
 Firstly, the Vue 3 frontend should be built using
 
-```
+```bash
 npm run build
 ```
 
 Then, we can Electron Forge's `make` command to package the application which will use the built frontend
 
-```
+```bash
 npm run make
 ```
 
@@ -138,16 +138,17 @@ To package this application for Linux on a Windows computer, you will need to us
 
 Inside this environment, you can run the same commands as you would when making the Windows application.
 
-*(Note: Ensure you are working on a new git clone of this repository, as the Windows `node_modules` folder may conflict with the Linux version, and vice versa.)*
+*(Note: Ensure you are working on a new Git clone of this repository, as the Windows `node_modules` folder may conflict with the Linux version, and vice versa.)*
 
 This will create the application installer (`.deb`) in the `out/make/deb/x64` folder in your project root.
 
-#### MacOS
+#### macOS
 
-It is not recommend to use a virtual machine to package this application for MacOS, as there will likely be compatibility issues. We recommend to run the commands on a genuine Macbook.
+It is not recommend to use a virtual machine to package this application for macOS, as there will likely be compatibility issues. We recommend to run the commands on a genuine MacBook.
 
 The only difference here is the application must be made for both the x64 and arm64 architectures, the latter of which is used by the Apple silicon chips (M1 and above). This is done by running:
-```
+
+```bash
 npm run make -- --arch=universal --platform=darwin
 ```
 
