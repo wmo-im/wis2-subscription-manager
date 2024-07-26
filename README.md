@@ -1,4 +1,5 @@
 <a name="readme-top"></a>
+![rounded-toolbar](https://github.com/user-attachments/assets/6b62a099-d346-48ed-921d-e1c1263950d1)
 
 # The WIS2 Subscription Manager
 ### The desktop application for managing your WIS2 Downloader
