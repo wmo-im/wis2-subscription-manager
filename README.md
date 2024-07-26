@@ -5,7 +5,8 @@
 ### The desktop application for managing your WIS2 Downloader
 
 <a href="https://github.com/wmo-im/wis2-subscription-manager/blob/main/LICENSE" alt="License" ><img src="https://img.shields.io/badge/License-Apache_2.0-blue"></img></a>
-[![Super-Linter](https://github.com/wmo-im/wis2-subscription-manager/actions/workflows/test-code-qualiy.yml/badge.svg)](https://github.com/marketplace/actions/super-linter)
+[![Super-Linter](https://github.com/wmo-im/wis2-subscription-manager/actions/workflows/test-code-quality.yml/badge.svg)](https://github.com/marketplace/actions/super-linter)
+![Release-App](https://github.com/wmo-im/wis2-subscription-manager/actions/workflows/release-app.yml/badge.svg)
 
 The WIS2 Subscription Manager is an Electron application that allows you to easily maintain your on-going subscriptions, as well as explore new topics of interest on a Global Discovery Catalogue.
 
