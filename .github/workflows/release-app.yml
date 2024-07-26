@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   build:
+    name: Release App
     # Run this job on the following operating systems
     strategy:
       matrix:
