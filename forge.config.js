@@ -11,7 +11,7 @@ module.exports = {
     // These files will be copied to the app's resources directory instead.
     // NOTE: ASAR should only be used for static files, so the backend folder should be excluded.
     asar: {
-      unpack: "src/frontend/**/*|src/main/**/*|public/assets/**/*"
+      unpack: 'src/frontend/**/*|src/main/**/*|public/assets/**/*'
     },
     // Icon for both Windows and MacOS, no file extension needed
     icon: 'public/assets/app-icon'
@@ -31,7 +31,7 @@ module.exports = {
         iconUrl: 'https://raw.githubusercontent.com/wmo-im/wis2-subscription-manager/main/public/assets/app-icon.ico',
         setupIcon: 'public/assets/app-icon.ico',
         loadingGif: 'public/assets/install-banner.gif'
-      },
+      }
     },
     // Linux maker
     {
@@ -41,16 +41,16 @@ module.exports = {
         options: {
           icon: 'public/assets/app-icon.png'
         }
-      },
+      }
     },
     // MacOS maker
     {
       name: '@electron-forge/maker-dmg',
       platforms: ['darwin'],
       config: {
-        icon: 'public/assets/app-icon.icns',
-      },
-    },
+        icon: 'public/assets/app-icon.icns'
+      }
+    }
   ],
   publishers: [
     {
@@ -77,20 +77,20 @@ module.exports = {
           {
             // `entry` is just an alias for `build.lib.entry` in the corresponding file of `config`.
             entry: 'src/main/main.js',
-            config: 'vite.main.config.mjs',
+            config: 'vite.main.config.mjs'
           },
           {
             entry: 'src/main/preload.js',
-            config: 'vite.preload.config.mjs',
-          },
+            config: 'vite.preload.config.mjs'
+          }
         ],
         renderer: [
           {
             name: 'main_window',
-            config: 'vite.renderer.config.mjs',
-          },
-        ],
-      },
-    },
-  ],
-};
+            config: 'vite.renderer.config.mjs'
+          }
+        ]
+      }
+    }
+  ]
+}
