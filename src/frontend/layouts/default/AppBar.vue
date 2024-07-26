@@ -64,17 +64,17 @@ export default defineComponent({
 .wmo-logo {
   -webkit-app-region: no-drag;
   height: 50px;
-  margin-left: 10%;
+  margin-left: 20%;
 }
 
 .logo-placeholder {
-  width: 50px;
+  width: 100px;
   height: 50px;
 }
 
 .app-button {
   -webkit-app-region: no-drag;
-  margin-left: 15px;
+  margin-left: 5%;
 }
 
 .draggable {
