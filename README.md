@@ -1,3 +1,4 @@
+![Rounded Toolbar](https://github.com/user-attachments/assets/6b62a099-d346-48ed-921d-e1c1263950d1)
 # The WIS2 Subscription Manager
 <a name="readme-top"></a>
 
@@ -15,7 +16,6 @@ The WIS2 Subscription Manager is an Electron application that allows you to easi
 
 **Note**: This repository does *not* contain the downloader which actually enables the subscription process. <a href="https://github.com/wmo-im/wis2downloader">The WIS2 Downloader can be found here.</a>
 
-<!-- markdownlint-disable -->
 <!-- TABLE OF CONTENTS -->
 <details>
   <summary>Table of Contents</summary>
@@ -51,10 +51,8 @@ The WIS2 Subscription Manager is an Electron application that allows you to easi
     <li><a href="#contact">Contract</a></li>
   </ol>
 </details>
-<!-- markdownlint-enable -->
 
 ## Features
-![Rounded Toolbar](https://github.com/user-attachments/assets/6b62a099-d346-48ed-921d-e1c1263950d1)
 - **Configure Your Subscriptions**: Easily view and configure topics through a user-friendly interface, built with <a href="https://vuetifyjs.com/en/">Vuetify 3</a>.
 - **Explore the Global Discovery Catalogue (GDC)**: Browse a GDC of your choice and seamlessly add new topics to your subscription.
 - **Visualize Download Metrics**: Just click on a subscribed topic to see the number of files/bytes downloaded, file types, and failed downloads.
