@@ -15,41 +15,46 @@ The WIS2 Subscription Manager is an Electron application that allows you to easi
 
 **Note**: This repository does *not* contain the downloader which actually enables the subscription process. <a href="https://github.com/wmo-im/wis2downloader">The WIS2 Downloader can be found here.</a>
 
+<!-- markdownlint-disable -->
 <!-- TABLE OF CONTENTS -->
 <details>
-<summary>Table of Contents</summary>
-<ol>
-<li><a href="#features">Features</a>
-<ul>
-<li><a href="#built-with">Built With</a></li>
-<li><a href="#examples">Examples</a></li>
-</ul>
-</li>
-<li><a href="#demos">Demos</a>
-<ul>
-<li><a href="#adding-and-configuring-topics">Adding and Configuring Topics</a></li>
-</ul>
-</li>
-<li><a href="#getting-started">Getting Started</a>
-<ul>
-<li><a href="#1-download">Download</a></li>
-<li><a href="#2-install">Extract and Install</a></li>
-</ul>
-</li>
-<li><a href="#development">Development</a>
-<ul>
-<li><a href="#how-to-run-the-application">How to run the application</a></li>
-<li><a href="#how-to-package-the-application">How to package the application</a></li>
-<li><a href="#understanding-the-structure-of-this-repository">Understanding the structure of this repository</a></li>
-</ul>
-</li>
-<li><a href="#bugs-and-issues">Bugs and Issues</a></li>
-<li><a href="#contact">Contract</a></li>
-</ol>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li>
+      <a href="#features">Features</a>
+      <ul>
+        <li><a href="#built-with">Built With</a></li>
+        <li><a href="#examples">Examples</a></li>
+      </ul>
+    </li>
+    <li><a href="#demos">Demos</a>
+      <ul>
+        <li><a href="#adding-and-configuring-topics">Adding and Configuring Topics</a></li>
+      </ul>
+    </li>
+    <li>
+      <a href="#getting-started">Getting Started</a>
+      <ul>
+        <li><a href="#1-download">Download</a></li>
+        <li><a href="#2-install">Extract and Install</a></li>
+      </ul>
+    </li>
+    <li>
+      <a href="#development">Development</a>
+      <ul>
+        <li><a href="#how-to-run-the-application">How to run the application</a></li>
+        <li><a href="#how-to-package-the-application">How to package the application</a></li>
+        <li><a href="#understanding-the-structure-of-this-repository">Understanding the structure of this repository</a></li>
+      </ul>
+    </li>
+    <li><a href="#bugs-and-issues">Bugs and Issues</a></li>
+    <li><a href="#contact">Contract</a></li>
+  </ol>
 </details>
+<!-- markdownlint-enable -->
 
 ## Features
-![rounded-toolbar](https://github.com/user-attachments/assets/6b62a099-d346-48ed-921d-e1c1263950d1)
+![Rounded Toolbar](https://github.com/user-attachments/assets/6b62a099-d346-48ed-921d-e1c1263950d1)
 - **Configure Your Subscriptions**: Easily view and configure topics through a user-friendly interface, built with <a href="https://vuetifyjs.com/en/">Vuetify 3</a>.
 - **Explore the Global Discovery Catalogue (GDC)**: Browse a GDC of your choice and seamlessly add new topics to your subscription.
 - **Visualize Download Metrics**: Just click on a subscribed topic to see the number of files/bytes downloaded, file types, and failed downloads.
@@ -61,15 +66,15 @@ The WIS2 Subscription Manager is an Electron application that allows you to easi
 
 ### Examples
 <div align="center">
-    <img src="https://github.com/user-attachments/assets/a2dc40d1-5790-4181-a7f1-f54eea6e980d" style="width:400px"/>
-    <img src="https://github.com/user-attachments/assets/c763f38a-e79d-4f05-abc4-6e8333d68c7c" style="width:400px"/>
+    ![Catalogue Search]<img src="https://github.com/user-attachments/assets/a2dc40d1-5790-4181-a7f1-f54eea6e980d" style="width:400px"/>
+    ![Feature Dialog]<img src="https://github.com/user-attachments/assets/c763f38a-e79d-4f05-abc4-6e8333d68c7c" style="width:400px"/>
 </div>
 
 <br/>
 
 <div align="center">
-    <img src="https://github.com/wmo-im/wis2-subscription-manager/assets/47696929/85ffd7ae-cf50-4bd0-87bd-450bd3e38247" style="width:400px"/>
-    <img src="https://github.com/wmo-im/wis2-subscription-manager/assets/47696929/f7972cb0-a2e1-4e3d-8c65-7ec5cb56f8e2" style="width:400px"/>
+    ![Topic Management]<img src="https://github.com/wmo-im/wis2-subscription-manager/assets/47696929/85ffd7ae-cf50-4bd0-87bd-450bd3e38247" style="width:400px"/>
+    ![Download Metrics]<img src="https://github.com/wmo-im/wis2-subscription-manager/assets/47696929/f7972cb0-a2e1-4e3d-8c65-7ec5cb56f8e2" style="width:400px"/>
 </div>
 
 ## Getting Started
