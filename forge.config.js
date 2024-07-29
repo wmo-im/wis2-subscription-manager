@@ -28,7 +28,8 @@ module.exports = {
       name: '@electron-forge/maker-squirrel',
       config: {
         authors: 'World Meteorological Organization',
-        iconUrl: 'https://raw.githubusercontent.com/wmo-im/wis2-subscription-manager/main/public/assets/app-icon.ico',
+        iconUrl:
+          'https://raw.githubusercontent.com/wmo-im/wis2-subscription-manager/main/public/assets/app-icon.ico',
         setupIcon: 'public/assets/app-icon.ico',
         loadingGif: 'public/assets/install-banner.gif'
       }
@@ -93,4 +94,4 @@ module.exports = {
       }
     }
   ]
-}
+};

@@ -1,4 +1,4 @@
-import { createWebHashHistory, createRouter } from 'vue-router'
+import { createWebHashHistory, createRouter } from 'vue-router';
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -14,5 +14,5 @@ const router = createRouter({
       component: () => import('@/components/CatalogueView.vue')
     }
   ]
-})
-export default router
+});
+export default router;
