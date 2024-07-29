@@ -30,5 +30,8 @@ jobs:
         env:
           VALIDATE_SCSS: true
           VALIDATE_MARKDOWN: false
+          VALIDATE_JAVASCRIPT_ES: true
+          VALIDATE_JAVASCRIPT_PRETTIER: true
+          VALIDATE_JAVASCRIPT_STANDARD: false
           # To report GitHub Actions status checks
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
